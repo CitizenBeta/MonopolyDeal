@@ -1,5 +1,8 @@
 package ie.ucd.monopolydeal.model;
 
+import java.util.Arrays;
+import java.util.List;
+
 public enum Color {
     BROWN("Brown", 2, new int[]{1, 2}),
     LIGHT_BLUE("Light Blue", 3, new int[]{1, 2, 3}),
@@ -12,31 +15,33 @@ public enum Color {
     RAILROAD("Railroad", 4, new int[]{1, 2, 3, 4}),
     UTILITY("Utility", 2, new int[]{1, 2});
 
-    private final String name;
-    private final int setSize;
-    private final int[] rent;
+    private final String displayName;
+    private final int fullSetSize;
+    private final int[] rents;
 
-    Color(String name, int setSize, int[] rent) {
-        this.name = name;
-        this.setSize = setSize;
-        this.rent = rent;
+
+    Color(String displayName, int fullSetSize, int[] rents) {
+        this.displayName = displayName;
+        this.fullSetSize = fullSetSize;
+
+        // 添加 rents != null 防止传入 null 时抛出空指针异常
+        this.rents = rents != null ? rents.clone() : new int[0];
     }
 
-    public String getName() {
-        return name;
+    public String getDisplayName() {
+        return displayName;
     }
 
-    public int getSetSize() {
-        return setSize;
+    public int getFullSetSize() {
+        return fullSetSize;
     }
 
-    public int getRent(int ownedPropertyCount) {
-        if (ownedPropertyCount < 1) {
-            ownedPropertyCount = 1;
-        } else if (ownedPropertyCount > rent.length) {
-            ownedPropertyCount = rent.length;
-        }
+    public int getRent(int propertyCount) {
+        int bounded = Math.max(1, Math.min(propertyCount, rents.length));
+        return rents[bounded - 1];
+    }
 
-        return rent[ownedPropertyCount - 1];
+    public static List<Color> getColors() {
+        return Arrays.asList(values());
     }
 }
