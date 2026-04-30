@@ -28,11 +28,11 @@ public enum Color {
         this.rents = rents != null ? rents.clone() : new int[0];
     }
 
-    public String getDisplayName() {
+    public String getName() {
         return displayName;
     }
 
-    public int getFullSetSize() {
+    public int getSize() {
         return fullSetSize;
     }
 
