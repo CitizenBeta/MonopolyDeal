@@ -1,14 +1,266 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="ie.ucd.monopolydeal.ui.GameController"
-            prefHeight="400.0" prefWidth="600.0">
+<BorderPane fx:controller="ie.ucd.monopolydeal.ui.GameController"
+            xmlns="http://javafx.com/javafx/21"
+            xmlns:fx="http://javafx.com/fxml/1"
+            prefWidth="1180.0" prefHeight="760.0"
+            style="-fx-padding: 16; -fx-background-color: #f1f5f9;">
 
-</AnchorPane>
+    <top>
+        <VBox spacing="12.0">
+            <children>
+                <Label text="Monopoly Deal FX" textFill="#0f172a">
+                    <font>
+                        <Font name="Segoe UI Bold" size="28.0" />
+                    </font>
+                </Label>
+
+                <HBox alignment="CENTER_LEFT" spacing="12.0"
+                      style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
+                    <children>
+                        <Region prefWidth="6.0" prefHeight="48.0" style="-fx-background-color: #3b82f6; -fx-background-radius: 12;" />
+                        <VBox spacing="4.0">
+                            <children>
+                                <Label fx:id="statusCaptionLabel" text="Status" textFill="#475569">
+                                    <font>
+                                        <Font name="Segoe UI Semibold" size="12.0" />
+                                    </font>
+                                </Label>
+                                <Label fx:id="statusLabel" text="Start a new game." textFill="#0f172a" wrapText="true">
+                                    <font>
+                                        <Font name="Segoe UI Bold" size="18.0" />
+                                    </font>
+                                </Label>
+                            </children>
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="statusStateLabel" text="Ready"
+                               style="-fx-padding: 5 10 5 10; -fx-background-color: #e0e7ff; -fx-border-color: #a5b4fc; -fx-border-radius: 12; -fx-background-radius: 12; -fx-text-fill: #4338ca;">
+                            <font>
+                                <Font name="Segoe UI Semibold" size="12.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </HBox>
+
+                <GridPane hgap="12.0" maxWidth="1.7976931348623157E308">
+                    <columnConstraints>
+                        <ColumnConstraints percentWidth="16.6667" hgrow="ALWAYS" fillWidth="true" />
+                        <ColumnConstraints percentWidth="16.6667" hgrow="ALWAYS" fillWidth="true" />
+                        <ColumnConstraints percentWidth="16.6667" hgrow="ALWAYS" fillWidth="true" />
+                        <ColumnConstraints percentWidth="16.6667" hgrow="ALWAYS" fillWidth="true" />
+                        <ColumnConstraints percentWidth="16.6667" hgrow="ALWAYS" fillWidth="true" />
+                        <ColumnConstraints percentWidth="16.6667" hgrow="ALWAYS" fillWidth="true" />
+                    </columnConstraints>
+                    <children>
+                        <VBox GridPane.columnIndex="0" maxWidth="1.7976931348623157E308">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="12.0" maxWidth="1.7976931348623157E308"
+                                      style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
+                                    <children>
+                                        <Region prefWidth="6.0" prefHeight="48.0" style="-fx-background-color: #2563eb; -fx-background-radius: 12;" />
+                                        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label text="Current Player" textFill="#475569">
+                                                    <font><Font name="Segoe UI Semibold" size="12.0" /></font>
+                                                </Label>
+                                                <Label fx:id="currentPlayerLabel" text="-" textFill="#0f172a">
+                                                    <font><Font name="Segoe UI Bold" size="18.0" /></font>
+                                                </Label>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <VBox GridPane.columnIndex="1" maxWidth="1.7976931348623157E308">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="12.0" maxWidth="1.7976931348623157E308"
+                                      style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
+                                    <children>
+                                        <Region prefWidth="6.0" prefHeight="48.0" style="-fx-background-color: #f97316; -fx-background-radius: 12;" />
+                                        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label text="Actions" textFill="#475569">
+                                                    <font><Font name="Segoe UI Semibold" size="12.0" /></font>
+                                                </Label>
+                                                <Label fx:id="actionsLabel" text="0 / 3" textFill="#0f172a">
+                                                    <font><Font name="Segoe UI Bold" size="18.0" /></font>
+                                                </Label>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <VBox GridPane.columnIndex="2" maxWidth="1.7976931348623157E308">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="12.0" maxWidth="1.7976931348623157E308"
+                                      style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
+                                    <children>
+                                        <Region prefWidth="6.0" prefHeight="48.0" style="-fx-background-color: #0891b2; -fx-background-radius: 12;" />
+                                        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label text="Hand Size" textFill="#475569">
+                                                    <font><Font name="Segoe UI Semibold" size="12.0" /></font>
+                                                </Label>
+                                                <Label fx:id="handCountLabel" text="0" textFill="#0f172a">
+                                                    <font><Font name="Segoe UI Bold" size="18.0" /></font>
+                                                </Label>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <VBox GridPane.columnIndex="3" maxWidth="1.7976931348623157E308">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="12.0" maxWidth="1.7976931348623157E308"
+                                      style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
+                                    <children>
+                                        <Region prefWidth="6.0" prefHeight="48.0" style="-fx-background-color: #16a34a; -fx-background-radius: 12;" />
+                                        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label text="Bank Total" textFill="#475569">
+                                                    <font><Font name="Segoe UI Semibold" size="12.0" /></font>
+                                                </Label>
+                                                <Label fx:id="bankTotalLabel" text="0M" textFill="#0f172a">
+                                                    <font><Font name="Segoe UI Bold" size="18.0" /></font>
+                                                </Label>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <VBox GridPane.columnIndex="4" maxWidth="1.7976931348623157E308">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="12.0" maxWidth="1.7976931348623157E308"
+                                      style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
+                                    <children>
+                                        <Region prefWidth="6.0" prefHeight="48.0" style="-fx-background-color: #a855f7; -fx-background-radius: 12;" />
+                                        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label text="Completed Sets" textFill="#475569">
+                                                    <font><Font name="Segoe UI Semibold" size="12.0" /></font>
+                                                </Label>
+                                                <Label fx:id="completedSetsLabel" text="0 / 3" textFill="#0f172a">
+                                                    <font><Font name="Segoe UI Bold" size="18.0" /></font>
+                                                </Label>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+
+                        <VBox GridPane.columnIndex="5" maxWidth="1.7976931348623157E308">
+                            <children>
+                                <HBox alignment="CENTER_LEFT" spacing="12.0" maxWidth="1.7976931348623157E308"
+                                      style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
+                                    <children>
+                                        <Region prefWidth="6.0" prefHeight="48.0" style="-fx-background-color: #475569; -fx-background-radius: 12;" />
+                                        <VBox spacing="4.0" HBox.hgrow="ALWAYS">
+                                            <children>
+                                                <Label text="Draw / Discard" textFill="#475569">
+                                                    <font><Font name="Segoe UI Semibold" size="12.0" /></font>
+                                                </Label>
+                                                <Label fx:id="drawPileLabel" text="0 / 0" textFill="#0f172a">
+                                                    <font><Font name="Segoe UI Bold" size="18.0" /></font>
+                                                </Label>
+                                            </children>
+                                        </VBox>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </GridPane>
+            </children>
+        </VBox>
+    </top>
+
+    <center>
+        <HBox spacing="14.0" style="-fx-padding: 12 0 0 0;">
+            <children>
+                <VBox prefWidth="460.0" minWidth="420.0" spacing="10.0"
+                      style="-fx-padding: 14; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
+                    <children>
+                        <Label text="Current Hand" textFill="#0f172a">
+                            <font><Font name="Segoe UI Bold" size="18.0" /></font>
+                        </Label>
+                        <Label fx:id="handHeaderLabel" text="No active hand" textFill="#475569">
+                            <font><Font name="Segoe UI" size="13.0" /></font>
+                        </Label>
+                        <Separator />
+                        <ScrollPane fx:id="handCardsScroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" pannable="true" VBox.vgrow="ALWAYS">
+                            <content>
+                                <VBox fx:id="handCardsBox" spacing="10.0" fillWidth="true">
+                                    <padding>
+                                        <Insets top="10.0" right="12.0" bottom="12.0" left="12.0" />
+                                    </padding>
+                                </VBox>
+                            </content>
+                        </ScrollPane>
+                    </children>
+                </VBox>
+
+                <VBox spacing="10.0" style="-fx-padding: 14; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;" HBox.hgrow="ALWAYS">
+                    <children>
+                        <Label text="Player Table" textFill="#0f172a">
+                            <font><Font name="Segoe UI Bold" size="18.0" /></font>
+                        </Label>
+                        <Label fx:id="boardHeaderLabel" text="Player table" textFill="#475569">
+                            <font><Font name="Segoe UI" size="13.0" /></font>
+                        </Label>
+                        <Separator />
+                        <ScrollPane fx:id="playerBoardsScroll" fitToWidth="true" hbarPolicy="NEVER" pannable="true" VBox.vgrow="ALWAYS">
+                            <content>
+                                <VBox fx:id="playerBoardsBox" spacing="12.0" fillWidth="true">
+                                    <padding>
+                                        <Insets top="10.0" right="12.0" bottom="12.0" left="12.0" />
+                                    </padding>
+                                </VBox>
+                            </content>
+                        </ScrollPane>
+                    </children>
+                </VBox>
+
+                <VBox fx:id="logPanel" prefWidth="310.0" minWidth="290.0" spacing="10.0" visible="false" managed="false"
+                      style="-fx-padding: 14; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
+                    <children>
+                        <Label text="Game Log" textFill="#0f172a">
+                            <font><Font name="Segoe UI Bold" size="18.0" /></font>
+                        </Label>
+                        <Label text="Latest actions and turn flow" textFill="#475569">
+                            <font><Font name="Segoe UI" size="13.0" /></font>
+                        </Label>
+                        <Separator />
+                        <TextArea fx:id="logArea" editable="false" focusTraversable="false" wrapText="true" prefRowCount="18" VBox.vgrow="ALWAYS" />
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+    </center>
+
+    <bottom>
+        <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-padding: 12 0 0 0;">
+            <children>
+                <Button fx:id="newGameButton" text="New Game" onAction="#onNewGame" />
+                <Button fx:id="playButton" text="Play Selected Card" onAction="#onPlaySelected" />
+                <Button fx:id="moveWildButton" text="Move Wild Card" onAction="#onMoveWild" />
+                <Button fx:id="endTurnButton" text="End Turn" onAction="#onEndTurn" />
+                <Button fx:id="toggleLogButton" text="Show Log" onAction="#toggleLogVisibility" />
+            </children>
+        </HBox>
+    </bottom>
+</BorderPane>
