@@ -4,13 +4,26 @@ import ie.ucd.monopolydeal.game.DecisionMaker;
 import ie.ucd.monopolydeal.game.Game;
 import ie.ucd.monopolydeal.model.*;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
+
 import java.util.List;
 
 public class GameController implements DecisionMaker {
     private final Game game = new Game();
 
+    @FXML private Label statusTitle;
+    @FXML private Label statusText;
+    @FXML private Label statusState;
+
     @FXML
     private void initialize() {
+        refreshView();
+    }
+
+    private void refreshView() {
+        statusTitle.setText("Status");
+        statusText.setText("Start a new game.");
+        statusState.setText("Ready");
     }
 
     @Override public Player selectNextPlayer(Player currentPlayer, List<Player> players, String prompt) { return null; }

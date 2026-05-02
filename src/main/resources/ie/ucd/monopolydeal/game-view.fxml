@@ -1,10 +1,45 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
 
 <BorderPane fx:controller="ie.ucd.monopolydeal.ui.GameController"
             xmlns="http://javafx.com/javafx/21"
             xmlns:fx="http://javafx.com/fxml/1"
             prefWidth="1180.0"
-            prefHeight="760.0">
+            prefHeight="760.0"
+            style="-fx-padding: 16; -fx-background-color: #f1f5f9;">
+
+    <top>
+        <VBox spacing="12.0">
+            <children>
+                <Label text="Monopoly Deal FX" textFill="#0f172a">
+                    <font>
+                        <Font name="Segoe UI Bold" size="28.0"/>
+                    </font>
+                </Label>
+
+                <HBox alignment="CENTER_LEFT"
+                      spacing="12.0"
+                      style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1;">
+                    <children>
+                        <VBox spacing="4.0">
+                            <children>
+                                <Label fx:id="statusTitle" text="Status"/>
+                                <Label fx:id="statusText" text="Start a new game." wrapText="true"/>
+                            </children>
+                        </VBox>
+
+                        <Region HBox.hgrow="ALWAYS"/>
+
+                        <Label fx:id="statusState" text="Ready"/>
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </top>
 </BorderPane>
