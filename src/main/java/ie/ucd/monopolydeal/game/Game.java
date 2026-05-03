@@ -70,4 +70,17 @@ public class Game {
         }
         return total;
     }
+
+    public void endTurn() {
+        if (!started || players.isEmpty()) {
+            return;
+        }
+
+        currentPlayerIndex++;
+        if (currentPlayerIndex >= players.size()) {
+            currentPlayerIndex = 0;
+        }
+
+        actionsUsed = 0;
+    }
 }

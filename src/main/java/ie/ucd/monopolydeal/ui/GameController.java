@@ -120,6 +120,14 @@ public class GameController implements DecisionMaker {
 
     @FXML
     private void onEndTurn() {
+        if (!game.isStarted()) {
+            return;
+        }
+
+        selectedCard = null;
+        game.endTurn();
+        statusText.setText("Turn ended.");
+        refreshView();
     }
 
     private List<String> askNames() {
