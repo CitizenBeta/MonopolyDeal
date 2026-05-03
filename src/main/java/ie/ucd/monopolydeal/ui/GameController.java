@@ -9,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.VBox;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,10 @@ public class GameController implements DecisionMaker {
     @FXML private Button playButton;
     @FXML private Button moveWildButton;
     @FXML private Button endTurnButton;
+    @FXML private Label handText;
+    @FXML private Label boardText;
+    @FXML private VBox handCards;
+    @FXML private VBox playerBoards;
 
     @FXML
     private void initialize() {
@@ -38,14 +43,14 @@ public class GameController implements DecisionMaker {
 
     private void refreshView() {
         if (!game.isStarted()) {
-            showPreGameState();
+            showPregame();
             return;
         }
 
-        showGameState();
+        showGame();
     }
 
-    private void showPreGameState() {
+    private void showPregame() {
         statusTitle.setText("Status");
         statusText.setText("Start a new game.");
         statusState.setText("Ready");
@@ -55,9 +60,13 @@ public class GameController implements DecisionMaker {
         bankTotal.setText("0M");
         completedSets.setText("0 / 3");
         piles.setText("0 / 0");
+        handText.setText("No active hand");
+        boardText.setText("Start a new game to populate the table");
+        handCards.getChildren().clear();
+        playerBoards.getChildren().clear();
     }
 
-    private void showGameState() {
+    private void showGame() {
         Player current = game.getCurrentPlayer();
 
         statusTitle.setText("Status");
@@ -68,11 +77,15 @@ public class GameController implements DecisionMaker {
         bankTotal.setText(game.getCurrentPlayerBankTotal() + "M");
         completedSets.setText("0 / 3");
         piles.setText("0 / 0");
+        handText.setText(current.getName() + " can act now");
+        boardText.setText(game.getPlayers().size() + " players in this match");
+        handCards.getChildren().clear();
+        playerBoards.getChildren().clear();
     }
 
     @FXML
     private void onNewGame() {
-        List<String> names = askPlayerNames();
+        List<String> names = askNames();
         if (names == null || names.size() < 2) {
             return;
         }
@@ -94,7 +107,7 @@ public class GameController implements DecisionMaker {
     private void onEndTurn() {
     }
 
-    private List<String> askPlayerNames() {
+    private List<String> askNames() {
         Integer count = askInt("How many players?", 2, 5);
         if (count == null) {
             return null;
@@ -122,6 +135,19 @@ public class GameController implements DecisionMaker {
         ChoiceDialog<Integer> dialog = new ChoiceDialog<>(min, FXCollections.observableArrayList(IntStream.rangeClosed(min, max).boxed().toList()));
         dialog.setHeaderText(prompt);
         return dialog.showAndWait().orElse(null);
+    }
+
+    private void refreshHand(Player player) {
+        List<Card> hand = player.getCardsAtHand();
+
+        if (hand.isEmpty()) {
+            handCards.getChildren().add(new Label("No cards."));
+            return;
+        }
+
+        for (Card card : hand) {
+            handCards.getChildren().add(new Label(card.getName()));
+        }
     }
 
     @Override public Player selectNextPlayer(Player currentPlayer, List<Player> players, String prompt) { return null; }
