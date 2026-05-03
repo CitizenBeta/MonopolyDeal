@@ -3,13 +3,14 @@ package ie.ucd.monopolydeal.ui;
 import ie.ucd.monopolydeal.game.DecisionMaker;
 import ie.ucd.monopolydeal.game.Game;
 import ie.ucd.monopolydeal.model.*;
-import javafx.fxml.FXML;
 import javafx.collections.FXCollections;
-import javafx.scene.control.Button;
-import javafx.scene.control.ChoiceDialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextInputDialog;
-import javafx.scene.layout.VBox;
+import javafx.fxml.FXML;
+import javafx.geometry.Insets;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,8 +38,15 @@ public class GameController implements DecisionMaker {
     @FXML private VBox handCards;
     @FXML private VBox table;
 
+    @FXML private ScrollPane handCardsScroll;
+    @FXML private ScrollPane tableScroll;
+
     @FXML
     private void initialize() {
+        refreshView();
+        configureButtons();
+        configureStatusBanner();
+        configureContentAreas();
         refreshView();
     }
 
@@ -207,8 +215,68 @@ public class GameController implements DecisionMaker {
         endTurnButton.setDisable(!game.isStarted());
     }
 
+    private void configureButtons() {
+        styleActionButton(newGameButton, Color.rgb(37, 99, 235), true);
+        styleActionButton(playButton, Color.rgb(22, 163, 74), true);
+        styleActionButton(moveWildButton, Color.rgb(245, 158, 11), false);
+        styleActionButton(endTurnButton, Color.rgb(71, 85, 105), false);
+    }
+
+    private void configureStatusBanner() {
+        statusTitle.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+        statusTitle.setTextFill(Color.rgb(71, 85, 105));
+        statusText.setWrapText(true);
+        statusText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
+        statusText.setTextFill(Color.rgb(15, 23, 42));
+        statusState.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+    }
+
+    private void configureContentAreas() {
+        handCards.setFillWidth(true);
+        handCardsScroll.setFitToWidth(true);
+        handCardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        handCardsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        handCardsScroll.setPannable(true);
+        handCardsScroll.setBackground(solidBackground(Color.WHITE));
+        handCardsScroll.setBorder(Border.EMPTY);
+
+        table.setFillWidth(true);
+        tableScroll.setFitToWidth(true);
+        tableScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        tableScroll.setPannable(true);
+
+        handText.setFont(Font.font("Segoe UI", 13));
+        boardText.setFont(Font.font("Segoe UI", 13));
+    }
+
+
+    private void styleActionButton(Button button, Color color, boolean filled) {
+        button.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
+        button.setPadding(new Insets(10, 16, 10, 16));
+        button.setMinHeight(40);
+
+        if (filled) {
+            button.setTextFill(Color.WHITE);
+            button.setBackground(solidBackground(color));
+            button.setBorder(roundedBorder(color.darker()));
+        } else {
+            button.setTextFill(color.darker());
+            button.setBackground(solidBackground(Color.WHITE));
+            button.setBorder(roundedBorder(color));
+        }
+    }
+
+    private Background solidBackground(Color color) {
+        return new Background(new BackgroundFill(color, new CornerRadii(12), Insets.EMPTY));
+    }
+
+    private Border roundedBorder(Color color) {
+        return new Border(new BorderStroke(color, BorderStrokeStyle.SOLID, new CornerRadii(12), new BorderWidths(1)));
+    }
+
+
     @Override public Player selectNextPlayer(Player currentPlayer, List<Player> players, String prompt) { return null; }
-    @Override public Color selectColor(String prompt, List<Color> players) { return null; }
+    @Override public PropertyColor selectColor(String prompt, List<PropertyColor> players) { return null; }
     @Override public UseMode useCard(ActionCard action) { return null; }
     @Override public WildPropertyCard selectWildCardToMove(Player current, List<WildPropertyCard> wildCards) { return null; }
     @Override public Card selectDiscard(Player current, List<Card> cards) { return null; }

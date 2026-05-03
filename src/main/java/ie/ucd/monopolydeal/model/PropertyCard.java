@@ -3,9 +3,9 @@ package ie.ucd.monopolydeal.model;
 public class PropertyCard implements Card {
     private final String name;
     private final int bankValue;
-    private final Color color;
+    private final PropertyColor color;
 
-    public PropertyCard(String name, int bankValue, Color color) {
+    public PropertyCard(String name, int bankValue, PropertyColor color) {
         this.name = name;
         this.bankValue = bankValue;
         this.color = color;
@@ -26,7 +26,7 @@ public class PropertyCard implements Card {
         return name + " [Property, " + color.getName() + ", bank " + bankValue + "M]";
     }
 
-    public Color getColor() {
+    public PropertyColor getColor() {
         return color;
     }
 

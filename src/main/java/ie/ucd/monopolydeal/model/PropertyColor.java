@@ -3,7 +3,7 @@ package ie.ucd.monopolydeal.model;
 import java.util.Arrays;
 import java.util.List;
 
-public enum Color {
+public enum PropertyColor {
     BROWN("Brown", 2, new int[]{1, 2}),
     LIGHT_BLUE("Light Blue", 3, new int[]{1, 2, 3}),
     PINK("Pink", 3, new int[]{1, 2, 4}),
@@ -20,7 +20,7 @@ public enum Color {
     private final int[] rents;
 
 
-    Color(String displayName, int fullSetSize, int[] rents) {
+    PropertyColor(String displayName, int fullSetSize, int[] rents) {
         this.displayName = displayName;
         this.fullSetSize = fullSetSize;
 
@@ -41,7 +41,7 @@ public enum Color {
         return rents[bounded - 1];
     }
 
-    public static List<Color> getColors() {
+    public static List<PropertyColor> getColors() {
         return Arrays.asList(values());
     }
 }

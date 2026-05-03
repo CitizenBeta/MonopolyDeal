@@ -5,7 +5,7 @@ import java.util.List;
 
 public interface DecisionMaker {
     Player selectNextPlayer(Player currentPlayer, List<Player> players, String prompt);
-    Color selectColor(String prompt, List<Color> players);
+    PropertyColor selectColor(String prompt, List<PropertyColor> players);
     UseMode useCard(ActionCard action);
     WildPropertyCard selectWildCardToMove(Player current, List<WildPropertyCard> wildCards);
     Card selectDiscard(Player current, List<Card> cards);

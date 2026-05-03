@@ -7,25 +7,25 @@ import java.util.stream.Collectors;
 
 public class WildPropertyCard implements Card {
     private final String name;
-    private final List<Color> possibleColors;
+    private final List<PropertyColor> possibleColors;
     private final int bankValue;
-    private Color currentColor;
+    private PropertyColor currentColor;
 
-    public WildPropertyCard(String name, List<Color> possibleColors, int bankValue) {
+    public WildPropertyCard(String name, List<PropertyColor> possibleColors, int bankValue) {
         this.name = name;
         this.possibleColors = new ArrayList<>(possibleColors);
         this.bankValue = bankValue;
     }
 
-    public List<Color> getPossibleColors() {
+    public List<PropertyColor> getPossibleColors() {
         return Collections.unmodifiableList(possibleColors);
     }
 
-    public Color getCurrentColor() {
+    public PropertyColor getCurrentColor() {
         return currentColor;
     }
 
-    public void setCurrentColor(Color currentColor) {
+    public void setCurrentColor(PropertyColor currentColor) {
         if (!possibleColors.contains(currentColor)) {
             throw new IllegalArgumentException("Invalid color for this wild card.");
         }
@@ -44,7 +44,7 @@ public class WildPropertyCard implements Card {
 
     @Override
     public String getDetail() {
-        String colors = possibleColors.stream().map(Color::getName).collect(Collectors.joining("/"));
+        String colors = possibleColors.stream().map(PropertyColor::getName).collect(Collectors.joining("/"));
         String current = currentColor == null ? "unplaced" : currentColor.getName();
         return name + " [Wild, " + colors + ", current " + current + ", bank " + bankValue + "M]";
     }
