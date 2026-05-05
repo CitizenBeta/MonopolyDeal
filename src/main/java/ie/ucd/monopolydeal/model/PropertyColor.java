@@ -24,7 +24,7 @@ public enum PropertyColor {
         this.displayName = displayName;
         this.fullSetSize = fullSetSize;
 
-        // 添加 rents != null 防止传入 null 时抛出空指针异常
+
         this.rents = rents != null ? rents.clone() : new int[0];
     }
 
