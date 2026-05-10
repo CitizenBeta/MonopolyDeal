@@ -144,8 +144,8 @@ public class GameController implements DecisionMaker {
         boardText.setText("Start a new game to populate the table");
 
         selectedCard = null;
-        handCards.getChildren().setAll(pregameCard("No cards yet", "Start a new game to render the active hand here."));
-        table.getChildren().setAll(pregameCard("No players yet", "Create a game to see hand, bank, and property areas."));
+        handCards.getChildren().setAll(noCardBox("No cards yet", "Start a new game to render the active hand here."));
+        table.getChildren().setAll(noCardBox("No players yet", "Create a game to see hand, bank, and property areas."));
 
         updateBadge("Ready", Color.rgb(224, 231, 255), Color.rgb(165, 180, 252), Color.rgb(67, 56, 202));
     }
@@ -203,27 +203,85 @@ public class GameController implements DecisionMaker {
         List<Card> hand = player.getCardsAtHand();
 
         if (hand.isEmpty()) {
-            handCards.getChildren().add(new Label("No cards."));
+            handCards.getChildren().add(noCardBox("No cards.", "This player has no cards in hand."));
             return;
         }
 
         for (Card card : hand) {
-            Label label = new Label(card.getName());
-
-            if (selectedCard == card) {
-                label.setStyle("-fx-padding: 8; -fx-border-color: #2563eb; -fx-background-color: #eff6ff;");
-            } else {
-                label.setStyle("-fx-padding: 8; -fx-border-color: #cbd5e1; -fx-background-color: white;");
-            }
-            label.setOnMouseClicked(e -> {
-                selectedCard = card;
-                refresh();
-            });
-            label.setMaxWidth(Double.MAX_VALUE);
-
-            handCards.getChildren().add(label);
-
+            handCards.getChildren().add(newHandCard(card));
         }
+    }
+
+    private HBox newHandCard(Card card) {
+        Label name = new Label(card.getName());
+        name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+        name.setTextFill(Color.rgb(15, 23, 42));
+
+        Label type = new Label(cardType(card));
+        type.setTextFill(Color.rgb(71, 85, 105));
+
+        Label detail = new Label(cardDetail(card));
+        detail.setTextFill(Color.rgb(71, 85, 105));
+        detail.setWrapText(true);
+
+        VBox textBox = new VBox(4, name, type, detail);
+
+        HBox cardBox = new HBox(12, newCardBar(cardColor(card)), textBox);
+        cardBox.setAlignment(Pos.CENTER_LEFT);
+        cardBox.setPadding(new Insets(12));
+        cardBox.setMaxWidth(Double.MAX_VALUE);
+
+        if (selectedCard == card) {
+            cardBox.setBackground(setSolidBackground(Color.rgb(239, 246, 255)));
+            cardBox.setBorder(roundCorner(Color.rgb(37, 99, 235)));
+        } else {
+            cardBox.setBackground(setSolidBackground(Color.WHITE));
+            cardBox.setBorder(roundCorner(Color.rgb(203, 213, 225)));
+        }
+
+        cardBox.setOnMouseClicked(e -> {
+            selectedCard = card;
+            refresh();
+        });
+
+        return cardBox;
+    }
+
+    private Region newCardBar(Color color) {
+        Region bar = new Region();
+        bar.setPrefSize(6, 46);
+        bar.setMinWidth(6);
+        bar.setBackground(setSolidBackground(color));
+        return bar;
+    }
+
+    private String cardType(Card card) {
+        return switch (card) {
+            case MoneyCard _ -> "Money";
+            case PropertyCard _ -> "Property";
+            case WildPropertyCard _ -> "Wild";
+            case ActionCard _ -> "Action";
+            case null, default -> "Card";
+        };
+    }
+
+    private String cardDetail(Card card) {
+        return switch (card) {
+            case PropertyCard propertyCard -> "Color: " + propertyCard.getColor().getName() + " | Value: " + propertyCard.getBankValue() + "M";
+            case WildPropertyCard wildCard -> "Current color: " + (wildCard.getCurrentColor() == null ? "Not selected" : wildCard.getCurrentColor().getName()) + " | Value: " + wildCard.getBankValue() + "M";
+            case ActionCard actionCard -> "Effect: " + actionCard.getActionType().name() + " | Value: " + actionCard.getBankValue() + "M";
+            default -> "Value: " + card.getBankValue() + "M";
+        };
+    }
+
+    private Color cardColor(Card card) {
+        return switch (card) {
+            case MoneyCard _ -> Color.rgb(22, 163, 74);
+            case PropertyCard _ -> Color.rgb(37, 99, 235);
+            case WildPropertyCard _ -> Color.rgb(8, 145, 178);
+            case ActionCard _ -> Color.rgb(217, 119, 6);
+            case null, default -> Color.rgb(100, 116, 139);
+        };
     }
 
     private void updateTable(List<Player> players) {
@@ -252,7 +310,7 @@ public class GameController implements DecisionMaker {
         badge.setTextFill(foreground);
     }
 
-    private VBox pregameCard(String titleText, String bodyText) {
+    private VBox noCardBox(String titleText, String bodyText) {
         Label title = new Label(titleText);
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
 
