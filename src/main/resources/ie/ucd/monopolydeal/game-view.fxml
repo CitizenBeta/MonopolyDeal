@@ -201,7 +201,7 @@
                             <font><Font name="Segoe UI" size="13.0" /></font>
                         </Label>
                         <Separator />
-                        <ScrollPane fx:id="handCardsScroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" pannable="true" VBox.vgrow="ALWAYS">
+                        <ScrollPane fx:id="cardsScroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" pannable="true" VBox.vgrow="ALWAYS">
                             <content>
                                 <VBox fx:id="handCards" spacing="10.0" fillWidth="true">
                                     <padding>
