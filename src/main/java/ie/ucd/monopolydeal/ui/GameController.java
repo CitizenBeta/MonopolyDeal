@@ -43,14 +43,41 @@ public class GameController implements DecisionMaker {
 
     @FXML
     private void initialize() {
-        refreshView();
-        configureButtons();
-        configureStatusBanner();
-        configureContentAreas();
-        refreshView();
+        // Set buttons
+        setActionButton(newGameButton, Color.rgb(37, 99, 235), true);
+        setActionButton(playButton, Color.rgb(22, 163, 74), true);
+        setActionButton(moveWildButton, Color.rgb(245, 158, 11), false);
+        setActionButton(endTurnButton, Color.rgb(71, 85, 105), false);
+
+        // Set status
+        statusTitle.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+        statusTitle.setTextFill(Color.rgb(71, 85, 105));
+        statusText.setWrapText(true);
+        statusText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
+        statusText.setTextFill(Color.rgb(15, 23, 42));
+        statusState.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+
+        // Set content area
+        handCards.setFillWidth(true);
+        handCardsScroll.setFitToWidth(true);
+        handCardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        handCardsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        handCardsScroll.setPannable(true);
+        handCardsScroll.setBackground(solidBackground(Color.WHITE));
+        handCardsScroll.setBorder(Border.EMPTY);
+
+        table.setFillWidth(true);
+        tableScroll.setFitToWidth(true);
+        tableScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        tableScroll.setPannable(true);
+
+        handText.setFont(Font.font("Segoe UI", 13));
+        boardText.setFont(Font.font("Segoe UI", 13));
+
+        refresh();
     }
 
-    private void refreshView() {
+    private void refresh() {
         if (!game.isStarted()) {
             showPregame();
         } else {
@@ -103,7 +130,7 @@ public class GameController implements DecisionMaker {
 
         game.setup(names);
         statusText.setText("Game started.");
-        refreshView();
+        refresh();
     }
 
     @FXML
@@ -119,7 +146,7 @@ public class GameController implements DecisionMaker {
             statusText.setText("Cannot play " + selectedCard.getName());
         }
 
-        refreshView();
+        refresh();
     }
 
     @FXML
@@ -135,7 +162,7 @@ public class GameController implements DecisionMaker {
         selectedCard = null;
         game.endTurn();
         statusText.setText("Turn ended.");
-        refreshView();
+        refresh();
     }
 
     private List<String> askNames() {
@@ -187,7 +214,7 @@ public class GameController implements DecisionMaker {
             }
             label.setOnMouseClicked(e -> {
                 selectedCard = card;
-                refreshView();
+                refresh();
             });
             label.setMaxWidth(Double.MAX_VALUE);
 
@@ -215,54 +242,19 @@ public class GameController implements DecisionMaker {
         endTurnButton.setDisable(!game.isStarted());
     }
 
-    private void configureButtons() {
-        styleActionButton(newGameButton, Color.rgb(37, 99, 235), true);
-        styleActionButton(playButton, Color.rgb(22, 163, 74), true);
-        styleActionButton(moveWildButton, Color.rgb(245, 158, 11), false);
-        styleActionButton(endTurnButton, Color.rgb(71, 85, 105), false);
-    }
-
-    private void configureStatusBanner() {
-        statusTitle.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
-        statusTitle.setTextFill(Color.rgb(71, 85, 105));
-        statusText.setWrapText(true);
-        statusText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
-        statusText.setTextFill(Color.rgb(15, 23, 42));
-        statusState.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
-    }
-
-    private void configureContentAreas() {
-        handCards.setFillWidth(true);
-        handCardsScroll.setFitToWidth(true);
-        handCardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        handCardsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        handCardsScroll.setPannable(true);
-        handCardsScroll.setBackground(solidBackground(Color.WHITE));
-        handCardsScroll.setBorder(Border.EMPTY);
-
-        table.setFillWidth(true);
-        tableScroll.setFitToWidth(true);
-        tableScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        tableScroll.setPannable(true);
-
-        handText.setFont(Font.font("Segoe UI", 13));
-        boardText.setFont(Font.font("Segoe UI", 13));
-    }
-
-
-    private void styleActionButton(Button button, Color color, boolean filled) {
+    private void setActionButton(Button button, Color color, boolean isFilled) {
         button.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
         button.setPadding(new Insets(10, 16, 10, 16));
         button.setMinHeight(40);
 
-        if (filled) {
+        if (isFilled) {
             button.setTextFill(Color.WHITE);
             button.setBackground(solidBackground(color));
-            button.setBorder(roundedBorder(color.darker()));
+            button.setBorder(roundCorner(color.darker()));
         } else {
             button.setTextFill(color.darker());
             button.setBackground(solidBackground(Color.WHITE));
-            button.setBorder(roundedBorder(color));
+            button.setBorder(roundCorner(color));
         }
     }
 
@@ -270,7 +262,7 @@ public class GameController implements DecisionMaker {
         return new Background(new BackgroundFill(color, new CornerRadii(12), Insets.EMPTY));
     }
 
-    private Border roundedBorder(Color color) {
+    private Border roundCorner(Color color) {
         return new Border(new BorderStroke(color, BorderStrokeStyle.SOLID, new CornerRadii(12), new BorderWidths(1)));
     }
 
