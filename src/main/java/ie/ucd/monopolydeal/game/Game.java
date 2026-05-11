@@ -48,7 +48,7 @@ public class Game {
     public List<Player> getOtherPlayers(){
         List<Player> otherPlayers = new ArrayList<>();
         otherPlayers.addAll(getPlayers());
-        otherPlayers.remove(getCurrentPlayer());
+        otherPlayers.remove(getCurrPlayer());
         return otherPlayers;
     }
 

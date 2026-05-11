@@ -227,17 +227,19 @@ public class GameController implements DecisionMaker {
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
         name.setTextFill(Color.rgb(15, 23, 42));
 
-        Label type = new Label(cardType(card));
-        type.setTextFill(Color.rgb(71, 85, 105));
+        VBox textBox = new VBox(4, name);
+        String detailText = cardDetail(card);
+        if (!detailText.isEmpty()) {
+            Label detail = new Label(detailText);
+            detail.setTextFill(Color.rgb(71, 85, 105));
+            detail.setWrapText(true);
+            textBox.getChildren().add(detail);
+        }
 
-        Label detail = new Label(cardDetail(card));
-        detail.setTextFill(Color.rgb(71, 85, 105));
-        detail.setWrapText(true);
-
-        VBox textBox = new VBox(4, name, type, detail);
-
-        HBox cardBox = new HBox(12, newCardBar(cardColor(card)), textBox);
+        Region bar = newCardBar(cardColor(card));
+        HBox cardBox = new HBox(12, bar, textBox);
         cardBox.setAlignment(Pos.CENTER_LEFT);
+        cardBox.setFillHeight(true);
         cardBox.setPadding(new Insets(12));
         cardBox.setMaxWidth(Double.MAX_VALUE);
 
@@ -259,25 +261,17 @@ public class GameController implements DecisionMaker {
 
     private Region newCardBar(Color color) {
         Region bar = new Region();
-        bar.setPrefSize(6, 46);
+        bar.setPrefWidth(6);
         bar.setMinWidth(6);
+        bar.setMaxWidth(6);
+        bar.setMaxHeight(Double.MAX_VALUE);
         bar.setBackground(setSolidBackground(color));
         return bar;
     }
 
-    private String cardType(Card card) {
-        return switch (card) {
-            case MoneyCard _ -> "Money";
-            case PropertyCard _ -> "Property";
-            case WildPropertyCard _ -> "Wild";
-            case ActionCard _ -> "Action";
-            case null, default -> "Card";
-        };
-    }
-
     private String cardDetail(Card card) {
         return switch (card) {
-            case PropertyCard propertyCard -> "Color: " + propertyCard.getColor().getName() + " | Value: " + propertyCard.getBankValue() + "M";
+            case PropertyCard propertyCard -> propertyCard.getColor().getName();
             case WildPropertyCard wildCard -> {
                 String currentColor;
                 if (wildCard.getCurrentColor() == null) {
@@ -285,10 +279,10 @@ public class GameController implements DecisionMaker {
                 } else {
                     currentColor = wildCard.getCurrentColor().getName();
                 }
-                yield "Current color: " + currentColor + " | Value: " + wildCard.getBankValue() + "M";
+                yield currentColor;
             }
-            case ActionCard actionCard -> "Effect: " + actionCard.getActionType().name() + " | Value: " + actionCard.getBankValue() + "M";
-            default -> "Value: " + card.getBankValue() + "M";
+            case ActionCard actionCard -> actionCard.getActionType().name();
+            default -> "";
         };
     }
 
@@ -387,14 +381,14 @@ public class GameController implements DecisionMaker {
         name.setTextFill(Color.rgb(15, 23, 42));
 
         Region bar = new Region();
-        bar.setPrefSize(4, 22);
+        bar.setPrefSize(4, 20);
         bar.setMinWidth(4);
         bar.setBackground(setSolidBackground(cardColor(card)));
 
-        HBox box = new HBox(6, bar, name);
+        HBox box = new HBox(8, bar, name);
         box.setAlignment(Pos.CENTER_LEFT);
-        box.setPadding(new Insets(4));
-        box.setPrefWidth(92);
+        box.setPadding(new Insets(5, 10, 5, 9));
+        box.setMinWidth(62);
         box.setBackground(setSolidBackground(Color.WHITE));
         box.setBorder(roundCorner(Color.rgb(203, 213, 225)));
         return box;
