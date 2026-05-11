@@ -40,6 +40,7 @@ public class GameController implements DecisionMaker {
     @FXML private VBox handCardsBox;
     @FXML private VBox tableBox;
 
+    @FXML private BorderPane rootPane;
     @FXML private ScrollPane cardsScroll;
     @FXML private ScrollPane tableScroll;
 
@@ -70,8 +71,11 @@ public class GameController implements DecisionMaker {
         cardsScroll.setPannable(true);
         cardsScroll.setBackground(setSolidBackground(Color.WHITE));
         cardsScroll.setBorder(Border.EMPTY);
+        cardsScroll.setFocusTraversable(false);
+        cardsScroll.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+        cardsScroll.setOnMousePressed(event -> rootPane.requestFocus());
         cardsScroll.setOnMouseClicked(event -> {
-            if (event.getTarget() == cardsScroll || event.getTarget() == handCardsBox && selectedCard != null) {
+            if ((event.getTarget() == cardsScroll || event.getTarget() == handCardsBox) && selectedCard != null) {
                 selectedCard = null;
                 refresh();
             }
@@ -81,6 +85,9 @@ public class GameController implements DecisionMaker {
         tableScroll.setFitToWidth(true);
         tableScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         tableScroll.setPannable(true);
+        tableScroll.setFocusTraversable(false);
+        tableScroll.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
+        tableScroll.setOnMousePressed(event -> rootPane.requestFocus());
 
         handCardsText.setFont(Font.font("Segoe UI", 13));
         boardText.setFont(Font.font("Segoe UI", 13));
@@ -215,6 +222,10 @@ public class GameController implements DecisionMaker {
         handCardsBox.getChildren().clear();
         List<Card> handCards = player.getCardsAtHand();
 
+        if (selectedCard != null && !handCards.contains(selectedCard)) {
+            selectedCard = null;
+        }
+
         if (handCards.isEmpty()) {
             handCardsBox.getChildren().add(noCardBox("No cards.", "This player has no cards in hand."));
             return;
@@ -255,8 +266,13 @@ public class GameController implements DecisionMaker {
         }
 
         cardBox.setOnMouseClicked(e -> {
-            selectedCard = card;
+            if (selectedCard == card) {
+                selectedCard = null;
+            } else {
+                selectedCard = card;
+            }
             refresh();
+            e.consume();
         });
 
         return cardBox;
@@ -319,31 +335,23 @@ public class GameController implements DecisionMaker {
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
         name.setTextFill(Color.rgb(15, 23, 42));
 
-        String turnText;
-        Color turnBackground;
-        Color turnTextColor;
-
-        // Set badge
-        if (isCurrent) {
-            turnText = "Current Turn";
-            turnBackground = Color.rgb(220, 252, 231);
-            turnTextColor = Color.rgb(22, 101, 52);
-        } else {
-            turnText = "Waiting";
-            turnBackground = Color.rgb(241, 245, 249);
-            turnTextColor = Color.rgb(71, 85, 105);
-        }
-
-        HBox header = new HBox(8, name,
-                newBadge("P" + player.getNumber(), Color.rgb(226, 232, 240), Color.rgb(15, 23, 42)),
-                newBadge(turnText, turnBackground, turnTextColor)
+        // Show small player summary values.
+        HBox summaryBox = new HBox(
+                8,
+                newBadge("Hand " + player.getCardsAtHand().size()),
+                newBadge("Bank " + player.getBankTotalValue() + "M"),
+                newBadge("Sets 0/3")
         );
-        header.setAlignment(Pos.CENTER_LEFT);
-
-        HBox summaryBox = new HBox(8, newBadge("Hand " + player.getCardsAtHand().size()), newBadge("Bank " + player.getBankTotalValue() + "M"));
         summaryBox.setAlignment(Pos.CENTER_LEFT);
 
-        // Add bank in player's box
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        // Show player name and summary values on one line.
+        HBox header = new HBox(12, name, spacer, summaryBox);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        // Show cards that have been placed into the player's bank.
         VBox bank = new VBox(4);
         Label bankTitle = new Label("Bank");
         bankTitle.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
@@ -352,6 +360,7 @@ public class GameController implements DecisionMaker {
 
         if (player.getCardsAtBank().isEmpty()) {
             Label emptyBank = new Label("Bank is empty.");
+            emptyBank.setWrapText(true);
             emptyBank.setTextFill(Color.rgb(100, 116, 139));
             bank.getChildren().add(emptyBank);
         } else {
@@ -363,24 +372,25 @@ public class GameController implements DecisionMaker {
             bank.getChildren().add(bankCards);
         }
 
-        // Add properties
+        // Reserve a property area for the later property-playing logic.
         VBox properties = new VBox(4);
         Label propertiesTitle = new Label("Properties");
         propertiesTitle.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
         propertiesTitle.setTextFill(Color.rgb(71, 85, 105));
 
         Label emptyProperties = new Label("No properties in play.");
+        emptyProperties.setWrapText(true);
         emptyProperties.setTextFill(Color.rgb(100, 116, 139));
         properties.getChildren().addAll(propertiesTitle, emptyProperties);
 
-        VBox box = new VBox(8, header, summaryBox, bank, properties);
+        VBox box = new VBox(8, header, new Separator(), bank, properties);
         box.setPadding(new Insets(12));
         box.setMaxWidth(Double.MAX_VALUE);
 
-        // Set focus
+        // Highlight the player whose turn is active.
         if (isCurrent) {
-            box.setBackground(setSolidBackground(Color.rgb(239, 246, 255)));
-            box.setBorder(roundCorner(Color.rgb(96, 165, 250)));
+            box.setBackground(setSolidBackground(Color.rgb(240, 253, 244)));
+            box.setBorder(roundCorner(Color.rgb(34, 197, 94)));
         } else {
             box.setBackground(setSolidBackground(Color.WHITE));
             box.setBorder(roundCorner(Color.rgb(203, 213, 225)));
@@ -424,8 +434,9 @@ public class GameController implements DecisionMaker {
     }
 
     private void updateButtonStatus() {
-        playButton.setDisable(!game.isStarted() || selectedCard == null);
-        moveWildButton.setDisable(!game.isStarted());
+        boolean canPlay = game.isStarted() && selectedCard != null && game.getActionsUsed() < Player.MAX_ACTIONS_PER_TURN;
+        playButton.setDisable(!canPlay);
+        moveWildButton.setDisable(true);
         endTurnButton.setDisable(!game.isStarted());
     }
 
@@ -442,7 +453,7 @@ public class GameController implements DecisionMaker {
 
         Label body = new Label(bodyText);
         body.setWrapText(true);
-        body.setTextFill(Color.rgb(71, 85, 105));
+        body.setTextFill(Color.rgb(100, 116, 139));
 
         VBox box = new VBox(8, title, body);
         box.setAlignment(Pos.CENTER_LEFT);
