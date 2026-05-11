@@ -194,7 +194,7 @@
                 <VBox prefWidth="460.0" minWidth="420.0" spacing="10.0"
                       style="-fx-padding: 14; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
                     <children>
-                        <Label text="Current Hand" textFill="#0f172a">
+                        <Label fx:id="handTitle" text="Current Hand" textFill="#0f172a">
                             <font><Font name="Segoe UI Bold" size="18.0" /></font>
                         </Label>
                         <Label fx:id="handText" text="No active hand" textFill="#475569">

@@ -34,6 +34,7 @@ public class GameController implements DecisionMaker {
     @FXML private Button playButton;
     @FXML private Button moveWildButton;
     @FXML private Button endTurnButton;
+    @FXML private Label handTitle;
     @FXML private Label handText;
     @FXML private Label boardText;
     @FXML private VBox handCards;
@@ -143,6 +144,7 @@ public class GameController implements DecisionMaker {
     private void showPregame() {
         statusTitle.setText("Status");
         statusText.setText("Start a new game.");
+        handTitle.setText("Current Hand");
         currentPlayer.setText("-");
         actions.setText("0 / 3");
         handCount.setText("0");
@@ -162,6 +164,7 @@ public class GameController implements DecisionMaker {
     private void showGame() {
         Player player = game.getCurrPlayer();
         statusTitle.setText("Status");
+        handTitle.setText(player.getName() + " Hand");
         currentPlayer.setText(player.getName());
         actions.setText(game.getActionsUsed() + " / " + Player.MAX_ACTIONS_PER_TURN);
         handCount.setText(String.valueOf(player.getCardsAtHand().size()));
