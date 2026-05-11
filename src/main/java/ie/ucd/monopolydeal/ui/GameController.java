@@ -343,6 +343,7 @@ public class GameController implements DecisionMaker {
         HBox summaryBox = new HBox(8, newBadge("Hand " + player.getCardsAtHand().size()), newBadge("Bank " + player.getBankTotalValue() + "M"));
         summaryBox.setAlignment(Pos.CENTER_LEFT);
 
+        // Add bank in player's box
         VBox bank = new VBox(4);
         Label bankTitle = new Label("Bank");
         bankTitle.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
@@ -357,12 +358,22 @@ public class GameController implements DecisionMaker {
             FlowPane bankCards = new FlowPane(6, 6);
             bankCards.setPrefWrapLength(320);
             for (Card card : player.getCardsAtBank()) {
-                bankCards.getChildren().add(newBankCard(card));
+                bankCards.getChildren().add(newBankBox(card));
             }
             bank.getChildren().add(bankCards);
         }
 
-        VBox box = new VBox(8, header, summaryBox, bank);
+        // Add properties
+        VBox properties = new VBox(4);
+        Label propertiesTitle = new Label("Properties");
+        propertiesTitle.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+        propertiesTitle.setTextFill(Color.rgb(71, 85, 105));
+
+        Label emptyProperties = new Label("No properties in play.");
+        emptyProperties.setTextFill(Color.rgb(100, 116, 139));
+        properties.getChildren().addAll(propertiesTitle, emptyProperties);
+
+        VBox box = new VBox(8, header, summaryBox, bank, properties);
         box.setPadding(new Insets(12));
         box.setMaxWidth(Double.MAX_VALUE);
 
@@ -378,7 +389,7 @@ public class GameController implements DecisionMaker {
         return box;
     }
 
-    private HBox newBankCard(Card card) {
+    private HBox newBankBox(Card card) {
         Label name = new Label(card.getName());
         name.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 11));
         name.setTextFill(Color.rgb(15, 23, 42));
