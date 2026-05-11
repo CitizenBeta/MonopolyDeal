@@ -357,11 +357,12 @@ public class GameController implements DecisionMaker {
             emptyBank.setTextFill(Color.rgb(100, 116, 139));
             bank.getChildren().add(emptyBank);
         } else {
+            FlowPane bankCards = new FlowPane(6, 6);
+            bankCards.setPrefWrapLength(320);
             for (Card card : player.getCardsAtBank()) {
-                Label bankCard = new Label(card.getName() + " | " + card.getBankValue() + "M");
-                bankCard.setTextFill(Color.rgb(71, 85, 105));
-                bank.getChildren().add(bankCard);
+                bankCards.getChildren().add(newBankCard(card));
             }
+            bank.getChildren().add(bankCards);
         }
 
         VBox box = new VBox(8, header, summaryBox, bank);
@@ -377,6 +378,25 @@ public class GameController implements DecisionMaker {
             box.setBorder(roundCorner(Color.rgb(203, 213, 225)));
         }
 
+        return box;
+    }
+
+    private HBox newBankCard(Card card) {
+        Label name = new Label(card.getName());
+        name.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 11));
+        name.setTextFill(Color.rgb(15, 23, 42));
+
+        Region bar = new Region();
+        bar.setPrefSize(4, 22);
+        bar.setMinWidth(4);
+        bar.setBackground(setSolidBackground(cardColor(card)));
+
+        HBox box = new HBox(6, bar, name);
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setPadding(new Insets(4));
+        box.setPrefWidth(92);
+        box.setBackground(setSolidBackground(Color.WHITE));
+        box.setBorder(roundCorner(Color.rgb(203, 213, 225)));
         return box;
     }
 
