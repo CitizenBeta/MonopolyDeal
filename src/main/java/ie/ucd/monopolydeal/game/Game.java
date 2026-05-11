@@ -11,6 +11,7 @@ public class Game {
     private List<Player> players = new ArrayList<>();
     private int currentPlayerIndex;
     private int actionsUsed;
+    private int turnCount;
     private boolean started;
     private Deck deck = new Deck() ;
     private List<String> log = new ArrayList<>();
@@ -20,6 +21,7 @@ public class Game {
         players.clear();
         currentPlayerIndex = 0;
         actionsUsed = 0;
+        turnCount = 1;
         started = true;
         gameOver = false;
         turn = 1;
@@ -62,6 +64,10 @@ public class Game {
 
     public int getActionsUsed() {
         return actionsUsed;
+    }
+
+    public int getTurnCount() {
+        return turnCount;
     }
 
     public List<Player> getOtherPlayers(){
@@ -123,10 +129,13 @@ public class Game {
         }
 
         actionsUsed = 0;
+        turnCount++;
+
         if(turn == 1){
             turn ++;
             return;
         }
+
         int drawCardsNumber;
         if(getCurrPlayer().getCardsAtHand().isEmpty()){
             drawCardsNumber = 5;

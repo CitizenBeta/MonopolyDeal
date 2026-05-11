@@ -23,12 +23,9 @@ public class GameController implements DecisionMaker {
 
     @FXML private Label statusTitle;
     @FXML private Label statusText;
-    @FXML private Label badge;
-    @FXML private Label currentPlayer;
+    @FXML private Label statusBadge;
+    @FXML private Label turnCount;
     @FXML private Label actions;
-    @FXML private Label handCount;
-    @FXML private Label bankTotal;
-    @FXML private Label completedSets;
     @FXML private Label piles;
     @FXML private Button newGameButton;
     @FXML private Button playButton;
@@ -58,7 +55,6 @@ public class GameController implements DecisionMaker {
         statusText.setWrapText(true);
         statusText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
         statusText.setTextFill(Color.rgb(15, 23, 42));
-        badge.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
 
         // Set content area
         handCardsBox.setFillWidth(true);
@@ -152,11 +148,7 @@ public class GameController implements DecisionMaker {
         statusTitle.setText("Status");
         statusText.setText("Start a new game.");
         handCardsTitle.setText("Current Hand");
-        currentPlayer.setText("-");
-        actions.setText("0 / 3");
-        handCount.setText("0");
-        bankTotal.setText("0M");
-        completedSets.setText("0 / 3");
+        updateActionsBadge(0);
         piles.setText("0 / 0");
         handCardsText.setText("No active hand");
         boardText.setText("Start a new game to populate the table");
@@ -165,18 +157,15 @@ public class GameController implements DecisionMaker {
         handCardsBox.getChildren().setAll(noCardBox("No cards yet", "Start a new game to render the active hand here."));
         tableBox.getChildren().setAll(noCardBox("No players yet", "Create a game to see hand, bank, and property areas."));
 
-        updateBadge("Ready", Color.rgb(224, 231, 255), Color.rgb(165, 180, 252), Color.rgb(67, 56, 202));
+        updateTurnCount(0);
+        updateStatusBadge("Ready", Color.rgb(224, 231, 255), Color.rgb(165, 180, 252), Color.rgb(67, 56, 202));
     }
 
     private void showGame() {
         Player player = game.getCurrPlayer();
         statusTitle.setText("Status");
         handCardsTitle.setText(player.getName() + " Hand");
-        currentPlayer.setText(player.getName());
-        actions.setText(game.getActionsUsed() + " / " + Player.MAX_ACTIONS_PER_TURN);
-        handCount.setText(String.valueOf(player.getCardsAtHand().size()));
-        bankTotal.setText(game.getCurrBankTotal() + "M");
-        completedSets.setText("0 / 3");
+        updateActionsBadge(game.getActionsUsed());
         piles.setText("0 / 0");
         handCardsText.setText(player.getName() + " can act now");
         boardText.setText(game.getPlayers().size() + " players in this match");
@@ -184,7 +173,8 @@ public class GameController implements DecisionMaker {
         tableBox.getChildren().clear();
         updateHand(player);
         updateTable(game.getPlayers());
-        updateBadge("Turn Active", Color.rgb(219, 234, 254), Color.rgb(147, 197, 253), Color.rgb(29, 78, 216));
+        updateTurnCount(game.getTurnCount());
+        updateStatusBadge("Turn Active", Color.rgb(219, 234, 254), Color.rgb(147, 197, 253), Color.rgb(29, 78, 216));
     }
 
     private List<String> askPlayerNames() {
@@ -335,7 +325,7 @@ public class GameController implements DecisionMaker {
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
         name.setTextFill(Color.rgb(15, 23, 42));
 
-        // Show small player summary values.
+        // Add summary
         HBox summaryBox = new HBox(
                 8,
                 newBadge("Hand " + player.getCardsAtHand().size()),
@@ -347,11 +337,10 @@ public class GameController implements DecisionMaker {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        // Show player name and summary values on one line.
         HBox header = new HBox(12, name, spacer, summaryBox);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        // Show cards that have been placed into the player's bank.
+        // Show cards in bank
         VBox bank = new VBox(4);
         Label bankTitle = new Label("Bank");
         bankTitle.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
@@ -372,7 +361,7 @@ public class GameController implements DecisionMaker {
             bank.getChildren().add(bankCards);
         }
 
-        // Reserve a property area for the later property-playing logic.
+        // Add property section
         VBox properties = new VBox(4);
         Label propertiesTitle = new Label("Properties");
         propertiesTitle.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
@@ -387,7 +376,7 @@ public class GameController implements DecisionMaker {
         box.setPadding(new Insets(12));
         box.setMaxWidth(Double.MAX_VALUE);
 
-        // Highlight the player whose turn is active.
+        // Add focus for player
         if (isCurrent) {
             box.setBackground(setSolidBackground(Color.rgb(240, 253, 244)));
             box.setBorder(roundCorner(Color.rgb(34, 197, 94)));
@@ -440,11 +429,40 @@ public class GameController implements DecisionMaker {
         endTurnButton.setDisable(!game.isStarted());
     }
 
-    private void updateBadge(String text, Color background, Color border, Color foreground) {
-        badge.setText(text);
-        badge.setBackground(setSolidBackground(background));
-        badge.setBorder(roundCorner(border));
-        badge.setTextFill(foreground);
+    private void updateActionsBadge(int actionsUsed) {
+        Color background;
+        Color border;
+        Color foreground;
+
+        if (actionsUsed >= Player.MAX_ACTIONS_PER_TURN) {
+            background = Color.rgb(254, 226, 226);
+            border = Color.rgb(252, 165, 165);
+            foreground = Color.rgb(153, 27, 27);
+        } else if (actionsUsed == 2) {
+            background = Color.rgb(255, 247, 237);
+            border = Color.rgb(253, 186, 116);
+            foreground = Color.rgb(194, 65, 12);
+        } else {
+            background = Color.rgb(220, 252, 231);
+            border = Color.rgb(134, 239, 172);
+            foreground = Color.rgb(22, 101, 52);
+        }
+
+        actions.setText("Actions " + actionsUsed + " / " + Player.MAX_ACTIONS_PER_TURN);
+        actions.setBackground(setSolidBackground(background));
+        actions.setBorder(roundCorner(border));
+        actions.setTextFill(foreground);
+    }
+
+    private void updateTurnCount(int count) {
+        turnCount.setText(String.valueOf(count));
+    }
+
+    private void updateStatusBadge(String text, Color background, Color border, Color foreground) {
+        statusBadge.setText(text);
+        statusBadge.setBackground(setSolidBackground(background));
+        statusBadge.setBorder(roundCorner(border));
+        statusBadge.setTextFill(foreground);
     }
 
     private VBox noCardBox(String titleText, String bodyText) {
