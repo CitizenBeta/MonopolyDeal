@@ -34,11 +34,11 @@ public class GameController implements DecisionMaker {
     @FXML private Button playButton;
     @FXML private Button moveWildButton;
     @FXML private Button endTurnButton;
-    @FXML private Label handTitle;
-    @FXML private Label handText;
+    @FXML private Label handCardsTitle;
+    @FXML private Label handCardsText;
     @FXML private Label boardText;
-    @FXML private VBox handCards;
-    @FXML private VBox table;
+    @FXML private VBox handCardsBox;
+    @FXML private VBox tableBox;
 
     @FXML private ScrollPane cardsScroll;
     @FXML private ScrollPane tableScroll;
@@ -60,10 +60,10 @@ public class GameController implements DecisionMaker {
         badge.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
 
         // Set content area
-        handCards.setFillWidth(true);
+        handCardsBox.setFillWidth(true);
         cardsScroll.setFitToWidth(true);
         cardsScroll.viewportBoundsProperty().addListener((event, oldBounds, newBounds) -> {
-            handCards.setMinHeight(newBounds.getHeight());
+            handCardsBox.setMinHeight(newBounds.getHeight());
         });
         cardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         cardsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
@@ -71,18 +71,18 @@ public class GameController implements DecisionMaker {
         cardsScroll.setBackground(setSolidBackground(Color.WHITE));
         cardsScroll.setBorder(Border.EMPTY);
         cardsScroll.setOnMouseClicked(event -> {
-            if (event.getTarget() == cardsScroll || event.getTarget() == handCards && selectedCard != null) {
+            if (event.getTarget() == cardsScroll || event.getTarget() == handCardsBox && selectedCard != null) {
                 selectedCard = null;
                 refresh();
             }
         });
 
-        table.setFillWidth(true);
+        tableBox.setFillWidth(true);
         tableScroll.setFitToWidth(true);
         tableScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         tableScroll.setPannable(true);
 
-        handText.setFont(Font.font("Segoe UI", 13));
+        handCardsText.setFont(Font.font("Segoe UI", 13));
         boardText.setFont(Font.font("Segoe UI", 13));
 
         refresh();
@@ -144,19 +144,19 @@ public class GameController implements DecisionMaker {
     private void showPregame() {
         statusTitle.setText("Status");
         statusText.setText("Start a new game.");
-        handTitle.setText("Current Hand");
+        handCardsTitle.setText("Current Hand");
         currentPlayer.setText("-");
         actions.setText("0 / 3");
         handCount.setText("0");
         bankTotal.setText("0M");
         completedSets.setText("0 / 3");
         piles.setText("0 / 0");
-        handText.setText("No active hand");
+        handCardsText.setText("No active hand");
         boardText.setText("Start a new game to populate the table");
 
         selectedCard = null;
-        handCards.getChildren().setAll(noCardBox("No cards yet", "Start a new game to render the active hand here."));
-        table.getChildren().setAll(noCardBox("No players yet", "Create a game to see hand, bank, and property areas."));
+        handCardsBox.getChildren().setAll(noCardBox("No cards yet", "Start a new game to render the active hand here."));
+        tableBox.getChildren().setAll(noCardBox("No players yet", "Create a game to see hand, bank, and property areas."));
 
         updateBadge("Ready", Color.rgb(224, 231, 255), Color.rgb(165, 180, 252), Color.rgb(67, 56, 202));
     }
@@ -164,17 +164,17 @@ public class GameController implements DecisionMaker {
     private void showGame() {
         Player player = game.getCurrPlayer();
         statusTitle.setText("Status");
-        handTitle.setText(player.getName() + " Hand");
+        handCardsTitle.setText(player.getName() + " Hand");
         currentPlayer.setText(player.getName());
         actions.setText(game.getActionsUsed() + " / " + Player.MAX_ACTIONS_PER_TURN);
         handCount.setText(String.valueOf(player.getCardsAtHand().size()));
         bankTotal.setText(game.getCurrBankTotal() + "M");
         completedSets.setText("0 / 3");
         piles.setText("0 / 0");
-        handText.setText(player.getName() + " can act now");
+        handCardsText.setText(player.getName() + " can act now");
         boardText.setText(game.getPlayers().size() + " players in this match");
-        handCards.getChildren().clear();
-        table.getChildren().clear();
+        handCardsBox.getChildren().clear();
+        tableBox.getChildren().clear();
         updateHand(player);
         updateTable(game.getPlayers());
         updateBadge("Turn Active", Color.rgb(219, 234, 254), Color.rgb(147, 197, 253), Color.rgb(29, 78, 216));
@@ -212,16 +212,16 @@ public class GameController implements DecisionMaker {
     }
 
     private void updateHand(Player player) {
-        handCards.getChildren().clear();
-        List<Card> hand = player.getCardsAtHand();
+        handCardsBox.getChildren().clear();
+        List<Card> handCards = player.getCardsAtHand();
 
-        if (hand.isEmpty()) {
-            handCards.getChildren().add(noCardBox("No cards.", "This player has no cards in hand."));
+        if (handCards.isEmpty()) {
+            handCardsBox.getChildren().add(noCardBox("No cards.", "This player has no cards in hand."));
             return;
         }
 
-        for (Card card : hand) {
-            handCards.getChildren().add(newHandCard(card));
+        for (Card handCard : handCards) {
+            handCardsBox.getChildren().add(newHandCard(handCard));
         }
     }
 
@@ -300,15 +300,15 @@ public class GameController implements DecisionMaker {
     }
 
     private void updateTable(List<Player> players) {
-        table.getChildren().clear();
+        tableBox.getChildren().clear();
 
         if (players.isEmpty()) {
-            table.getChildren().add(noCardBox("No players.", "Start a new game to show player boards."));
+            tableBox.getChildren().add(noCardBox("No players.", "Start a new game to show player boards."));
             return;
         }
 
         for (Player player : players) {
-            table.getChildren().add(newPlayerBox(player));
+            tableBox.getChildren().add(newPlayerBox(player));
         }
     }
 

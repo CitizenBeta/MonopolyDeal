@@ -194,16 +194,16 @@
                 <VBox prefWidth="460.0" minWidth="420.0" spacing="10.0"
                       style="-fx-padding: 14; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
                     <children>
-                        <Label fx:id="handTitle" text="Current Hand" textFill="#0f172a">
+                        <Label fx:id="handCardsTitle" text="Current Hand" textFill="#0f172a">
                             <font><Font name="Segoe UI Bold" size="18.0" /></font>
                         </Label>
-                        <Label fx:id="handText" text="No active hand" textFill="#475569">
+                        <Label fx:id="handCardsText" text="No active hand" textFill="#475569">
                             <font><Font name="Segoe UI" size="13.0" /></font>
                         </Label>
                         <Separator />
                         <ScrollPane fx:id="cardsScroll" fitToWidth="true" hbarPolicy="NEVER" vbarPolicy="AS_NEEDED" pannable="true" VBox.vgrow="ALWAYS">
                             <content>
-                                <VBox fx:id="handCards" spacing="10.0" fillWidth="true">
+                                <VBox fx:id="handCardsBox" spacing="10.0" fillWidth="true">
                                     <padding>
                                         <Insets top="10.0" right="12.0" bottom="12.0" left="12.0" />
                                     </padding>
@@ -224,7 +224,7 @@
                         <Separator />
                         <ScrollPane fx:id="tableScroll" fitToWidth="true" hbarPolicy="NEVER" pannable="true" VBox.vgrow="ALWAYS">
                             <content>
-                                <VBox fx:id="table" spacing="12.0" fillWidth="true">
+                                <VBox fx:id="tableBox" spacing="12.0" fillWidth="true">
                                     <padding>
                                         <Insets top="10.0" right="12.0" bottom="12.0" left="12.0" />
                                     </padding>
