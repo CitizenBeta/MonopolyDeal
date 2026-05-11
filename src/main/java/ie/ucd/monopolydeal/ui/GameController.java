@@ -106,7 +106,7 @@ public class GameController implements DecisionMaker {
             return;
         }
 
-        if (game.playCard(selectedCard)) {
+        if (game.playCard(selectedCard,this)) {
             statusText.setText("Played " + selectedCard.getName());
             selectedCard = null;
         } else {
@@ -127,7 +127,7 @@ public class GameController implements DecisionMaker {
         }
 
         selectedCard = null;
-        game.endTurn();
+        game.endTurn(this);
         statusText.setText("Turn ended.");
         refresh();
     }

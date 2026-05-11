@@ -8,26 +8,45 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Game {
-    private final List<Player> players = new ArrayList<>();
+    private List<Player> players = new ArrayList<>();
     private int currentPlayerIndex;
     private int actionsUsed;
     private boolean started;
-    private Deck deck = new Deck();
-
+    private Deck deck = new Deck() ;
+    private List<String> log = new ArrayList<>();
+    private boolean gameOver;
+    private int turn;
     public void setup(List<String> names) {
         players.clear();
         currentPlayerIndex = 0;
         actionsUsed = 0;
         started = true;
+        gameOver = false;
+        turn = 1;
 
         for (int i = 0; i < names.size(); i++) {
             Player player = new Player(names.get(i), i + 1);
             player.addCardToHand(new MoneyCard("1M", 1));
             player.addCardToHand(new MoneyCard("2M", 2));
             player.addCardToHand(new MoneyCard("3M", 3));
+            drawCards(player,2);
             players.add(player);
         }
     }
+
+
+    public List<String> getLog(){
+        return log;
+    }
+
+    public boolean isOver(){
+        return gameOver;
+    }
+
+    public int getTurn(){
+        return turn;
+    }
+
 
     public boolean isStarted() {
         return started;
@@ -53,7 +72,7 @@ public class Game {
     }
 
 
-    public boolean playCard(Card card) {
+    public boolean playCard(Card card, DecisionMaker dm) {
         if (!started || card == null) {
             return false;
         }
@@ -67,9 +86,14 @@ public class Game {
             return false;
         }
 
-        current.addCardToBank(card);
+        playSpecificCard(current,card,dm);
         actionsUsed++;
+        current.removeCardFromHand(card);
         return true;
+    }
+
+    public void playSpecificCard(Player player, Card card, DecisionMaker dm){
+        player.addCardToBank(card);
     }
 
     public int getCurrBankTotal() {
@@ -80,9 +104,17 @@ public class Game {
         return total;
     }
 
-    public void endTurn() {
+    public void endTurn(DecisionMaker dm) {
         if (!started || players.isEmpty()) {
             return;
+        }
+        Player currPlayer = getCurrPlayer();
+        while(currPlayer.getCardsAtHand().size()>Player.MAX_CARDS_AT_HAND){
+            Card discard = dm.selectDiscard(currPlayer,currPlayer.getCardsAtHand());
+            if(discard == null){
+                discard = currPlayer.getCardsAtHand().getLast();
+            }
+            currPlayer.removeCardFromHand(discard);
         }
 
         currentPlayerIndex++;
@@ -91,6 +123,18 @@ public class Game {
         }
 
         actionsUsed = 0;
+        if(turn == 1){
+            turn ++;
+            return;
+        }
+        int drawCardsNumber;
+        if(getCurrPlayer().getCardsAtHand().isEmpty()){
+            drawCardsNumber = 5;
+        }else{
+            drawCardsNumber = 3;
+        }
+        drawCards(getCurrPlayer(),drawCardsNumber);
+        turn++;
     }
 
     private void drawCards(Player player, int number){
@@ -101,5 +145,7 @@ public class Game {
            }
         }
     }
+
+
 
 }
