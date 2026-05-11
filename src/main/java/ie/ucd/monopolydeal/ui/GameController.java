@@ -27,6 +27,7 @@ public class GameController implements DecisionMaker {
     @FXML private Label turnCount;
     @FXML private Label actions;
     @FXML private Label piles;
+    @FXML private Label leadingPlayer;
     @FXML private Button newGameButton;
     @FXML private Button playButton;
     @FXML private Button moveWildButton;
@@ -55,13 +56,11 @@ public class GameController implements DecisionMaker {
         statusText.setWrapText(true);
         statusText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
         statusText.setTextFill(Color.rgb(15, 23, 42));
+        leadingPlayer.setWrapText(true);
 
         // Set content area
         handCardsBox.setFillWidth(true);
         cardsScroll.setFitToWidth(true);
-        cardsScroll.viewportBoundsProperty().addListener((event, oldBounds, newBounds) -> {
-            handCardsBox.setMinHeight(newBounds.getHeight());
-        });
         cardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         cardsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         cardsScroll.setPannable(true);
@@ -150,6 +149,7 @@ public class GameController implements DecisionMaker {
         handCardsTitle.setText("Current Hand");
         updateActionsBadge(0);
         piles.setText("0 / 0");
+        leadingPlayer.setText("-");
         handCardsText.setText("No active hand");
         boardText.setText("Start a new game to populate the table");
 
@@ -166,7 +166,8 @@ public class GameController implements DecisionMaker {
         statusTitle.setText("Status");
         handCardsTitle.setText(player.getName() + " Hand");
         updateActionsBadge(game.getActionsUsed());
-        piles.setText("0 / 0");
+        piles.setText(game.getDiscardPileNumber() + " / " + game.getDrawPileNumber());
+        leadingPlayer.setText(findLeadingPlayer());
         handCardsText.setText(player.getName() + " can act now");
         boardText.setText(game.getPlayers().size() + " players in this match");
         handCardsBox.getChildren().clear();
@@ -208,6 +209,25 @@ public class GameController implements DecisionMaker {
         return names;
     }
 
+    private String findLeadingPlayer() {
+        Player leader = null;
+        int bestBank = -1;
+
+        for (Player player : game.getPlayers()) {
+            int bankTotal = player.getBankTotalValue();
+            if (bankTotal > bestBank) {
+                leader = player;
+                bestBank = bankTotal;
+            }
+        }
+
+        if (leader == null) {
+            return "-";
+        }
+
+        return leader.getName();
+    }
+
     private void updateHand(Player player) {
         handCardsBox.getChildren().clear();
         List<Card> handCards = player.getCardsAtHand();
@@ -240,7 +260,7 @@ public class GameController implements DecisionMaker {
             textBox.getChildren().add(detail);
         }
 
-        Region bar = newCardBar(cardColor(card));
+        Region bar = newCardBar(card);
         HBox cardBox = new HBox(12, bar, textBox);
         cardBox.setAlignment(Pos.CENTER_LEFT);
         cardBox.setFillHeight(true);
@@ -268,7 +288,32 @@ public class GameController implements DecisionMaker {
         return cardBox;
     }
 
-    private Region newCardBar(Color color) {
+    private Region newCardBar(Card card) {
+        if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() >= 2) {
+            Color topColor = propertyColor(wildCard.getPossibleColors().get(0));
+            Color bottomColor = propertyColor(wildCard.getPossibleColors().get(1));
+
+            Region bar = new Region();
+            bar.setPrefWidth(6);
+            bar.setMinWidth(6);
+            bar.setMaxWidth(6);
+            bar.setMaxHeight(Double.MAX_VALUE);
+            bar.setStyle("-fx-background-color: linear-gradient(to bottom, "
+                    + cssColor(topColor) + " 0%, "
+                    + cssColor(topColor) + " 50%, "
+                    + cssColor(bottomColor) + " 50%, "
+                    + cssColor(bottomColor) + " 100%); -fx-background-radius: 12;");
+            return bar;
+        }
+
+        if (card instanceof PropertyCard propertyCard) {
+            return newCardBarSegment(propertyColor(propertyCard.getColor()));
+        }
+
+        return newCardBarSegment(cardColor(card));
+    }
+
+    private Region newCardBarSegment(Color color) {
         Region bar = new Region();
         bar.setPrefWidth(6);
         bar.setMinWidth(6);
@@ -290,19 +335,63 @@ public class GameController implements DecisionMaker {
                 }
                 yield currentColor;
             }
-            case ActionCard actionCard -> actionCard.getActionType().name();
+            case ActionCard actionCard -> actionText(actionCard.getActionType());
             default -> "";
+        };
+    }
+
+    private String actionText(ActionType actionType) {
+        return switch (actionType) {
+            case TODAY_IS_MY_BIRTHDAY -> "It's My Birthday";
+            case PASS_GO -> "Pass Go";
+            case DEBT_COLLECTOR -> "Debt Collector";
+            case RENT -> "Rent";
+            case MULTI_RENT -> "Wild Rent";
+            case DOUBLE_RENT -> "Double The Rent";
+            case SLY_DEAL -> "Sly Deal";
+            case FORCED_DEAL -> "Forced Deal";
+            case DEAL_BREAKER -> "Deal Breaker";
+            case HOUSE -> "House";
+            case HOTEL -> "Hotel";
+            case JUST_SAY_NO -> "Just Say No";
         };
     }
 
     private Color cardColor(Card card) {
         return switch (card) {
             case MoneyCard _ -> Color.rgb(22, 163, 74);
-            case PropertyCard _ -> Color.rgb(37, 99, 235);
-            case WildPropertyCard _ -> Color.rgb(8, 145, 178);
+            case PropertyCard propertyCard -> propertyColor(propertyCard.getColor());
+            case WildPropertyCard wildCard -> {
+                if (wildCard.getCurrentColor() == null) {
+                    yield Color.rgb(8, 145, 178);
+                }
+                yield propertyColor(wildCard.getCurrentColor());
+            }
             case ActionCard _ -> Color.rgb(217, 119, 6);
             case null, default -> Color.rgb(100, 116, 139);
         };
+    }
+
+    private Color propertyColor(PropertyColor color) {
+        return switch (color) {
+            case BROWN -> Color.rgb(120, 72, 45);
+            case LIGHT_BLUE -> Color.rgb(56, 189, 248);
+            case PINK -> Color.rgb(236, 72, 153);
+            case ORANGE -> Color.rgb(249, 115, 22);
+            case RED -> Color.rgb(220, 38, 38);
+            case YELLOW -> Color.rgb(234, 179, 8);
+            case GREEN -> Color.rgb(22, 163, 74);
+            case DARK_BLUE -> Color.rgb(30, 64, 175);
+            case RAILROAD -> Color.rgb(71, 85, 105);
+            case UTILITY -> Color.rgb(20, 184, 166);
+        };
+    }
+
+    private String cssColor(Color color) {
+        int red = (int) Math.round(color.getRed() * 255);
+        int green = (int) Math.round(color.getGreen() * 255);
+        int blue = (int) Math.round(color.getBlue() * 255);
+        return "rgb(" + red + "," + green + "," + blue + ")";
     }
 
     private void updateTable(List<Player> players) {
@@ -393,10 +482,7 @@ public class GameController implements DecisionMaker {
         name.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 11));
         name.setTextFill(Color.rgb(15, 23, 42));
 
-        Region bar = new Region();
-        bar.setPrefSize(4, 20);
-        bar.setMinWidth(4);
-        bar.setBackground(setSolidBackground(cardColor(card)));
+        Region bar = newBankCardBar(card);
 
         HBox box = new HBox(8, bar, name);
         box.setAlignment(Pos.CENTER_LEFT);
@@ -405,6 +491,29 @@ public class GameController implements DecisionMaker {
         box.setBackground(setSolidBackground(Color.WHITE));
         box.setBorder(roundCorner(Color.rgb(203, 213, 225)));
         return box;
+    }
+
+    private Region newBankCardBar(Card card) {
+        if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() >= 2) {
+            Color topColor = propertyColor(wildCard.getPossibleColors().get(0));
+            Color bottomColor = propertyColor(wildCard.getPossibleColors().get(1));
+
+            Region bar = new Region();
+            bar.setPrefSize(4, 20);
+            bar.setMinWidth(4);
+            bar.setStyle("-fx-background-color: linear-gradient(to bottom, "
+                    + cssColor(topColor) + " 0%, "
+                    + cssColor(topColor) + " 50%, "
+                    + cssColor(bottomColor) + " 50%, "
+                    + cssColor(bottomColor) + " 100%); -fx-background-radius: 12;");
+            return bar;
+        }
+
+        Region bar = new Region();
+        bar.setPrefSize(4, 20);
+        bar.setMinWidth(4);
+        bar.setBackground(setSolidBackground(cardColor(card)));
+        return bar;
     }
 
     // Gray badge by default

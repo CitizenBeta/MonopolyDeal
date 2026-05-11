@@ -70,6 +70,14 @@ public class Game {
         return turnCount;
     }
 
+    public int getDrawPileNumber() {
+        return deck.getDrawPileNumber();
+    }
+
+    public int getDiscardPileNumber() {
+        return deck.getDiscardPileNumber();
+    }
+
     public List<Player> getOtherPlayers(){
         List<Player> otherPlayers = new ArrayList<>();
         otherPlayers.addAll(getPlayers());
