@@ -53,13 +53,13 @@ public class GameController implements DecisionMaker {
         setActionButton(endTurnButton, Color.rgb(220, 38, 38), false);
 
         // Set status
-        statusTitle.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
+        statusTitle.setFont(Font.font("Segoe UI Semibold", 12));
         statusTitle.setTextFill(Color.rgb(71, 85, 105));
         statusText.setWrapText(true);
         statusText.setMinWidth(0);
         statusText.setMaxWidth(Double.MAX_VALUE);
         statusText.prefWidthProperty().bind(((Region) statusText.getParent()).widthProperty());
-        statusText.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
+        statusText.setFont(Font.font("Segoe UI Bold", 18));
         statusText.setTextFill(Color.rgb(15, 23, 42));
         leadingPlayer.setWrapText(true);
 
@@ -188,10 +188,10 @@ public class GameController implements DecisionMaker {
         }
 
         if (game.playCard(selectedCard,this)) {
-            statusText.setText("Played " + selectedCard.getName());
+            statusText.setText("Played " + statusCardText(selectedCard) + ".");
             selectedCard = null;
         } else {
-            statusText.setText("Cannot play " + selectedCard.getName());
+            statusText.setText("Cannot play " + statusCardText(selectedCard) + ".");
         }
 
         refresh();
@@ -431,6 +431,16 @@ public class GameController implements DecisionMaker {
             }
             case ActionCard actionCard -> actionDetail(actionCard.getActionType());
             default -> "";
+        };
+    }
+
+    private String statusCardText(Card card) {
+        return switch (card) {
+            case MoneyCard moneyCard -> moneyCard.getName();
+            case PropertyCard _ -> "property card";
+            case WildPropertyCard _ -> "wild card";
+            case ActionCard actionCard -> actionCard.getName();
+            case null, default -> "card";
         };
     }
 
