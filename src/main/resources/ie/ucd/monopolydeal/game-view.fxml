@@ -31,7 +31,7 @@
                         <HBox GridPane.columnIndex="0" alignment="CENTER_LEFT" spacing="12.0" minHeight="74.0" prefHeight="74.0" maxHeight="74.0" maxWidth="1.7976931348623157E308"
                               style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
                             <children>
-                                <Region prefWidth="6.0" prefHeight="48.0" style="-fx-background-color: #3b82f6; -fx-background-radius: 12;" />
+                                <Region prefWidth="6.0" minWidth="6.0" maxWidth="6.0" prefHeight="48.0" style="-fx-background-color: #3b82f6; -fx-background-radius: 12;" />
                                 <VBox spacing="4.0" minWidth="0.0" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
                                     <children>
                                         <HBox alignment="CENTER_LEFT" spacing="8.0">
@@ -63,7 +63,7 @@
                         <HBox GridPane.columnIndex="1" alignment="CENTER_LEFT" spacing="12.0" minHeight="74.0" prefHeight="74.0" maxHeight="74.0" maxWidth="1.7976931348623157E308"
                               style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
                             <children>
-                                <Region prefWidth="6.0" prefHeight="48.0" style="-fx-background-color: #3b82f6; -fx-background-radius: 12;" />
+                                <Region prefWidth="6.0" minWidth="6.0" maxWidth="6.0" prefHeight="48.0" style="-fx-background-color: #3b82f6; -fx-background-radius: 12;" />
                                 <VBox spacing="4.0" HBox.hgrow="ALWAYS">
                                     <children>
                                         <Label text="Turn" textFill="#475569">
@@ -80,7 +80,7 @@
                         <HBox GridPane.columnIndex="2" alignment="CENTER_LEFT" spacing="12.0" minHeight="74.0" prefHeight="74.0" maxHeight="74.0" maxWidth="1.7976931348623157E308"
                               style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
                             <children>
-                                <Region prefWidth="6.0" prefHeight="48.0" style="-fx-background-color: #3b82f6; -fx-background-radius: 12;" />
+                                <Region prefWidth="6.0" minWidth="6.0" maxWidth="6.0" prefHeight="48.0" style="-fx-background-color: #3b82f6; -fx-background-radius: 12;" />
                                 <VBox spacing="4.0" HBox.hgrow="ALWAYS">
                                     <children>
                                         <Label text="Discard / Deck" textFill="#475569">
@@ -97,7 +97,7 @@
                         <HBox GridPane.columnIndex="3" alignment="CENTER_LEFT" spacing="12.0" minHeight="74.0" prefHeight="74.0" maxHeight="74.0" maxWidth="1.7976931348623157E308"
                               style="-fx-padding: 12; -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 12; -fx-background-radius: 12;">
                             <children>
-                                <Region prefWidth="6.0" prefHeight="48.0" style="-fx-background-color: #3b82f6; -fx-background-radius: 12;" />
+                                <Region prefWidth="6.0" minWidth="6.0" maxWidth="6.0" prefHeight="48.0" style="-fx-background-color: #3b82f6; -fx-background-radius: 12;" />
                                 <VBox spacing="4.0" minWidth="0.0" maxWidth="1.7976931348623157E308" HBox.hgrow="ALWAYS">
                                     <children>
                                         <Label text="Leading Player" textFill="#475569">
@@ -148,7 +148,7 @@
                                 <Label fx:id="handCardsTitle" text="Current Hand" textFill="#0f172a">
                                     <font><Font name="Segoe UI Bold" size="18.0" /></font>
                                 </Label>
-                                <Label fx:id="actions" text="0 / 3" textFill="#0f172a" minWidth="104.0" alignment="CENTER"
+                                <Label fx:id="actions" text="0 / 3" textFill="#0f172a"
                                        style="-fx-padding: 4 8 4 8; -fx-background-color: #dcfce7; -fx-border-color: #86efac; -fx-border-radius: 12; -fx-background-radius: 12;">
                                     <font><Font name="Segoe UI Semibold" size="12.0" /></font>
                                 </Label>
@@ -178,6 +178,7 @@
         <HBox alignment="CENTER_LEFT" spacing="10.0" style="-fx-padding: 12 0 0 0;">
             <children>
                 <Button fx:id="newGameButton" text="New Game" onAction="#onNewGame" />
+                <Region HBox.hgrow="ALWAYS" />
                 <Button fx:id="playButton" text="Play Selected Card" onAction="#onPlaySelected" />
                 <Button fx:id="moveWildButton" text="Move Wild Card" onAction="#onMoveWild" />
                 <Button fx:id="endTurnButton" text="End Turn" onAction="#onEndTurn" />

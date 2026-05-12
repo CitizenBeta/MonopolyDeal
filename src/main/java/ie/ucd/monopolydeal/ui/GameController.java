@@ -47,8 +47,8 @@ public class GameController implements DecisionMaker {
         // Set buttons
         setActionButton(newGameButton, Color.rgb(37, 99, 235), true);
         setActionButton(playButton, Color.rgb(22, 163, 74), true);
-        setActionButton(moveWildButton, Color.rgb(245, 158, 11), false);
-        setActionButton(endTurnButton, Color.rgb(71, 85, 105), false);
+        setActionButton(moveWildButton, Color.rgb(22, 163, 74), false);
+        setActionButton(endTurnButton, Color.rgb(220, 38, 38), false);
 
         // Set status
         statusTitle.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 12));
@@ -90,6 +90,7 @@ public class GameController implements DecisionMaker {
         refresh();
     }
 
+    // Run when the user presses New Game button
     @FXML
     private void onNewGame() {
         List<String> names = askPlayerNames();
@@ -102,6 +103,7 @@ public class GameController implements DecisionMaker {
         refresh();
     }
 
+    // Run when the user presses Play Selected button
     @FXML
     private void onPlaySelected() {
         if (!game.isStarted() || selectedCard == null) {
@@ -118,6 +120,7 @@ public class GameController implements DecisionMaker {
         refresh();
     }
 
+    // Run when the user presses Move wild button
     @FXML
     private void onMoveWild() {
     }
@@ -134,6 +137,7 @@ public class GameController implements DecisionMaker {
         refresh();
     }
 
+    // Refresh view after user's action
     private void refresh() {
         if (!game.isStarted()) {
             showPregame();
@@ -143,6 +147,7 @@ public class GameController implements DecisionMaker {
         updateButtonStatus();
     }
 
+    // Show empty UI
     private void showPregame() {
         statusTitle.setText("Status");
         statusText.setText("Start a new game.");
@@ -161,6 +166,7 @@ public class GameController implements DecisionMaker {
         updateStatusBadge("Ready", Color.rgb(224, 231, 255), Color.rgb(165, 180, 252), Color.rgb(67, 56, 202));
     }
 
+    // Show in-game UI. Important!
     private void showGame() {
         Player player = game.getCurrPlayer();
         statusTitle.setText("Status");
@@ -178,6 +184,7 @@ public class GameController implements DecisionMaker {
         updateStatusBadge("Turn Active", Color.rgb(219, 234, 254), Color.rgb(147, 197, 253), Color.rgb(29, 78, 216));
     }
 
+    // Pop a dialog to ask players' name
     private List<String> askPlayerNames() {
         ChoiceDialog<Integer> playerNumDialog = new ChoiceDialog<>(2, FXCollections.observableArrayList(IntStream.rangeClosed(2, 5).boxed().toList()));
         playerNumDialog.setHeaderText("How many players?");
@@ -209,6 +216,7 @@ public class GameController implements DecisionMaker {
         return names;
     }
 
+    // Find the player who have highest completed sets, then highest bank total
     private String findLeadingPlayer() {
         Player leader = null;
         int bestBank = -1;
@@ -228,6 +236,7 @@ public class GameController implements DecisionMaker {
         return leader.getName();
     }
 
+    // Update player's hand from backend
     private void updateHand(Player player) {
         handCardsBox.getChildren().clear();
         List<Card> handCards = player.getCardsAtHand();
@@ -246,6 +255,7 @@ public class GameController implements DecisionMaker {
         }
     }
 
+    // Add a card row in the player's hand table
     private HBox newHandCard(Card card) {
         Label name = new Label(card.getName());
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
@@ -267,6 +277,7 @@ public class GameController implements DecisionMaker {
         cardBox.setPadding(new Insets(12));
         cardBox.setMaxWidth(Double.MAX_VALUE);
 
+        // Set focus
         if (selectedCard == card) {
             cardBox.setBackground(setSolidBackground(Color.rgb(239, 246, 255)));
             cardBox.setBorder(roundCorner(Color.rgb(37, 99, 235)));
@@ -275,6 +286,7 @@ public class GameController implements DecisionMaker {
             cardBox.setBorder(roundCorner(Color.rgb(203, 213, 225)));
         }
 
+        // If clicked again, remove focus
         cardBox.setOnMouseClicked(e -> {
             if (selectedCard == card) {
                 selectedCard = null;
@@ -288,6 +300,7 @@ public class GameController implements DecisionMaker {
         return cardBox;
     }
 
+    // Add color bar for cards
     private Region newCardBar(Card card) {
         if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() >= 2) {
             Color topColor = propertyColor(wildCard.getPossibleColors().get(0));
@@ -313,6 +326,7 @@ public class GameController implements DecisionMaker {
         return newCardBarSegment(cardColor(card));
     }
 
+    // If the card has only 1 color, use this method
     private Region newCardBarSegment(Color color) {
         Region bar = new Region();
         bar.setPrefWidth(6);
@@ -335,25 +349,25 @@ public class GameController implements DecisionMaker {
                 }
                 yield currentColor;
             }
-            case ActionCard actionCard -> actionText(actionCard.getActionType());
+            case ActionCard actionCard -> actionDetail(actionCard.getActionType());
             default -> "";
         };
     }
 
-    private String actionText(ActionType actionType) {
+    private String actionDetail(ActionType actionType) {
         return switch (actionType) {
-            case TODAY_IS_MY_BIRTHDAY -> "It's My Birthday";
-            case PASS_GO -> "Pass Go";
-            case DEBT_COLLECTOR -> "Debt Collector";
-            case RENT -> "Rent";
-            case MULTI_RENT -> "Wild Rent";
-            case DOUBLE_RENT -> "Double The Rent";
-            case SLY_DEAL -> "Sly Deal";
-            case FORCED_DEAL -> "Forced Deal";
-            case DEAL_BREAKER -> "Deal Breaker";
-            case HOUSE -> "House";
-            case HOTEL -> "Hotel";
-            case JUST_SAY_NO -> "Just Say No";
+            case TODAY_IS_MY_BIRTHDAY -> "Each other player pays you 2M.";
+            case PASS_GO -> "Draw 2 cards.";
+            case DEBT_COLLECTOR -> "Choose a player to pay you 5M.";
+            case RENT -> "Charge rent for the listed colors.";
+            case MULTI_RENT -> "Charge rent for any one color.";
+            case DOUBLE_RENT -> "Double the rent you charge.";
+            case SLY_DEAL -> "Steal one property from another player.";
+            case FORCED_DEAL -> "Swap properties with another player.";
+            case DEAL_BREAKER -> "Steal a full property set.";
+            case HOUSE -> "Add a house to a full set.";
+            case HOTEL -> "Add a hotel to a full set with a house.";
+            case JUST_SAY_NO -> "Cancel an action played against you.";
         };
     }
 
@@ -407,6 +421,7 @@ public class GameController implements DecisionMaker {
         }
     }
 
+    // Create a player box for each player
     private VBox newPlayerBox(Player player) {
         boolean isCurrent = (player == game.getCurrPlayer());
 
@@ -477,6 +492,7 @@ public class GameController implements DecisionMaker {
         return box;
     }
 
+    // Create a small card box for bank
     private HBox newBankBox(Card card) {
         Label name = new Label(card.getName());
         name.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 11));
@@ -493,6 +509,7 @@ public class GameController implements DecisionMaker {
         return box;
     }
 
+    // Add color bar for small card in bank
     private Region newBankCardBar(Card card) {
         if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() >= 2) {
             Color topColor = propertyColor(wildCard.getPossibleColors().get(0));
@@ -531,9 +548,11 @@ public class GameController implements DecisionMaker {
         return label;
     }
 
+    // Enable/diable a button
     private void updateButtonStatus() {
-        boolean canPlay = game.isStarted() && selectedCard != null && game.getActionsUsed() < Player.MAX_ACTIONS_PER_TURN;
-        playButton.setDisable(!canPlay);
+        // Play selected card is available when,
+        // the game has started, has selected a card, has not used all 3 actions
+        playButton.setDisable(!game.isStarted() || selectedCard == null || game.getActionsUsed() >= Player.MAX_ACTIONS_PER_TURN);
         moveWildButton.setDisable(true);
         endTurnButton.setDisable(!game.isStarted());
     }
@@ -574,6 +593,7 @@ public class GameController implements DecisionMaker {
         statusBadge.setTextFill(foreground);
     }
 
+    // Add a box in table when there is no player/card
     private VBox noCardBox(String titleText, String bodyText) {
         Label title = new Label(titleText);
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
@@ -591,6 +611,7 @@ public class GameController implements DecisionMaker {
         return box;
     }
 
+    // Apply unified style for all buttons
     private void setActionButton(Button button, Color color, boolean isFilled) {
         button.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 13));
         button.setPadding(new Insets(10, 16, 10, 16));
