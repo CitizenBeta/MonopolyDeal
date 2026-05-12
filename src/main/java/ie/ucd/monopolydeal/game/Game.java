@@ -16,7 +16,6 @@ public class Game {
     private Deck deck = new Deck() ;
     private List<String> log = new ArrayList<>();
     private boolean gameOver;
-    private int turn;
     public void setup(List<String> names) {
         players.clear();
         currentPlayerIndex = 0;
@@ -24,7 +23,6 @@ public class Game {
         turnCount = 1;
         started = true;
         gameOver = false;
-        turn = 1;
 
         for (int i = 0; i < names.size(); i++) {
             Player player = new Player(names.get(i), i + 1);
@@ -43,10 +41,6 @@ public class Game {
 
     public boolean isOver(){
         return gameOver;
-    }
-
-    public int getTurn(){
-        return turn;
     }
 
 
@@ -96,7 +90,7 @@ public class Game {
             return false;
         }
 
-        if (actionsUsed >= Player.MAX_ACTIONS_PER_TURN) {
+        if (current.isHandFull()) {
             return false;
         }
 
@@ -137,21 +131,22 @@ public class Game {
         }
 
         actionsUsed = 0;
-        turnCount++;
 
-        if(turn == 1){
-            turn ++;
-            return;
+
+        if(turnCount != 1){
+            int drawCardsNumber;
+            if(getCurrPlayer().getCardsAtHand().isEmpty()){
+                drawCardsNumber = 5;
+            }else{
+                drawCardsNumber = 2;
+            }
+            drawCards(getCurrPlayer(),drawCardsNumber);
         }
 
-        int drawCardsNumber;
-        if(getCurrPlayer().getCardsAtHand().isEmpty()){
-            drawCardsNumber = 5;
-        }else{
-            drawCardsNumber = 2;
+        if(currentPlayerIndex==0){
+            turnCount++;
         }
-        drawCards(getCurrPlayer(),drawCardsNumber);
-        turn++;
+
     }
 
     private void drawCards(Player player, int number){
