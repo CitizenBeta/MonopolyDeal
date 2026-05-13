@@ -34,10 +34,8 @@ public class GameController implements DecisionMaker {
     @FXML private Button moveWildButton;
     @FXML private Button endTurnButton;
     @FXML private Label handCardsTitle;
-    @FXML private Label handCardsText;
-    @FXML private Label boardText;
-    @FXML private VBox handCardsBox;
-    @FXML private VBox tableBox;
+    @FXML private HBox handCardsBox;
+    @FXML private HBox tableBox;
 
     @FXML private BorderPane rootPane;
     @FXML private ScrollPane cardsScroll;
@@ -53,22 +51,34 @@ public class GameController implements DecisionMaker {
         setActionButton(endTurnButton, Color.rgb(220, 38, 38), false);
 
         // Set status
-        statusTitle.setFont(Font.font("Segoe UI Semibold", 12));
+        statusTitle.setFont(Font.font("Segoe UI Semibold", 11));
         statusTitle.setTextFill(Color.rgb(71, 85, 105));
         statusText.setWrapText(true);
         statusText.setMinWidth(0);
         statusText.setMaxWidth(Double.MAX_VALUE);
         statusText.prefWidthProperty().bind(((Region) statusText.getParent()).widthProperty());
-        statusText.setFont(Font.font("Segoe UI Bold", 18));
+        statusText.setFont(Font.font("Segoe UI Bold", 16));
         statusText.setTextFill(Color.rgb(15, 23, 42));
         leadingPlayer.setWrapText(true);
 
         // Set content area
-        handCardsBox.setFillWidth(true);
-        cardsScroll.setFitToWidth(true);
-        cardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        cardsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        cardsScroll.setPannable(true);
+        handCardsBox.setFillHeight(false);
+        handCardsBox.setAlignment(Pos.CENTER);
+        cardsScroll.setFitToHeight(true);
+        cardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        cardsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        cardsScroll.setPannable(false);
+        cardsScroll.viewportBoundsProperty().addListener((event, oldBounds, newBounds) ->
+                resizeHandArea(newBounds.getWidth(), newBounds.getHeight()));
+        cardsScroll.setVvalue(0);
+        cardsScroll.vvalueProperty().addListener((event, oldValue, newValue) -> cardsScroll.setVvalue(0));
+        cardsScroll.setOnScroll(event -> {
+            if (event.getDeltaY() != 0) {
+                double nextValue = cardsScroll.getHvalue() - event.getDeltaY() / handCardsBox.getWidth();
+                cardsScroll.setHvalue(Math.max(0, Math.min(1, nextValue)));
+                event.consume();
+            }
+        });
         cardsScroll.setBackground(setSolidBackground(Color.WHITE));
         cardsScroll.setBorder(Border.EMPTY);
         cardsScroll.setFocusTraversable(false);
@@ -81,16 +91,17 @@ public class GameController implements DecisionMaker {
             }
         });
 
-        tableBox.setFillWidth(true);
+        tableBox.setFillHeight(true);
+        tableBox.setAlignment(Pos.TOP_CENTER);
         tableScroll.setFitToWidth(true);
+        tableScroll.setFitToHeight(true);
         tableScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         tableScroll.setPannable(true);
+        tableScroll.viewportBoundsProperty().addListener((event, oldBounds, newBounds) ->
+                resizeTableArea(newBounds.getWidth(), newBounds.getHeight()));
         tableScroll.setFocusTraversable(false);
         tableScroll.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
         tableScroll.setOnMousePressed(event -> rootPane.requestFocus());
-
-        handCardsText.setFont(Font.font("Segoe UI", 13));
-        boardText.setFont(Font.font("Segoe UI", 13));
 
         refresh();
     }
@@ -114,24 +125,28 @@ public class GameController implements DecisionMaker {
         alert.setTitle("Used Cards");
         alert.setHeaderText("Used / discarded cards, newest first");
 
-        VBox cardList = new VBox(10);
-        cardList.setPadding(new Insets(10));
-        cardList.setFillWidth(true);
-
-        List<Game.UsedCardRecord> history = game.getUsedCardHistory();
-        if (history.isEmpty()) {
-            cardList.getChildren().add(noCardBox("No cards yet", "No cards have been used or discarded yet."));
-        } else {
-            for (Game.UsedCardRecord record : history) {
-                cardList.getChildren().add(newUsedCardBox(record));
-            }
-        }
-
-        ScrollPane scrollPane = new ScrollPane(cardList);
+        ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setPrefSize(520, 420);
 
+        List<Game.UsedCardRecord> history = game.getUsedCardHistory();
+        if (history.isEmpty()) {
+            StackPane emptyBox = new StackPane(noCardBox("No cards yet", "No cards have been used or discarded yet"));
+            emptyBox.setAlignment(Pos.CENTER);
+            emptyBox.setPrefHeight(360);
+            scrollPane.setContent(emptyBox);
+        } else {
+            VBox cardList = new VBox(10);
+            cardList.setPadding(new Insets(10));
+            cardList.setFillWidth(true);
+
+            for (Game.UsedCardRecord record : history) {
+                cardList.getChildren().add(newUsedCardBox(record));
+            }
+
+            scrollPane.setContent(cardList);
+        }
         alert.getDialogPane().setContent(scrollPane);
         alert.showAndWait();
     }
@@ -160,7 +175,7 @@ public class GameController implements DecisionMaker {
 
         Label actionBadge = usedCardBadge(record);
 
-        HBox box = new HBox(12, newCardBar(card), textBox, actionBadge);
+        HBox box = new HBox(12, newUsedCardBar(card), textBox, actionBadge);
         box.setAlignment(Pos.CENTER_LEFT);
         box.setFillHeight(true);
         box.setPadding(new Insets(12));
@@ -168,6 +183,37 @@ public class GameController implements DecisionMaker {
         box.setBackground(setSolidBackground(Color.WHITE));
         box.setBorder(roundCorner(Color.rgb(203, 213, 225)));
         return box;
+    }
+
+    private Region newUsedCardBar(Card card) {
+        if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() == 2) {
+            return newDoubleColorVerticalBar(wildCard.getPossibleColors().get(0), wildCard.getPossibleColors().get(1));
+        }
+
+        if (card instanceof ActionCard actionCard && actionCard.getColors().size() == 2) {
+            return newDoubleColorVerticalBar(actionCard.getColors().get(0), actionCard.getColors().get(1));
+        }
+
+        Region bar = new Region();
+        bar.setPrefSize(6, 44);
+        bar.setMinWidth(6);
+        bar.setBackground(setSolidBackground(cardColor(card)));
+        return bar;
+    }
+
+    private Region newDoubleColorVerticalBar(PropertyColor topColor, PropertyColor bottomColor) {
+        Color firstColor = propertyColor(topColor);
+        Color secondColor = propertyColor(bottomColor);
+
+        Region bar = new Region();
+        bar.setPrefSize(6, 44);
+        bar.setMinWidth(6);
+        bar.setStyle("-fx-background-color: linear-gradient(to bottom, "
+                + cssColor(firstColor) + " 0%, "
+                + cssColor(firstColor) + " 50%, "
+                + cssColor(secondColor) + " 50%, "
+                + cssColor(secondColor) + " 100%); -fx-background-radius: 12;");
+        return bar;
     }
 
     private Label usedCardBadge(Game.UsedCardRecord record) {
@@ -212,7 +258,7 @@ public class GameController implements DecisionMaker {
             selectedCard = null;
             statusText.setText("Turn ended.");
         } else {
-            statusText.setText("Turn not ended. Discard required.");
+            statusText.setText("Discard required.");
         }
         refresh();
     }
@@ -235,12 +281,14 @@ public class GameController implements DecisionMaker {
         updateActionsBadge(0);
         piles.setText("0 / 0");
         leadingPlayer.setText("-");
-        handCardsText.setText("No active hand");
-        boardText.setText("Start a new game to populate the table");
 
         selectedCard = null;
-        handCardsBox.getChildren().setAll(noCardBox("No cards yet", "Start a new game to render the active hand here."));
-        tableBox.getChildren().setAll(noCardBox("No players yet", "Create a game to see hand, bank, and property areas."));
+        handCardsBox.setAlignment(Pos.CENTER);
+        tableBox.setAlignment(Pos.CENTER);
+        handCardsBox.getChildren().setAll(centeredEmptyBox(cardsScroll, "No cards yet", "Start a new game to render the active hand here"));
+        tableBox.getChildren().setAll(centeredEmptyBox(tableScroll, "No players yet", "Create a game to see hand, bank, and property areas"));
+        resizeHandArea(cardsScroll.getViewportBounds().getWidth(), cardsScroll.getViewportBounds().getHeight());
+        resizeTableArea(tableScroll.getViewportBounds().getWidth(), tableScroll.getViewportBounds().getHeight());
 
         updateTurnCount(0);
         updateStatusBadge("Ready", Color.rgb(224, 231, 255), Color.rgb(165, 180, 252), Color.rgb(67, 56, 202));
@@ -254,8 +302,6 @@ public class GameController implements DecisionMaker {
         updateActionsBadge(game.getActionsUsed());
         piles.setText(game.getDiscardPileNumber() + " / " + game.getDrawPileNumber());
         leadingPlayer.setText(findLeadingPlayer());
-        handCardsText.setText(player.getName() + " can act now");
-        boardText.setText(game.getPlayers().size() + " players in this match");
         handCardsBox.getChildren().clear();
         tableBox.getChildren().clear();
         updateHand(player);
@@ -326,36 +372,46 @@ public class GameController implements DecisionMaker {
         }
 
         if (handCards.isEmpty()) {
-            handCardsBox.getChildren().add(noCardBox("No cards.", "This player has no cards in hand."));
+            handCardsBox.setAlignment(Pos.CENTER);
+            handCardsBox.getChildren().add(centeredEmptyBox(cardsScroll, "No cards", "This player has no cards in hand"));
+            resizeHandArea(cardsScroll.getViewportBounds().getWidth(), cardsScroll.getViewportBounds().getHeight());
             return;
         }
 
+        handCardsBox.setAlignment(Pos.CENTER);
         for (Card handCard : handCards) {
             handCardsBox.getChildren().add(newHandCard(handCard));
         }
     }
 
     // Add a card row in the player's hand table
-    private HBox newHandCard(Card card) {
+    private VBox newHandCard(Card card) {
         Label name = new Label(card.getName());
-        name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
+        name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
         name.setTextFill(Color.rgb(15, 23, 42));
+        name.setWrapText(true);
+        name.setMaxWidth(86);
 
-        VBox textBox = new VBox(4, name);
+        VBox textBox = new VBox(3, name);
         String detailText = cardDetail(card);
         if (!detailText.isEmpty()) {
             Label detail = new Label(detailText);
+            detail.setFont(Font.font("Segoe UI", 12));
             detail.setTextFill(Color.rgb(71, 85, 105));
             detail.setWrapText(true);
+            detail.setMaxWidth(86);
             textBox.getChildren().add(detail);
         }
 
-        Region bar = newCardBar(card);
-        HBox cardBox = new HBox(12, bar, textBox);
-        cardBox.setAlignment(Pos.CENTER_LEFT);
-        cardBox.setFillHeight(true);
-        cardBox.setPadding(new Insets(12));
-        cardBox.setMaxWidth(Double.MAX_VALUE);
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
+        VBox cardBox = new VBox(8, textBox, spacer, newCardBar(card));
+        cardBox.setAlignment(Pos.TOP_LEFT);
+        cardBox.setPadding(new Insets(8));
+        cardBox.setPrefSize(104, 132);
+        cardBox.setMinSize(96, 124);
+        cardBox.setMaxSize(112, 142);
 
         // Set focus
         if (selectedCard == card) {
@@ -363,7 +419,7 @@ public class GameController implements DecisionMaker {
             cardBox.setBorder(roundCorner(Color.rgb(37, 99, 235)));
         } else {
             cardBox.setBackground(setSolidBackground(Color.WHITE));
-            cardBox.setBorder(roundCorner(Color.rgb(203, 213, 225)));
+            cardBox.setBorder(roundCorner(cardColor(card)));
         }
 
         // If clicked again, remove focus
@@ -382,21 +438,12 @@ public class GameController implements DecisionMaker {
 
     // Add color bar for cards
     private Region newCardBar(Card card) {
-        if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() >= 2) {
-            Color topColor = propertyColor(wildCard.getPossibleColors().get(0));
-            Color bottomColor = propertyColor(wildCard.getPossibleColors().get(1));
+        if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() == 2) {
+            return newDoubleColorBar(wildCard.getPossibleColors().get(0), wildCard.getPossibleColors().get(1));
+        }
 
-            Region bar = new Region();
-            bar.setPrefWidth(6);
-            bar.setMinWidth(6);
-            bar.setMaxWidth(6);
-            bar.setMaxHeight(Double.MAX_VALUE);
-            bar.setStyle("-fx-background-color: linear-gradient(to bottom, "
-                    + cssColor(topColor) + " 0%, "
-                    + cssColor(topColor) + " 50%, "
-                    + cssColor(bottomColor) + " 50%, "
-                    + cssColor(bottomColor) + " 100%); -fx-background-radius: 12;");
-            return bar;
+        if (card instanceof ActionCard actionCard && actionCard.getColors().size() == 2) {
+            return newDoubleColorBar(actionCard.getColors().get(0), actionCard.getColors().get(1));
         }
 
         if (card instanceof PropertyCard propertyCard) {
@@ -406,13 +453,30 @@ public class GameController implements DecisionMaker {
         return newCardBarSegment(cardColor(card));
     }
 
+    private Region newDoubleColorBar(PropertyColor firstColor, PropertyColor secondColor) {
+        Color leftColor = propertyColor(firstColor);
+        Color rightColor = propertyColor(secondColor);
+
+        Region bar = new Region();
+        bar.setPrefSize(84, 6);
+        bar.setMinHeight(6);
+        bar.setMaxHeight(6);
+        bar.setMaxWidth(Double.MAX_VALUE);
+        bar.setStyle("-fx-background-color: linear-gradient(to right, "
+                + cssColor(leftColor) + " 0%, "
+                + cssColor(leftColor) + " 50%, "
+                + cssColor(rightColor) + " 50%, "
+                + cssColor(rightColor) + " 100%); -fx-background-radius: 12;");
+        return bar;
+    }
+
     // If the card has only 1 color, use this method
     private Region newCardBarSegment(Color color) {
         Region bar = new Region();
-        bar.setPrefWidth(6);
-        bar.setMinWidth(6);
-        bar.setMaxWidth(6);
-        bar.setMaxHeight(Double.MAX_VALUE);
+        bar.setPrefSize(84, 6);
+        bar.setMinHeight(6);
+        bar.setMaxHeight(6);
+        bar.setMaxWidth(Double.MAX_VALUE);
         bar.setBackground(setSolidBackground(color));
         return bar;
     }
@@ -467,11 +531,19 @@ public class GameController implements DecisionMaker {
             case PropertyCard propertyCard -> propertyColor(propertyCard.getColor());
             case WildPropertyCard wildCard -> {
                 if (wildCard.getCurrentColor() == null) {
+                    if (wildCard.getPossibleColors().size() == 2) {
+                        yield propertyColor(wildCard.getPossibleColors().get(0));
+                    }
                     yield Color.rgb(8, 145, 178);
                 }
                 yield propertyColor(wildCard.getCurrentColor());
             }
-            case ActionCard _ -> Color.rgb(217, 119, 6);
+            case ActionCard actionCard -> {
+                if (actionCard.getColors().size() == 2) {
+                    yield propertyColor(actionCard.getColors().get(0));
+                }
+                yield Color.rgb(217, 119, 6);
+            }
             case null, default -> Color.rgb(100, 116, 139);
         };
     }
@@ -502,12 +574,17 @@ public class GameController implements DecisionMaker {
         tableBox.getChildren().clear();
 
         if (players.isEmpty()) {
-            tableBox.getChildren().add(noCardBox("No players.", "Start a new game to show player boards."));
+            tableBox.setAlignment(Pos.CENTER);
+            tableBox.getChildren().add(centeredEmptyBox(tableScroll, "No players", "Start a new game to show player boards"));
+            resizeTableArea(tableScroll.getViewportBounds().getWidth(), tableScroll.getViewportBounds().getHeight());
             return;
         }
 
+        tableBox.setAlignment(Pos.TOP_CENTER);
         for (Player player : players) {
-            tableBox.getChildren().add(newPlayerBox(player));
+            VBox playerBox = newPlayerBox(player);
+            HBox.setHgrow(playerBox, Priority.ALWAYS);
+            tableBox.getChildren().add(playerBox);
         }
     }
 
@@ -568,6 +645,10 @@ public class GameController implements DecisionMaker {
 
         VBox box = new VBox(8, header, new Separator(), bank, properties);
         box.setPadding(new Insets(12));
+        box.setMinWidth(0);
+        box.setPrefHeight(180);
+        box.setMinHeight(165);
+        box.setMaxHeight(Double.MAX_VALUE);
         box.setMaxWidth(Double.MAX_VALUE);
 
         // Add focus for player
@@ -683,22 +764,47 @@ public class GameController implements DecisionMaker {
         statusBadge.setTextFill(foreground);
     }
 
+    private void resizeHandArea(double width, double height) {
+        handCardsBox.setMinWidth(width);
+        handCardsBox.setMinHeight(height);
+    }
+
+    private void resizeTableArea(double width, double height) {
+        tableBox.setMinWidth(width);
+        tableBox.setMinHeight(height);
+    }
+
     // Add a box in table when there is no player/card
     private VBox noCardBox(String titleText, String bodyText) {
         Label title = new Label(titleText);
         title.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
+        title.setMaxWidth(Double.MAX_VALUE);
+        title.setAlignment(Pos.CENTER);
 
         Label body = new Label(bodyText);
         body.setWrapText(true);
         body.setTextFill(Color.rgb(100, 116, 139));
+        body.setMaxWidth(Double.MAX_VALUE);
+        body.setAlignment(Pos.CENTER);
+        body.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
 
         VBox box = new VBox(8, title, body);
-        box.setAlignment(Pos.CENTER_LEFT);
-        box.setPadding(new Insets(22));
-        box.setMaxWidth(Double.MAX_VALUE);
+        box.setAlignment(Pos.CENTER);
+        box.setPadding(new Insets(18));
+        box.setPrefSize(420, 120);
+        box.setMinSize(420, 120);
+        box.setMaxSize(420, 120);
         box.setBackground(setSolidBackground(Color.WHITE));
         box.setBorder(roundCorner(Color.rgb(203, 213, 225)));
         return box;
+    }
+
+    private StackPane centeredEmptyBox(ScrollPane scrollPane, String titleText, String bodyText) {
+        StackPane wrapper = new StackPane(noCardBox(titleText, bodyText));
+        wrapper.setAlignment(Pos.CENTER);
+        wrapper.setMinHeight(140);
+        wrapper.prefWidthProperty().bind(scrollPane.widthProperty().subtract(32));
+        return wrapper;
     }
 
     // Apply unified style for all buttons

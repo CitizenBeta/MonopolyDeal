@@ -43,6 +43,10 @@ public class ActionCard implements Card {
         return actionType;
     }
 
+    public List<PropertyColor> getColors() {
+        return colors;
+    }
+
     @Override
     public String toString() {
         return getDetail();
