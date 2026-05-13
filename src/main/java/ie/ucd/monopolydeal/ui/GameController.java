@@ -154,7 +154,7 @@ public class GameController implements DecisionMaker {
     private HBox newUsedCardBox(Game.UsedCardRecord record) {
         Card card = record.card();
 
-        Label name = new Label(card.getName());
+        Label name = new Label(card.getName().replace("/", "/\u200B"));
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
         name.setTextFill(Color.rgb(15, 23, 42));
 
@@ -279,7 +279,7 @@ public class GameController implements DecisionMaker {
         statusText.setText("Start a new game.");
         handCardsTitle.setText("Current Hand");
         updateActionsBadge(0);
-        piles.setText("0 / 0");
+        updateDeckCount();
         leadingPlayer.setText("-");
 
         selectedCard = null;
@@ -300,7 +300,7 @@ public class GameController implements DecisionMaker {
         statusTitle.setText("Status");
         handCardsTitle.setText(player.getName() + " Hand");
         updateActionsBadge(game.getActionsUsed());
-        piles.setText(game.getDiscardPileNumber() + " / " + game.getDrawPileNumber());
+        updateDeckCount();
         leadingPlayer.setText(findLeadingPlayer());
         handCardsBox.getChildren().clear();
         tableBox.getChildren().clear();
@@ -386,32 +386,52 @@ public class GameController implements DecisionMaker {
 
     // Add a card row in the player's hand table
     private VBox newHandCard(Card card) {
-        Label name = new Label(card.getName());
+        Label name = new Label(cardTitle(card));
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
         name.setTextFill(Color.rgb(15, 23, 42));
         name.setWrapText(true);
         name.setMaxWidth(86);
 
-        VBox textBox = new VBox(3, name);
-        String detailText = cardDetail(card);
-        if (!detailText.isEmpty()) {
-            Label detail = new Label(detailText);
-            detail.setFont(Font.font("Segoe UI", 12));
-            detail.setTextFill(Color.rgb(71, 85, 105));
-            detail.setWrapText(true);
-            detail.setMaxWidth(86);
-            textBox.getChildren().add(detail);
+        StackPane titleBox = new StackPane(name);
+        titleBox.setMinHeight(Region.USE_PREF_SIZE);
+        titleBox.setPadding(new Insets(0, 0, 3, 0));
+        titleBox.setMaxWidth(Double.MAX_VALUE);
+        titleBox.setAlignment(Pos.TOP_CENTER);
+        name.setAlignment(Pos.CENTER);
+        name.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+
+        VBox textBox = new VBox(4);
+        if (card instanceof MoneyCard) {
+            textBox.getChildren().add(titleBox);
+        } else {
+            textBox.getChildren().addAll(titleBox, new Separator());
+            if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() == 2) {
+                textBox.getChildren().add(newWildRentBox(wildCard));
+            } else if (card instanceof PropertyCard propertyCard) {
+                textBox.getChildren().add(newPropertyDetailBox(propertyCard.getColor()));
+            } else {
+                String detailText = cardDetail(card);
+                if (!detailText.isEmpty()) {
+                    Label detail = new Label(detailText);
+                    detail.setFont(Font.font("Segoe UI", 12));
+                    detail.setTextFill(Color.rgb(71, 85, 105));
+                    detail.setWrapText(true);
+                    detail.setMaxWidth(86);
+                    detail.setMinHeight(Region.USE_PREF_SIZE);
+                    textBox.getChildren().add(detail);
+                }
+            }
         }
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
 
-        VBox cardBox = new VBox(8, textBox, spacer, newCardBar(card));
+        VBox cardBox = new VBox(6, textBox, spacer, newCardBar(card));
         cardBox.setAlignment(Pos.TOP_LEFT);
         cardBox.setPadding(new Insets(8));
-        cardBox.setPrefSize(104, 132);
-        cardBox.setMinSize(96, 124);
-        cardBox.setMaxSize(112, 142);
+        cardBox.setPrefSize(104, 154);
+        cardBox.setMinSize(96, 146);
+        cardBox.setMaxSize(112, 162);
 
         // Set focus
         if (selectedCard == card) {
@@ -434,6 +454,85 @@ public class GameController implements DecisionMaker {
         });
 
         return cardBox;
+    }
+
+    private String cardTitle(Card card) {
+        if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() == 2) {
+            PropertyColor leftColor = wildCard.getPossibleColors().get(0);
+            PropertyColor rightColor = wildCard.getPossibleColors().get(1);
+            return leftColor.getName() + "/\n" + rightColor.getName() + " Wild";
+        }
+
+        return card.getName().replace("/", "/\u200B");
+    }
+
+    private VBox newPropertyDetailBox(PropertyColor color) {
+        Label colorName = newSmallCardText(color.getName());
+        VBox box = new VBox(1, colorName);
+
+        String[] rents = color.getRentDescription().split("\n");
+        box.getChildren().add(newRentGrid(rents));
+
+        return box;
+    }
+
+    private HBox newRentGrid(String[] rents) {
+        VBox leftColumn = new VBox(0);
+        VBox rightColumn = new VBox(0);
+        int splitIndex = (rents.length + 1) / 2;
+
+        for (int i = 0; i < splitIndex; i++) {
+            leftColumn.getChildren().add(newSmallCardText(rents[i]));
+        }
+
+        for (int i = splitIndex; i < rents.length; i++) {
+            Label rent = newSmallCardText(rents[i]);
+            rent.setAlignment(Pos.CENTER_RIGHT);
+            rightColumn.getChildren().add(rent);
+        }
+
+        leftColumn.setMaxWidth(Double.MAX_VALUE);
+        rightColumn.setMaxWidth(Double.MAX_VALUE);
+        leftColumn.setAlignment(Pos.TOP_LEFT);
+        rightColumn.setAlignment(Pos.TOP_RIGHT);
+        HBox.setHgrow(leftColumn, Priority.ALWAYS);
+        HBox.setHgrow(rightColumn, Priority.ALWAYS);
+
+        HBox rentGrid = new HBox(8, leftColumn, rightColumn);
+        rentGrid.setMaxWidth(86);
+        return rentGrid;
+    }
+
+    private Label newSmallCardText(String text) {
+        Label label = new Label(text);
+        label.setFont(Font.font("Segoe UI", 12));
+        label.setTextFill(Color.rgb(71, 85, 105));
+        label.setMaxWidth(86);
+        return label;
+    }
+
+    private HBox newWildRentBox(WildPropertyCard wildCard) {
+        PropertyColor leftColor = wildCard.getPossibleColors().get(0);
+        PropertyColor rightColor = wildCard.getPossibleColors().get(1);
+
+        Label leftRent = new Label(leftColor.getRentDescription());
+        leftRent.setFont(Font.font("Segoe UI", 12));
+        leftRent.setTextFill(Color.rgb(71, 85, 105));
+        leftRent.setAlignment(Pos.CENTER_LEFT);
+        leftRent.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(leftRent, Priority.ALWAYS);
+
+        Label rightRent = new Label(rightColor.getRentDescription());
+        rightRent.setFont(Font.font("Segoe UI", 12));
+        rightRent.setTextFill(Color.rgb(71, 85, 105));
+        rightRent.setAlignment(Pos.CENTER_RIGHT);
+        rightRent.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(rightRent, Priority.ALWAYS);
+
+        HBox rentBox = new HBox(leftRent, rightRent);
+        rentBox.setMaxWidth(86);
+        rentBox.setAlignment(Pos.CENTER);
+        return rentBox;
     }
 
     // Add color bar for cards
@@ -483,7 +582,7 @@ public class GameController implements DecisionMaker {
 
     private String cardDetail(Card card) {
         return switch (card) {
-            case PropertyCard propertyCard -> propertyCard.getColor().getName();
+            case PropertyCard propertyCard -> propertyCard.getColor().getName() + "\n" + propertyCard.getColor().getRentDescription();
             case WildPropertyCard wildCard -> {
                 String currentColor;
                 if (wildCard.getCurrentColor() == null) {
@@ -510,17 +609,17 @@ public class GameController implements DecisionMaker {
 
     private String actionDetail(ActionType actionType) {
         return switch (actionType) {
-            case TODAY_IS_MY_BIRTHDAY -> "Each other player pays you 2M.";
-            case PASS_GO -> "Draw 2 cards.";
-            case DEBT_COLLECTOR -> "Choose a player to pay you 5M.";
-            case RENT -> "Charge rent for the listed colors.";
-            case MULTI_RENT -> "Charge rent for any one color.";
-            case DOUBLE_RENT -> "Double the rent you charge.";
-            case SLY_DEAL -> "Steal one property from another player.";
-            case FORCED_DEAL -> "Swap properties with another player.";
-            case DEAL_BREAKER -> "Steal a full property set.";
-            case HOUSE -> "Add a house to a full set.";
-            case HOTEL -> "Add a hotel to a full set with a house.";
+            case TODAY_IS_MY_BIRTHDAY -> "All players pay you 2M.";
+            case PASS_GO -> "Draw 2 extra cards.";
+            case DEBT_COLLECTOR -> "Force any player to pay you 5M.";
+            case RENT -> "All players pay rent for one listed color.";
+            case MULTI_RENT -> "One player pays rent for any one color.";
+            case DOUBLE_RENT -> "Play with a rent card to double rent.";
+            case SLY_DEAL -> "Steal one property. Not from a full set.";
+            case FORCED_DEAL -> "Swap one property. Not from a full set.";
+            case DEAL_BREAKER -> "Steal a complete property set.";
+            case HOUSE -> "Add to a full set to add 3M rent.";
+            case HOTEL -> "Add to a full set with a house to add 4M rent.";
             case JUST_SAY_NO -> "Cancel an action played against you.";
         };
     }
@@ -757,6 +856,10 @@ public class GameController implements DecisionMaker {
         turnCount.setText(String.valueOf(count));
     }
 
+    private void updateDeckCount() {
+        piles.setText(game.getDrawPileNumber() + " / " + game.getTotalCardNumber());
+    }
+
     private void updateStatusBadge(String text, Color background, Color border, Color foreground) {
         statusBadge.setText(text);
         statusBadge.setBackground(setSolidBackground(background));
@@ -903,12 +1006,7 @@ public class GameController implements DecisionMaker {
     }
 
     private String discardOptionText(Card card) {
-        String text = card.getName();
-        String detail = cardDetail(card);
-        if (!detail.isEmpty()) {
-            text += " - " + detail;
-        }
-        return text;
+        return card.getName();
     }
 
     @Override public Card selectPropertyCard(Player owner, List<Card> cards, String prompt) { return null; }

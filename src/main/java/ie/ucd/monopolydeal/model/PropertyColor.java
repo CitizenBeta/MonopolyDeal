@@ -6,7 +6,7 @@ import java.util.List;
 public enum PropertyColor {
     BROWN("Brown", 2, new int[]{1, 2}),
     LIGHT_BLUE("Light Blue", 3, new int[]{1, 2, 3}),
-    PINK("Pink", 3, new int[]{1, 2, 4}),
+    PINK("Purple", 3, new int[]{1, 2, 4}),
     ORANGE("Orange", 3, new int[]{1, 3, 5}),
     RED("Red", 3, new int[]{2, 3, 6}),
     YELLOW("Yellow", 3, new int[]{2, 4, 6}),
@@ -39,6 +39,19 @@ public enum PropertyColor {
     public int getRent(int propertyCount) {
         int bounded = Math.max(1, Math.min(propertyCount, rents.length));
         return rents[bounded - 1];
+    }
+
+    public String getRentDescription() {
+        StringBuilder description = new StringBuilder();
+
+        for (int i = 0; i < rents.length; i++) {
+            if (i > 0) {
+                description.append("\n");
+            }
+            description.append(i + 1).append("=").append(rents[i]).append("M");
+        }
+
+        return description.toString();
     }
 
     public static List<PropertyColor> getColors() {

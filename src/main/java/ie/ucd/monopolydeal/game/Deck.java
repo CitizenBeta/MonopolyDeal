@@ -9,6 +9,7 @@ import java.util.List;
 public class Deck {
     private List<Card> drawPile = new ArrayList<>();
     private List<Card> discardPile = new ArrayList<>();
+    private int totalCardNumber;
 
     public Deck() {
         initialize();
@@ -80,43 +81,48 @@ public class Deck {
         addPropertyCard("Boardwalk", 4, PropertyColor.DARK_BLUE, 1);
         addPropertyCard("Reading Railroad", 2, PropertyColor.RAILROAD, 1);
         addPropertyCard("Pennsylvania Railroad", 2, PropertyColor.RAILROAD, 1);
-        addPropertyCard("B&O Railroad", 2, PropertyColor.RAILROAD, 1);
+        addPropertyCard("B. & O. Railroad", 2, PropertyColor.RAILROAD, 1);
         addPropertyCard("Short Line", 2, PropertyColor.RAILROAD, 1);
         addPropertyCard("Electric Company", 2, PropertyColor.UTILITY, 1);
         addPropertyCard("Water Works", 2, PropertyColor.UTILITY, 1);
 
-        addWildPropertyCard("Brown/Light Blue Wild", 1, Arrays.asList(PropertyColor.BROWN, PropertyColor.LIGHT_BLUE), 1);
-        addWildPropertyCard("Pink/Orange Wild", 2, Arrays.asList(PropertyColor.PINK, PropertyColor.ORANGE), 2);
+        addWildPropertyCard("Light Blue/Brown Wild", 1, Arrays.asList(PropertyColor.LIGHT_BLUE, PropertyColor.BROWN), 1);
+        addWildPropertyCard("Purple/Orange Wild", 2, Arrays.asList(PropertyColor.PINK, PropertyColor.ORANGE), 2);
         addWildPropertyCard("Red/Yellow Wild", 3, Arrays.asList(PropertyColor.RED, PropertyColor.YELLOW), 2);
-        addWildPropertyCard("Green/Dark Blue Wild", 4, Arrays.asList(PropertyColor.GREEN, PropertyColor.DARK_BLUE), 2);
+        addWildPropertyCard("Dark Blue/Green Wild", 4, Arrays.asList(PropertyColor.DARK_BLUE, PropertyColor.GREEN), 1);
         addWildPropertyCard("Railroad/Green Wild", 4, Arrays.asList(PropertyColor.RAILROAD, PropertyColor.GREEN), 1);
-        addWildPropertyCard("Railroad/Dark Blue Wild", 4, Arrays.asList(PropertyColor.RAILROAD, PropertyColor.DARK_BLUE), 1);
-        addWildPropertyCard("Railroad/Utility Wild", 2, Arrays.asList(PropertyColor.RAILROAD, PropertyColor.UTILITY), 1);
-        addWildPropertyCard("Any Color Wild", 0, PropertyColor.getColors(), 2);
+        addWildPropertyCard("Light Blue/Railroad Wild", 4, Arrays.asList(PropertyColor.LIGHT_BLUE, PropertyColor.RAILROAD), 1);
+        addWildPropertyCard("Utility/Railroad Wild", 2, Arrays.asList(PropertyColor.UTILITY, PropertyColor.RAILROAD), 1);
+        addWildPropertyCard("10 Color Wild", 0, PropertyColor.getColors(), 2);
 
         addActionCard("Pass Go", 1, ActionType.PASS_GO, 10);
         addActionCard("Debt Collector", 3, ActionType.DEBT_COLLECTOR, 3);
-        addActionCard("It's My Birthday", 2, ActionType.TODAY_IS_MY_BIRTHDAY, 3);
+        addActionCard("It's My Birthday!", 2, ActionType.TODAY_IS_MY_BIRTHDAY, 3);
         addActionCard("Sly Deal", 3, ActionType.SLY_DEAL, 3);
         addActionCard("Forced Deal", 3, ActionType.FORCED_DEAL, 3);
         addActionCard("Deal Breaker", 5, ActionType.DEAL_BREAKER, 2);
         addActionCard("House", 3, ActionType.HOUSE, 3);
         addActionCard("Hotel", 4, ActionType.HOTEL, 2);
-        addActionCard("Just Say No", 4, ActionType.JUST_SAY_NO, 3);
-        addActionCard("Double The Rent", 1, ActionType.DOUBLE_RENT, 2);
+        addActionCard("Just Say No!", 4, ActionType.JUST_SAY_NO, 3);
+        addActionCard("Double The Rent!", 1, ActionType.DOUBLE_RENT, 2);
 
-        addActionCard("Brown/Light Blue Rent", 1, ActionType.RENT, 2, Arrays.asList(PropertyColor.BROWN, PropertyColor.LIGHT_BLUE));
-        addActionCard("Pink/Orange Rent", 1, ActionType.RENT, 2, Arrays.asList(PropertyColor.PINK, PropertyColor.ORANGE));
+        addActionCard("Light Blue/Brown Rent", 1, ActionType.RENT, 2, Arrays.asList(PropertyColor.LIGHT_BLUE, PropertyColor.BROWN));
+        addActionCard("Purple/Orange Rent", 1, ActionType.RENT, 2, Arrays.asList(PropertyColor.PINK, PropertyColor.ORANGE));
         addActionCard("Red/Yellow Rent", 1, ActionType.RENT, 2, Arrays.asList(PropertyColor.RED, PropertyColor.YELLOW));
-        addActionCard("Green/Dark Blue Rent", 1, ActionType.RENT, 2, Arrays.asList(PropertyColor.GREEN, PropertyColor.DARK_BLUE));
+        addActionCard("Dark Blue/Green Rent", 1, ActionType.RENT, 2, Arrays.asList(PropertyColor.DARK_BLUE, PropertyColor.GREEN));
         addActionCard("Railroad/Utility Rent", 1, ActionType.RENT, 2, Arrays.asList(PropertyColor.RAILROAD, PropertyColor.UTILITY));
-        addActionCard("Wild Rent", 3, ActionType.MULTI_RENT, 3, PropertyColor.getColors());
+        addActionCard("Any Rent", 3, ActionType.MULTI_RENT, 3, PropertyColor.getColors());
 
         shuffle();
+        totalCardNumber = drawPile.size();
     }
 
     public int getDrawPileNumber() {
         return drawPile.size();
+    }
+
+    public int getTotalCardNumber() {
+        return totalCardNumber;
     }
 
     public int getDiscardPileNumber() {
@@ -143,9 +149,7 @@ public class Deck {
     }
 
     private void refill() {
-        if (discardPile.isEmpty()) {
-            return;
-        } else {
+        if (!discardPile.isEmpty()) {
             drawPile.addAll(discardPile);
             shuffle();
             discardPile.clear();

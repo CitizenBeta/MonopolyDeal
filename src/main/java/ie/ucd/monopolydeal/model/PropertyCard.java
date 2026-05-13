@@ -23,7 +23,7 @@ public class PropertyCard implements Card {
 
     @Override
     public String getDetail() {
-        return name + " [Property, " + color.getName() + ", bank " + bankValue + "M]";
+        return name + " [Property, " + color.getName() + ", " + color.getRentDescription() + ", bank " + bankValue + "M]";
     }
 
     public PropertyColor getColor() {

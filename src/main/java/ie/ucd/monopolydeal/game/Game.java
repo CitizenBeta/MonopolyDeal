@@ -19,6 +19,7 @@ public class Game {
     public void setup(List<String> names) {
         players.clear();
         usedCardHistory.clear();
+        deck = new Deck();
         currentPlayerIndex = 0;
         actionsUsed = 0;
         turnCount = 0;
@@ -75,6 +76,10 @@ public class Game {
 
     public int getDiscardPileNumber() {
         return deck.getDiscardPileNumber();
+    }
+
+    public int getTotalCardNumber() {
+        return deck.getTotalCardNumber();
     }
 
     public List<Player> getOtherPlayers(){

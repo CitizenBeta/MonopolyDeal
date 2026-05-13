@@ -127,16 +127,9 @@ public class Player {
 
     private int getRequiredCountForColor(PropertyColor color) {
         switch (color) {
-            case BROWN: return 2;
-            case LIGHT_BLUE: return 3;
-            case PINK: return 3;
-            case ORANGE: return 3;
-            case RED: return 3;
-            case YELLOW: return 3;
-            case GREEN: return 3;
-            case DARK_BLUE: return 2;
+            case BROWN, DARK_BLUE, UTILITY: return 2;
+            case LIGHT_BLUE, PINK, ORANGE, RED, YELLOW, GREEN: return 3;
             case RAILROAD: return 4;
-            case UTILITY: return 2;
             default: return 0;
         }
     }

@@ -82,7 +82,7 @@
                                 <Region prefWidth="5.0" minWidth="5.0" maxWidth="5.0" prefHeight="36.0" style="-fx-background-color: #3b82f6; -fx-background-radius: 12;" />
                                 <VBox spacing="2.0" HBox.hgrow="ALWAYS">
                                     <children>
-                                        <Label text="Discard / Deck" textFill="#475569">
+                                        <Label text="Deck / Total" textFill="#475569">
                                             <font><Font name="Segoe UI Semibold" size="11.0" /></font>
                                         </Label>
                                         <Label fx:id="piles" text="0 / 0" textFill="#0f172a">
@@ -153,7 +153,7 @@
                         <Separator />
                         <ScrollPane fx:id="cardsScroll" fitToHeight="true" hbarPolicy="AS_NEEDED" vbarPolicy="NEVER" pannable="false" VBox.vgrow="ALWAYS">
                             <content>
-                                <HBox fx:id="handCardsBox" alignment="CENTER" spacing="10.0" fillHeight="false">
+                                <HBox fx:id="handCardsBox" alignment="CENTER" spacing="8.0" fillHeight="false">
                                     <padding>
                                         <Insets top="8.0" right="10.0" bottom="10.0" left="10.0" />
                                     </padding>
