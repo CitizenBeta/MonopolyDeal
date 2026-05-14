@@ -12,6 +12,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
+import javafx.scene.text.TextAlignment;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -198,19 +199,13 @@ public class GameController implements DecisionMaker {
     }
 
     private Region newUsedCardBar(Card card) {
-        if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() == 2) {
-            return newDoubleColorBar(wildCard.getPossibleColors().get(0), wildCard.getPossibleColors().get(1), 6, 44, true);
+        List<PropertyColor> colors = getCardColors(card);
+
+        if (colors != null) {
+            return newColorBar(colors.get(0), colors.get(1), 6, 44, true);
         }
 
-        if (card instanceof ActionCard actionCard && actionCard.getColors().size() == 2) {
-            return newDoubleColorBar(actionCard.getColors().get(0), actionCard.getColors().get(1), 6, 44, true);
-        }
-
-        Region bar = new Region();
-        bar.setPrefSize(6, 44);
-        bar.setMinWidth(6);
-        bar.setBackground(setSolidBackground(cardColor(card)));
-        return bar;
+        return newColorBar(cardColor(card), 6, 44, true);
     }
 
     // Run when the user presses Play Selected button
@@ -288,7 +283,7 @@ public class GameController implements DecisionMaker {
         handCardsTitle.setText(player.getName() + " Hand");
         updateActionsBadge(game.getActionsUsed());
         updateDeckCount();
-        leadingPlayer.setText(findLeadingPlayer());
+        leadingPlayer.setText(leadingPlayer());
         handCardsBox.getChildren().clear();
         tableBox.getChildren().clear();
         updateHand(player);
@@ -330,23 +325,22 @@ public class GameController implements DecisionMaker {
     }
 
     // Find the player who have highest completed sets, then highest bank total
-    private String findLeadingPlayer() {
-        Player leader = null;
-        int bestBank = -1;
+    private String leadingPlayer() {
+        Player highestPlayer = null;
+        int highestBank = -1;
 
         for (Player player : game.getPlayers()) {
-            int bankTotal = player.getBankTotalValue();
-            if (bankTotal > bestBank) {
-                leader = player;
-                bestBank = bankTotal;
+            if (player.getBankTotalValue() > highestBank) {
+                highestPlayer = player;
+                highestBank = player.getBankTotalValue();
             }
         }
 
-        if (leader == null) {
+        if (highestPlayer == null) {
             return "-";
         }
 
-        return leader.getName();
+        return highestPlayer.getName();
     }
 
     // Update player's hand from backend
@@ -373,6 +367,7 @@ public class GameController implements DecisionMaker {
 
     // Add a card row in the player's hand table
     private VBox newHandCard(Card card) {
+        // Setup card name
         Label name = new Label(cardTitle(card));
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
         name.setTextFill(Color.rgb(15, 23, 42));
@@ -385,8 +380,9 @@ public class GameController implements DecisionMaker {
         titleBox.setMaxWidth(Double.MAX_VALUE);
         titleBox.setAlignment(Pos.TOP_CENTER);
         name.setAlignment(Pos.CENTER);
-        name.setTextAlignment(javafx.scene.text.TextAlignment.CENTER);
+        name.setTextAlignment(TextAlignment.CENTER);
 
+        // Add card detail
         VBox textBox = new VBox(4);
         if (card instanceof MoneyCard) {
             textBox.getChildren().add(titleBox);
@@ -410,27 +406,30 @@ public class GameController implements DecisionMaker {
             }
         }
 
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
+        // Adapt to various card detail text
+        // Push the bar to correct place
+        Region blank = new Region();
+        VBox.setVgrow(blank, Priority.ALWAYS);
 
-        VBox cardBox = new VBox(6, textBox, spacer, newCardBar(card));
-        cardBox.setAlignment(Pos.TOP_LEFT);
-        cardBox.setPadding(new Insets(8));
-        cardBox.setPrefSize(104, 154);
-        cardBox.setMinSize(96, 146);
-        cardBox.setMaxSize(112, 162);
+        // Pack all elements
+        VBox box = new VBox(6, textBox, blank, newCardBar(card));
+        box.setAlignment(Pos.TOP_LEFT);
+        box.setPadding(new Insets(8));
+        box.setPrefSize(104, 154);
+        box.setMinSize(96, 146);
+        box.setMaxSize(112, 162);
 
         // Set focus
         if (selectedCard == card) {
-            cardBox.setBackground(setSolidBackground(Color.rgb(239, 246, 255)));
-            cardBox.setBorder(roundCorner(Color.rgb(37, 99, 235)));
+            box.setBackground(setSolidBackground(Color.rgb(239, 246, 255)));
+            box.setBorder(roundCorner(Color.rgb(37, 99, 235)));
         } else {
-            cardBox.setBackground(setSolidBackground(Color.WHITE));
-            cardBox.setBorder(roundCorner(cardColor(card)));
+            box.setBackground(setSolidBackground(Color.WHITE));
+            box.setBorder(roundCorner(cardColor(card)));
         }
 
         // If clicked again, remove focus
-        cardBox.setOnMouseClicked(e -> {
+        box.setOnMouseClicked(e -> {
             if (selectedCard == card) {
                 selectedCard = null;
             } else {
@@ -440,7 +439,7 @@ public class GameController implements DecisionMaker {
             e.consume();
         });
 
-        return cardBox;
+        return box;
     }
 
     private String cardTitle(Card card) {
@@ -520,23 +519,28 @@ public class GameController implements DecisionMaker {
 
     // Add color bar for cards
     private Region newCardBar(Card card) {
+        List<PropertyColor> colors = getCardColors(card);
+
+        if (colors != null) {
+            return newColorBar(colors.get(0), colors.get(1), 84, 6, false);
+        }
+
+        return newColorBar(cardColor(card), 84, 6, false);
+    }
+
+    private List<PropertyColor> getCardColors(Card card) {
         if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() == 2) {
-            return newDoubleColorBar(wildCard.getPossibleColors().get(0), wildCard.getPossibleColors().get(1), 84, 6, false);
+            return wildCard.getPossibleColors();
         }
 
         if (card instanceof ActionCard actionCard && actionCard.getColors().size() == 2) {
-            return newDoubleColorBar(actionCard.getColors().get(0), actionCard.getColors().get(1), 84, 6, false);
+            return actionCard.getColors();
         }
 
-        if (card instanceof PropertyCard propertyCard) {
-            return newCardBarSegment(propertyColor(propertyCard.getColor()));
-        }
-
-        return newCardBarSegment(cardColor(card));
+        return null;
     }
 
-    private Region newDoubleColorBar(PropertyColor firstColor, PropertyColor secondColor,
-                                     double width, double height, boolean vertical) {
+    private Region newColorBar(PropertyColor firstColor, PropertyColor secondColor, double width, double height, boolean vertical) {
         Color leftColor = propertyColor(firstColor);
         Color rightColor = propertyColor(secondColor);
         String direction;
@@ -566,13 +570,18 @@ public class GameController implements DecisionMaker {
         return bar;
     }
 
-    // If the card has only 1 color, use this method
-    private Region newCardBarSegment(Color color) {
+    private Region newColorBar(Color color, double width, double height, boolean vertical) {
         Region bar = new Region();
-        bar.setPrefSize(84, 6);
-        bar.setMinHeight(6);
-        bar.setMaxHeight(6);
-        bar.setMaxWidth(Double.MAX_VALUE);
+        bar.setPrefSize(width, height);
+
+        if (vertical) {
+            bar.setMinWidth(width);
+        } else {
+            bar.setMinHeight(height);
+            bar.setMaxHeight(height);
+            bar.setMaxWidth(Double.MAX_VALUE);
+        }
+
         bar.setBackground(setSolidBackground(color));
         return bar;
     }
@@ -589,7 +598,7 @@ public class GameController implements DecisionMaker {
                 }
                 yield currentColor;
             }
-            case ActionCard actionCard -> actionDetail(actionCard.getActionType());
+            case ActionCard actionCard -> actionCard.getActionType().getDescription();
             default -> "";
         };
     }
@@ -601,23 +610,6 @@ public class GameController implements DecisionMaker {
             case WildPropertyCard _ -> "wild card";
             case ActionCard actionCard -> actionCard.getName();
             case null, default -> "card";
-        };
-    }
-
-    private String actionDetail(ActionType actionType) {
-        return switch (actionType) {
-            case TODAY_IS_MY_BIRTHDAY -> "All players pay you 2M.";
-            case PASS_GO -> "Draw 2 extra cards.";
-            case DEBT_COLLECTOR -> "Force any player to pay you 5M.";
-            case RENT -> "All players pay rent for one listed color.";
-            case MULTI_RENT -> "One player pays rent for any one color.";
-            case DOUBLE_RENT -> "Play with a rent card to double rent.";
-            case SLY_DEAL -> "Steal one property. Not from a full set.";
-            case FORCED_DEAL -> "Swap one property. Not from a full set.";
-            case DEAL_BREAKER -> "Steal a complete property set.";
-            case HOUSE -> "Add to a full set to add 3M rent.";
-            case HOTEL -> "Add to a full set with a house to add 4M rent.";
-            case JUST_SAY_NO -> "Cancel an action played against you.";
         };
     }
 
@@ -779,14 +771,10 @@ public class GameController implements DecisionMaker {
     // Add color bar for small card in bank
     private Region newBankCardBar(Card card) {
         if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() >= 2) {
-            return newDoubleColorBar(wildCard.getPossibleColors().get(0), wildCard.getPossibleColors().get(1), 4, 20, true);
+            return newColorBar(wildCard.getPossibleColors().get(0), wildCard.getPossibleColors().get(1), 4, 20, true);
         }
 
-        Region bar = new Region();
-        bar.setPrefSize(4, 20);
-        bar.setMinWidth(4);
-        bar.setBackground(setSolidBackground(cardColor(card)));
-        return bar;
+        return newColorBar(cardColor(card), 4, 20, true);
     }
 
     // Gray badge by default
@@ -794,7 +782,7 @@ public class GameController implements DecisionMaker {
         return newBadge(text, Color.rgb(241, 245, 249), Color.rgb(51, 65, 85));
     }
 
-    // Overload to add more options
+    // Overload to colors
     private Label newBadge(String text, Color background, Color foreground) {
         Label label = new Label(text);
         label.setPadding(new Insets(4, 8, 4, 8));
