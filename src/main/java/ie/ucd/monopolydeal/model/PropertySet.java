@@ -7,11 +7,15 @@ public class PropertySet {
     private final PropertyColor color;
     private final int requiredCount;
     private final List<Card> cards;
+    private boolean house;
+    private boolean hotel;
 
     public PropertySet(PropertyColor color, int requiredCount) {
         this.color = color;
         this.requiredCount = requiredCount;
         this.cards = new ArrayList<>();
+        house = false;
+        hotel = false;
     }
 
     public boolean addCard(Card card) {
@@ -55,7 +59,30 @@ public class PropertySet {
         if (!isComplete()) {
             return 0;
         }
+        int rent = color.getRent(cards.size());
+        if(house){
+            rent+=3;
+        }if(hotel){
+            rent += 4;
+        }
+        return rent ;
+    }
 
-        return color.getRent(cards.size());
+    public boolean addHouse() {
+        if(house){
+            return false;
+        }else{
+            house = true;
+            return true;
+        }
+    }
+
+    public boolean addHotel() {
+        if(hotel || !house){
+            return false;
+        }else{
+            hotel = true;
+            return true;
+        }
     }
 }
