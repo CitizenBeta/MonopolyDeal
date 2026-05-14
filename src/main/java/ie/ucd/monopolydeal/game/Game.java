@@ -12,7 +12,7 @@ public class Game {
     private int turnCount;
     private boolean started;
     private Deck deck = new Deck() ;
-    private List<usedCard> usedCards = new ArrayList<>();
+    private List<UsedCard> usedCards = new ArrayList<>();
     private boolean gameOver;
 
     public void setup(List<String> names) {
@@ -37,7 +37,7 @@ public class Game {
         startTurn();
     }
 
-    public List<usedCard> getUsedCards() {
+    public List<UsedCard> getUsedCards() {
         return new ArrayList<>(usedCards);
     }
 
@@ -97,7 +97,7 @@ public class Game {
         playSpecificCard(current,card,dm);
         actionsUsed++;
         current.removeCardFromHand(card);
-        addUsedCard(current, card, "Played");
+        addUsedCard(current, card, CardAction.PLAYED);
         return true;
     }
 
@@ -142,7 +142,7 @@ public class Game {
             for (Card discard : discards) {
                 currPlayer.removeCardFromHand(discard);
                 deck.discard(discard);
-                addUsedCard(currPlayer, discard, "Discarded");
+                addUsedCard(currPlayer, discard, CardAction.DISCARDED);
             }
         }
 
@@ -179,9 +179,24 @@ public class Game {
         }
     }
 
-    private void addUsedCard(Player player, Card card, String action) {
-        usedCards.addFirst(new usedCard(action, player.getName(), card));
+    private void addUsedCard(Player player, Card card, CardAction action) {
+        usedCards.addFirst(new UsedCard(action, player.getName(), card));
     }
 
-    public record usedCard(String action, String player, Card card) {}
+    public enum CardAction {
+        PLAYED("Played"),
+        DISCARDED("Discarded");
+
+        private final String label;
+
+        CardAction(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+    }
+
+    public record UsedCard(CardAction action, String player, Card card) {}
 }
