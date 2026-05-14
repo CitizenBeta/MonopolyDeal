@@ -69,6 +69,9 @@ public class PropertySet {
     }
 
     public boolean addHouse() {
+        if(this.color == PropertyColor.RAILROAD || this.color == PropertyColor.UTILITY ){
+            return false;
+        }
         if(house){
             return false;
         }else{
@@ -78,6 +81,9 @@ public class PropertySet {
     }
 
     public boolean addHotel() {
+        if(this.color == PropertyColor.RAILROAD || this.color == PropertyColor.UTILITY ){
+            return false;
+        }
         if(hotel || !house){
             return false;
         }else{
