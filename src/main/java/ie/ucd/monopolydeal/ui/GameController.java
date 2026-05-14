@@ -69,21 +69,21 @@ public class GameController implements DecisionMaker {
         cardsScroll.setPannable(false);
         cardsScroll.viewportBoundsProperty().addListener((_, _, bounds) -> resizeHandArea(bounds.getWidth(), bounds.getHeight()));
         cardsScroll.setVvalue(0);
-        cardsScroll.vvalueProperty().addListener((event, oldValue, newValue) -> cardsScroll.setVvalue(0));
-        cardsScroll.setOnScroll(event -> {
-            if (event.getDeltaY() != 0) {
-                double nextValue = cardsScroll.getHvalue() - event.getDeltaY() / handCardsBox.getWidth();
+        cardsScroll.vvalueProperty().addListener((_, _, _) -> cardsScroll.setVvalue(0));
+        cardsScroll.setOnScroll(e -> {
+            if (e.getDeltaY() != 0) {
+                double nextValue = cardsScroll.getHvalue() - e.getDeltaY() / handCardsBox.getWidth();
                 cardsScroll.setHvalue(Math.clamp(nextValue, 0, 1));
-                event.consume();
+                e.consume();
             }
         });
         cardsScroll.setBackground(setSolidBackground(Color.WHITE));
         cardsScroll.setBorder(Border.EMPTY);
         cardsScroll.setFocusTraversable(false);
         cardsScroll.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
-        cardsScroll.setOnMousePressed(event -> rootPane.requestFocus());
-        cardsScroll.setOnMouseClicked(event -> {
-            if ((event.getTarget() == cardsScroll || event.getTarget() == handCardsBox) && selectedCard != null) {
+        cardsScroll.setOnMousePressed(e -> rootPane.requestFocus());
+        cardsScroll.setOnMouseClicked(e -> {
+            if ((e.getTarget() == cardsScroll || e.getTarget() == handCardsBox) && selectedCard != null) {
                 selectedCard = null;
                 refresh();
             }
@@ -108,6 +108,8 @@ public class GameController implements DecisionMaker {
     @FXML
     private void onNewGame() {
         List<String> names = askPlayerNames();
+
+        // Player >= 2
         if (names == null || names.size() < 2) {
             return;
         }
@@ -121,41 +123,45 @@ public class GameController implements DecisionMaker {
     private void onUsedCards() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Used Cards");
-        alert.setHeaderText("Used / discarded cards, newest first");
+        alert.setHeaderText("Used cards in this game. Newest first");
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setPrefSize(520, 420);
 
-        List<Game.usedCard> history = game.getUsedCards();
-        if (history.isEmpty()) {
-            StackPane emptyBox = new StackPane(noCardBox("No cards yet", "No cards have been used or discarded yet"));
-            emptyBox.setAlignment(Pos.CENTER);
-            emptyBox.setPrefHeight(360);
-            scrollPane.setContent(emptyBox);
+        List<Game.UsedCard> usedCards = game.getUsedCards();
+        if (usedCards.isEmpty()) {
+            // Create an empty used cards box
+            StackPane box = new StackPane(noCardBox("No cards yet", "No cards have been used or discarded yet"));
+            box.setAlignment(Pos.CENTER);
+            box.setPrefHeight(360);
+            scrollPane.setContent(box);
         } else {
-            VBox cardList = new VBox(10);
-            cardList.setPadding(new Insets(10));
-            cardList.setFillWidth(true);
+            VBox cardsBox = new VBox(10);
+            cardsBox.setPadding(new Insets(10));
+            cardsBox.setFillWidth(true);
 
-            for (Game.usedCard record : history) {
-                cardList.getChildren().add(newUsedCardBox(record));
+            for (Game.UsedCard usedCard : usedCards) {
+                cardsBox.getChildren().add(newUsedCardBox(usedCard));
             }
 
-            scrollPane.setContent(cardList);
+            scrollPane.setContent(cardsBox);
         }
         alert.getDialogPane().setContent(scrollPane);
         alert.showAndWait();
     }
 
-    private HBox newUsedCardBox(Game.usedCard record) {
-        Card card = record.card();
+    // Create a box for a used card
+    private HBox newUsedCardBox(Game.UsedCard usedCard) {
+        Card card = usedCard.card();
 
+        // Set card name
         Label name = new Label(card.getName().replace("/", "/\u200B"));
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
         name.setTextFill(Color.rgb(15, 23, 42));
 
+        // Set card detail
         String detailText = cardDetail(card);
         Label detail = new Label(detailText);
         detail.setWrapText(true);
@@ -171,9 +177,17 @@ public class GameController implements DecisionMaker {
         textBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(textBox, Priority.ALWAYS);
 
-        Label actionBadge = usedCardBadge(record);
+        // Create a badge for a used card
+        Label usedCardBadge;
 
-        HBox box = new HBox(12, newUsedCardBar(card), textBox, actionBadge);
+        if (usedCard.action() == Game.CardAction.DISCARDED) {
+            usedCardBadge = newBadge(usedCard.action().getLabel() + " by " + usedCard.player(), Color.rgb(254, 226, 226), Color.rgb(153, 27, 27));
+        } else {
+            usedCardBadge = newBadge(usedCard.action().getLabel() + " by " + usedCard.player(), Color.rgb(220, 252, 231), Color.rgb(22, 101, 52));
+        }
+
+        // Create a HBox to pack every element
+        HBox box = new HBox(12, newUsedCardBar(card), textBox, usedCardBadge);
         box.setAlignment(Pos.CENTER_LEFT);
         box.setFillHeight(true);
         box.setPadding(new Insets(12));
@@ -197,16 +211,6 @@ public class GameController implements DecisionMaker {
         bar.setMinWidth(6);
         bar.setBackground(setSolidBackground(cardColor(card)));
         return bar;
-    }
-
-    private Label usedCardBadge(Game.usedCard record) {
-        String text = record.action() + " by " + record.player();
-
-        if (record.action().equals("Discarded")) {
-            return newBadge(text, Color.rgb(254, 226, 226), Color.rgb(153, 27, 27));
-        }
-
-        return newBadge(text, Color.rgb(220, 252, 231), Color.rgb(22, 101, 52));
     }
 
     // Run when the user presses Play Selected button
