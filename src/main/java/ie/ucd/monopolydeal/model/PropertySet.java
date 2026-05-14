@@ -63,7 +63,7 @@ public class PropertySet {
         if(house){
             rent+=3;
         }if(hotel){
-            rent += 4;
+            rent += 1;
         }
         return rent ;
     }

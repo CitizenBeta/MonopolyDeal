@@ -1,8 +1,6 @@
 package ie.ucd.monopolydeal.game;
 
-import ie.ucd.monopolydeal.model.Card;
-import ie.ucd.monopolydeal.model.MoneyCard;
-import ie.ucd.monopolydeal.model.Player;
+import ie.ucd.monopolydeal.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -103,8 +101,15 @@ public class Game {
         return true;
     }
 
-    public void playSpecificCard(Player player, Card card, DecisionMaker dm){
-        player.addCardToBank(card);
+    public boolean playSpecificCard(Player player, Card card, DecisionMaker dm){
+        if(card instanceof MoneyCard) {
+            player.addCardToBank(card);
+            return true;
+        }
+        if(card instanceof PropertyCard){
+
+        }
+        return true;
     }
 
     public int getCurrBankTotal() {
