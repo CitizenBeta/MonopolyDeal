@@ -94,21 +94,34 @@ public class Game {
             return false;
         }
 
-        playSpecificCard(current,card,dm);
+        if (!playSpecificCard(current, card, dm)) {
+            return false;
+        }
+
         actionsUsed++;
         current.removeCardFromHand(card);
         addUsedCard(current, card, CardAction.PLAYED);
         return true;
     }
 
-    public boolean playSpecificCard(Player player, Card card, DecisionMaker dm){
-        if(card instanceof MoneyCard) {
+    public boolean playSpecificCard(Player player, Card card, DecisionMaker dm) {
+        if (card instanceof MoneyCard) {
             player.addCardToBank(card);
             return true;
         }
-        if(card instanceof PropertyCard){
 
+        if (card instanceof PropertyCard propertyCard) {
+            return player.addProperty(propertyCard);
         }
+
+        if (card instanceof WildPropertyCard wildCard) {
+            PropertyColor color = dm.selectColor("Choose a color for " + wildCard.getName(), wildCard.getPossibleColors());
+            if (color == null) {
+                return false;
+            }
+            return player.addWildProperty(wildCard, color);
+        }
+
         return true;
     }
 
@@ -134,6 +147,10 @@ public class Game {
             }
 
             for (Card discard : discards) {
+                if (discards.indexOf(discard) != discards.lastIndexOf(discard)) {
+                    return false;
+                }
+
                 if (!currPlayer.getCardsAtHand().contains(discard)) {
                     return false;
                 }

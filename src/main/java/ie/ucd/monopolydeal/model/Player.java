@@ -88,7 +88,9 @@ public class Player {
 
     public boolean addWildProperty(WildPropertyCard card, PropertyColor color) {
         if (!hand.contains(card)) return false;
+        if (color == null || !card.getPossibleColors().contains(color)) return false;
         PropertySet set = propertySets.get(color);
+        if (set == null) return false;
         if (!set.canAddProperty()) return false;
         card.setCurrentColor(color);
         hand.remove(card);
@@ -97,25 +99,42 @@ public class Player {
     }
 
     public void moveExistingWild(WildPropertyCard card, PropertyColor newColor) {
+        if (newColor == null || !card.getPossibleColors().contains(newColor)) {
+            return;
+        }
+
         PropertyColor currentColor = card.getCurrentColor();
+        if (currentColor == newColor) {
+            return;
+        }
+
+        PropertySet targetSet = propertySets.get(newColor);
+        if (targetSet == null || !targetSet.canAddProperty()) {
+            return;
+        }
+
         if (currentColor != null) {
             propertySets.get(currentColor).removeProperty(card);
         }
-        if (propertySets.get(newColor).canAddProperty()) {
-            card.setCurrentColor(newColor);
-            propertySets.get(newColor).addProperty(card);
-        } else {
-            if (currentColor != null) {
-                propertySets.get(currentColor).addProperty(card);
-            }
-        }
+
+        card.setCurrentColor(newColor);
+        targetSet.addProperty(card);
     }
 
     public void receivePropertyCard(Card card, PropertyColor color) {
-        propertySets.get(color).addProperty(card);
+        PropertySet set = propertySets.get(color);
+        if (set == null || !set.canAddProperty()) {
+            return;
+        }
+
         if (card instanceof WildPropertyCard wild) {
+            if (!wild.getPossibleColors().contains(color)) {
+                return;
+            }
             wild.setCurrentColor(color);
         }
+
+        set.addProperty(card);
     }
 
     public void removePropertyCard(Card card) {
