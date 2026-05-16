@@ -9,18 +9,19 @@ import java.util.Map;
 
 public class Player {
     public static final int MAX_HAND_SIZE = 7;
+    public static final int MAX_CARDS_AT_HAND = MAX_HAND_SIZE;
     public static final int MAX_ACTIONS_PER_TURN = 3;
 
     private final String name;
     private final int number;
     private final List<Card> hand = new ArrayList<>();
     private final List<Card> bankCash = new ArrayList<>();
-    private final Map<Color, PropertySet> propertySets = new EnumMap<>(Color.class);
+    private final Map<PropertyColor, PropertySet> propertySets = new EnumMap<>(PropertyColor.class);
 
     public Player(String name, int number) {
         this.name = name;
         this.number = number;
-        for (Color color : Color.values()) {
+        for (PropertyColor color : PropertyColor.values()) {
             propertySets.put(color, new PropertySet(color));
         }
     }
@@ -28,11 +29,23 @@ public class Player {
     public String getName() { return name; }
     public int getNumber() { return number; }
     public List<Card> getHand() { return hand; }
+    public List<Card> getCardsAtHand() { return hand; }
     public List<Card> getBankCash() { return bankCash; }
-    public Map<Color, PropertySet> getPropertySets() { return propertySets; }
+    public List<Card> getCardsAtBank() { return bankCash; }
+    public Map<PropertyColor, PropertySet> getPropertySets() { return propertySets; }
 
     public void addCardToHand(Card card) {
         if (card != null) hand.add(card);
+    }
+
+    public void removeCardFromHand(Card card) {
+        hand.remove(card);
+    }
+
+    public void addCardToBank(Card card) {
+        if (card != null) {
+            bankCash.add(card);
+        }
     }
 
     public boolean bankMoneyCard(MoneyCard card) {
@@ -73,7 +86,7 @@ public class Player {
         return true;
     }
 
-    public boolean addWildProperty(WildPropertyCard card, Color color) {
+    public boolean addWildProperty(WildPropertyCard card, PropertyColor color) {
         if (!hand.contains(card)) return false;
         PropertySet set = propertySets.get(color);
         if (!set.canAddProperty()) return false;
@@ -83,8 +96,8 @@ public class Player {
         return true;
     }
 
-    public void moveExistingWild(WildPropertyCard card, Color newColor) {
-        Color currentColor = card.getCurrentColor();
+    public void moveExistingWild(WildPropertyCard card, PropertyColor newColor) {
+        PropertyColor currentColor = card.getCurrentColor();
         if (currentColor != null) {
             propertySets.get(currentColor).removeProperty(card);
         }
@@ -98,7 +111,7 @@ public class Player {
         }
     }
 
-    public void receivePropertyCard(Card card, Color color) {
+    public void receivePropertyCard(Card card, PropertyColor color) {
         propertySets.get(color).addProperty(card);
         if (card instanceof WildPropertyCard wild) {
             wild.setCurrentColor(color);
@@ -124,19 +137,19 @@ public class Player {
         return stealable;
     }
 
-    public boolean addHouse(Color color) {
+    public boolean addHouse(PropertyColor color) {
         return propertySets.get(color).addHouse();
     }
 
-    public boolean addHotel(Color color) {
+    public boolean addHotel(PropertyColor color) {
         return propertySets.get(color).addHotel();
     }
 
-    public void removeHouse(Color color) {
+    public void removeHouse(PropertyColor color) {
         propertySets.get(color).removeHouse();
     }
 
-    public void removeHotel(Color color) {
+    public void removeHotel(PropertyColor color) {
         propertySets.get(color).removeHotel();
     }
 
@@ -152,15 +165,15 @@ public class Player {
         return countCompletedSets() >= 3;
     }
 
-    public List<Color> getFullSetColors() {
-        List<Color> colors = new ArrayList<>();
-        for (Map.Entry<Color, PropertySet> entry : propertySets.entrySet()) {
+    public List<PropertyColor> getFullSetColors() {
+        List<PropertyColor> colors = new ArrayList<>();
+        for (Map.Entry<PropertyColor, PropertySet> entry : propertySets.entrySet()) {
             if (entry.getValue().isFullSet()) colors.add(entry.getKey());
         }
         return colors;
     }
 
-    public void transferFullSetTo(Player recipient, Color color) {
+    public void transferFullSetTo(Player recipient, PropertyColor color) {
         PropertySet sourceSet = propertySets.get(color);
         if (!sourceSet.isFullSet()) return;
         PropertySet targetSet = recipient.getPropertySets().get(color);
@@ -191,6 +204,10 @@ public class Player {
             total += card.getBankValue();
         }
         return total;
+    }
+
+    public int getBankTotalValue() {
+        return getCashValue();
     }
 
     public int getTotalAssetValue() {

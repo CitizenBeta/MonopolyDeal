@@ -1,23 +1,14 @@
 package ie.ucd.monopolydeal.game;
 
-import ie.ucd.monopolydeal.model.ActionCard;
-import ie.ucd.monopolydeal.model.ActionType;
-import ie.ucd.monopolydeal.model.Card;
-import ie.ucd.monopolydeal.model.Color;
-import ie.ucd.monopolydeal.model.MoneyCard;
-import ie.ucd.monopolydeal.model.PropertyCard;
-import ie.ucd.monopolydeal.model.WildPropertyCard;
+import ie.ucd.monopolydeal.model.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class Deck {
     private final List<Card> drawPile = new ArrayList<>();
     private final List<Card> discardPile = new ArrayList<>();
     private final Random random;
+    private int totalCardNumber;
 
     public Deck() {
         this(new Random());
@@ -34,19 +25,19 @@ public class Deck {
         }
     }
 
-    private void addProperty(String name, Color color, int bank, int copies) {
+    private void addProperty(String name, PropertyColor color, int bank, int copies) {
         for (int i = 0; i < copies; i++) {
-            drawPile.add(new PropertyCard(name, color, bank));
+            drawPile.add(new PropertyCard(name, bank, color));
         }
     }
 
-    private void addAction(String name, ActionType type, int bank, int amount, int copies, List<Color> colors) {
+    private void addAction(String name, ActionType type, int bank, int amount, int copies, List<PropertyColor> colors) {
         for (int i = 0; i < copies; i++) {
-            drawPile.add(new ActionCard(name, type, bank, amount, colors));
+            drawPile.add(new ActionCard(name, bank, type, colors));
         }
     }
 
-    private void addWild(String name, int bank, List<Color> colors, int copies) {
+    private void addWild(String name, int bank, List<PropertyColor> colors, int copies) {
         for (int i = 0; i < copies; i++) {
             drawPile.add(new WildPropertyCard(name, colors, bank));
         }
@@ -60,67 +51,68 @@ public class Deck {
         addMoney("5M", 5, 2);
         addMoney("10M", 10, 1);
 
-        addProperty("Mediterranean Avenue", Color.BROWN, 1, 1);
-        addProperty("Baltic Avenue", Color.BROWN, 1, 1);
-        addProperty("Oriental Avenue", Color.LIGHT_BLUE, 1, 1);
-        addProperty("Vermont Avenue", Color.LIGHT_BLUE, 1, 1);
-        addProperty("Connecticut Avenue", Color.LIGHT_BLUE, 1, 1);
-        addProperty("St. Charles Place", Color.PINK, 2, 1);
-        addProperty("States Avenue", Color.PINK, 2, 1);
-        addProperty("Virginia Avenue", Color.PINK, 2, 1);
-        addProperty("St. James Place", Color.ORANGE, 2, 1);
-        addProperty("Tennessee Avenue", Color.ORANGE, 2, 1);
-        addProperty("New York Avenue", Color.ORANGE, 2, 1);
-        addProperty("Kentucky Avenue", Color.RED, 3, 1);
-        addProperty("Indiana Avenue", Color.RED, 3, 1);
-        addProperty("Illinois Avenue", Color.RED, 3, 1);
-        addProperty("Atlantic Avenue", Color.YELLOW, 3, 1);
-        addProperty("Ventnor Avenue", Color.YELLOW, 3, 1);
-        addProperty("Marvin Gardens", Color.YELLOW, 3, 1);
-        addProperty("Pacific Avenue", Color.GREEN, 4, 1);
-        addProperty("North Carolina Avenue", Color.GREEN, 4, 1);
-        addProperty("Pennsylvania Avenue", Color.GREEN, 4, 1);
-        addProperty("Park Place", Color.DARK_BLUE, 4, 1);
-        addProperty("Boardwalk", Color.DARK_BLUE, 4, 1);
-        addProperty("Reading Railroad", Color.RAILROAD, 2, 1);
-        addProperty("Pennsylvania Railroad", Color.RAILROAD, 2, 1);
-        addProperty("B&O Railroad", Color.RAILROAD, 2, 1);
-        addProperty("Short Line", Color.RAILROAD, 2, 1);
-        addProperty("Electric Company", Color.UTILITY, 2, 1);
-        addProperty("Water Works", Color.UTILITY, 2, 1);
+        addProperty("Mediterranean Avenue", PropertyColor.BROWN, 1, 1);
+        addProperty("Baltic Avenue", PropertyColor.BROWN, 1, 1);
+        addProperty("Oriental Avenue", PropertyColor.LIGHT_BLUE, 1, 1);
+        addProperty("Vermont Avenue", PropertyColor.LIGHT_BLUE, 1, 1);
+        addProperty("Connecticut Avenue", PropertyColor.LIGHT_BLUE, 1, 1);
+        addProperty("St. Charles Place", PropertyColor.PINK, 2, 1);
+        addProperty("States Avenue", PropertyColor.PINK, 2, 1);
+        addProperty("Virginia Avenue", PropertyColor.PINK, 2, 1);
+        addProperty("St. James Place", PropertyColor.ORANGE, 2, 1);
+        addProperty("Tennessee Avenue", PropertyColor.ORANGE, 2, 1);
+        addProperty("New York Avenue", PropertyColor.ORANGE, 2, 1);
+        addProperty("Kentucky Avenue", PropertyColor.RED, 3, 1);
+        addProperty("Indiana Avenue", PropertyColor.RED, 3, 1);
+        addProperty("Illinois Avenue", PropertyColor.RED, 3, 1);
+        addProperty("Atlantic Avenue", PropertyColor.YELLOW, 3, 1);
+        addProperty("Ventnor Avenue", PropertyColor.YELLOW, 3, 1);
+        addProperty("Marvin Gardens", PropertyColor.YELLOW, 3, 1);
+        addProperty("Pacific Avenue", PropertyColor.GREEN, 4, 1);
+        addProperty("North Carolina Avenue", PropertyColor.GREEN, 4, 1);
+        addProperty("Pennsylvania Avenue", PropertyColor.GREEN, 4, 1);
+        addProperty("Park Place", PropertyColor.DARK_BLUE, 4, 1);
+        addProperty("Boardwalk", PropertyColor.DARK_BLUE, 4, 1);
+        addProperty("Reading Railroad", PropertyColor.RAILROAD, 2, 1);
+        addProperty("Pennsylvania Railroad", PropertyColor.RAILROAD, 2, 1);
+        addProperty("B. & O. Railroad", PropertyColor.RAILROAD, 2, 1);
+        addProperty("Short Line", PropertyColor.RAILROAD, 2, 1);
+        addProperty("Electric Company", PropertyColor.UTILITY, 2, 1);
+        addProperty("Water Works", PropertyColor.UTILITY, 2, 1);
 
-        addWild("Brown/Light Blue Wild", 1, Arrays.asList(Color.BROWN, Color.LIGHT_BLUE), 1);
-        addWild("Pink/Orange Wild", 2, Arrays.asList(Color.PINK, Color.ORANGE), 2);
-        addWild("Red/Yellow Wild", 3, Arrays.asList(Color.RED, Color.YELLOW), 2);
-        addWild("Green/Dark Blue Wild", 4, Arrays.asList(Color.GREEN, Color.DARK_BLUE), 2);
-        addWild("Railroad/Green Wild", 4, Arrays.asList(Color.RAILROAD, Color.GREEN), 1);
-        addWild("Railroad/Dark Blue Wild", 4, Arrays.asList(Color.RAILROAD, Color.DARK_BLUE), 1);
-        addWild("Railroad/Utility Wild", 2, Arrays.asList(Color.RAILROAD, Color.UTILITY), 1);
-        addWild("Any Color Wild", 0, Color.getColors(), 2);
+        addWild("Light Blue/Brown Wild", 1, Arrays.asList(PropertyColor.LIGHT_BLUE, PropertyColor.BROWN), 1);
+        addWild("Light Blue/Railroad Wild", 4, Arrays.asList(PropertyColor.LIGHT_BLUE, PropertyColor.RAILROAD), 1);
+        addWild("Pink/Orange Wild", 2, Arrays.asList(PropertyColor.PINK, PropertyColor.ORANGE), 2);
+        addWild("Red/Yellow Wild", 3, Arrays.asList(PropertyColor.RED, PropertyColor.YELLOW), 2);
+        addWild("Dark Blue/Green Wild", 4, Arrays.asList(PropertyColor.DARK_BLUE, PropertyColor.GREEN), 1);
+        addWild("Railroad/Green Wild", 4, Arrays.asList(PropertyColor.RAILROAD, PropertyColor.GREEN), 1);
+        addWild("Utility/Railroad Wild", 2, Arrays.asList(PropertyColor.UTILITY, PropertyColor.RAILROAD), 1);
+        addWild("10 Color Wild", 0, PropertyColor.getColors(), 2);
 
         addAction("Pass Go", ActionType.PASS_GO, 1, 2, 10, Collections.emptyList());
         addAction("Debt Collector", ActionType.DEBT_COLLECTOR, 3, 5, 3, Collections.emptyList());
-        addAction("It's My Birthday", ActionType.BIRTHDAY, 2, 2, 3, Collections.emptyList());
+        addAction("It's My Birthday!", ActionType.TODAY_IS_MY_BIRTHDAY, 2, 2, 3, Collections.emptyList());
         addAction("Sly Deal", ActionType.SLY_DEAL, 3, 0, 3, Collections.emptyList());
         addAction("Forced Deal", ActionType.FORCED_DEAL, 3, 0, 3, Collections.emptyList());
         addAction("Deal Breaker", ActionType.DEAL_BREAKER, 5, 0, 2, Collections.emptyList());
         addAction("House", ActionType.HOUSE, 3, 0, 3, Collections.emptyList());
         addAction("Hotel", ActionType.HOTEL, 4, 0, 2, Collections.emptyList());
-        addAction("Just Say No", ActionType.JUST_SAY_NO, 4, 0, 3, Collections.emptyList());
-        addAction("Double The Rent", ActionType.DOUBLE_RENT, 1, 0, 2, Collections.emptyList());
+        addAction("Just Say No!", ActionType.JUST_SAY_NO, 4, 0, 3, Collections.emptyList());
+        addAction("Double The Rent!", ActionType.DOUBLE_RENT, 1, 0, 2, Collections.emptyList());
 
-        addAction("Brown/Light Blue Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(Color.BROWN, Color.LIGHT_BLUE));
-        addAction("Pink/Orange Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(Color.PINK, Color.ORANGE));
-        addAction("Red/Yellow Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(Color.RED, Color.YELLOW));
-        addAction("Green/Dark Blue Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(Color.GREEN, Color.DARK_BLUE));
-        addAction("Railroad/Utility Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(Color.RAILROAD, Color.UTILITY));
-        addAction("Wild Rent", ActionType.MULTI_RENT, 3, 0, 3, Color.getColors());
+        addAction("Light Blue/Brown Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(PropertyColor.LIGHT_BLUE, PropertyColor.BROWN));
+        addAction("Pink/Orange Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(PropertyColor.PINK, PropertyColor.ORANGE));
+        addAction("Red/Yellow Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(PropertyColor.RED, PropertyColor.YELLOW));
+        addAction("Dark Blue/Green Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(PropertyColor.DARK_BLUE, PropertyColor.GREEN));
+        addAction("Railroad/Utility Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(PropertyColor.RAILROAD, PropertyColor.UTILITY));
+        addAction("Any Rent", ActionType.MULTI_RENT, 3, 0, 3, PropertyColor.getColors());
     }
 
     public void reset() {
         drawPile.clear();
         discardPile.clear();
         initializeStandardDeck();
+        totalCardNumber = drawPile.size();
         shuffle();
     }
 
@@ -148,12 +140,24 @@ public class Deck {
         return drawPile.size();
     }
 
+    public int getDrawPileNumber() {
+        return drawPile.size();
+    }
+
     public int getDiscardPileCount() {
         return discardPile.size();
     }
 
+    public int getDiscardPileNumber() {
+        return discardPile.size();
+    }
+
     public int getTotalCardCount() {
-        return drawPile.size() + discardPile.size();
+        return totalCardNumber;
+    }
+
+    public int getTotalCardNumber() {
+        return totalCardNumber;
     }
 
     private void refillFromDiscard() {

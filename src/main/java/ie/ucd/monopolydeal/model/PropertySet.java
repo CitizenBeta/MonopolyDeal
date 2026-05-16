@@ -4,16 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PropertySet {
-    private final Color color;
+    private final PropertyColor color;
     private final List<Card> cards = new ArrayList<>();
     private int houseCount;
     private int hotelCount;
 
-    public PropertySet(Color color) {
+    public PropertySet(PropertyColor color) {
         this.color = color;
     }
 
-    public Color getColor() {
+    public PropertyColor getColor() {
         return color;
     }
 
@@ -34,7 +34,7 @@ public class PropertySet {
     }
 
     public boolean isFullSet() {
-        return cards.size() >= color.getFullSetSize();
+        return cards.size() >= color.getSize();
     }
 
     public boolean addProperty(Card card) {
@@ -53,7 +53,7 @@ public class PropertySet {
     }
 
     public boolean canAddProperty() {
-        return cards.size() < color.getFullSetSize();
+        return cards.size() < color.getSize();
     }
 
     public boolean addHouse() {
@@ -113,7 +113,7 @@ public class PropertySet {
     }
 
     public String summary() {
-        return color.getDisplayName() + " set: " + cards.size() + "/" + color.getFullSetSize() +
+        return color.getName() + " set: " + cards.size() + "/" + color.getSize() +
                 ", rent=" + calculateRent() + "M, house=" + houseCount + ", hotel=" + hotelCount;
     }
 }
