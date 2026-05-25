@@ -5,6 +5,7 @@ import java.util.List;
 
 public class PropertySet {
     private final PropertyColor color;
+    // Holds only property cards; house and hotel upgrades are tracked separately.
     private final List<Card> cards = new ArrayList<>();
     private ActionCard houseCard;
     private ActionCard hotelCard;
@@ -33,6 +34,7 @@ public class PropertySet {
     }
 
     public List<Card> getAllCards() {
+        // Combines base properties and upgrades for asset-value and ownership checks.
         List<Card> allCards = new ArrayList<>(cards);
         allCards.addAll(getUpgradeCards());
         return allCards;
@@ -69,6 +71,7 @@ public class PropertySet {
     }
 
     public boolean addProperty(Card card) {
+        // Refuses extra cards once the set has reached the Monopoly color size.
         if (!canAddProperty()) {
             return false;
         }
@@ -85,6 +88,7 @@ public class PropertySet {
     }
 
     public boolean addHouse(ActionCard card) {
+        // A house must be the correct action type and must satisfy the set-state rules.
         if (!canAddHouse() || card == null || card.getActionType() != ActionType.HOUSE) {
             return false;
         }
@@ -93,6 +97,7 @@ public class PropertySet {
     }
 
     public boolean addHotel(ActionCard card) {
+        // A hotel depends on an existing house and the absence of another hotel.
         if (!canAddHotel() || card == null || card.getActionType() != ActionType.HOTEL) {
             return false;
         }
@@ -103,6 +108,7 @@ public class PropertySet {
     public boolean removeUpgradeCard(Card card) {
         if (card == houseCard) {
             houseCard = null;
+            // Removing the house also removes the hotel because a hotel cannot stand alone.
             if (hotelCard != null) {
                 hotelCard = null;
             }
@@ -144,6 +150,7 @@ public class PropertySet {
             return 0;
         }
         int rent = color.getRent(cards.size());
+        // Upgrade bonuses apply only after the property group is complete.
         if (isFullSet()) {
             rent += getHouseCount() * 3;
             rent += getHotelCount() * 4;
@@ -152,6 +159,7 @@ public class PropertySet {
     }
 
     public void transferUpgradesTo(PropertySet target) {
+        // Copies upgrades only into empty target upgrade slots.
         if (houseCard != null && target.houseCard == null) {
             target.houseCard = houseCard;
         }
@@ -162,6 +170,7 @@ public class PropertySet {
     }
 
     public void restore(List<Card> propertyCards, ActionCard houseCard, ActionCard hotelCard) {
+        // Rebuilds the set from a saved state, replacing all current cards and upgrades.
         cards.clear();
         cards.addAll(propertyCards);
         this.houseCard = houseCard;

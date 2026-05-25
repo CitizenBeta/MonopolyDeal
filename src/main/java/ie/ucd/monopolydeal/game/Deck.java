@@ -7,15 +7,18 @@ import java.util.*;
 public class Deck {
     private final List<Card> drawPile = new ArrayList<>();
     private final List<Card> discardPile = new ArrayList<>();
+    // The random object can be injected so tests can use a predictable shuffle.
     private final Random random;
     private int totalCardNumber;
 
     public Deck() {
         this(new Random());
+
     }
 
     public Deck(Random random) {
         this.random = random;
+        // Build a complete shuffled deck as soon as the deck object is created.
         reset();
     }
 
@@ -44,6 +47,7 @@ public class Deck {
     }
 
     private void initializeStandardDeck() {
+        // The card counts below define the standard Monopoly Deal deck used by the game.
         addMoney("1M", 1, 6);
         addMoney("2M", 2, 5);
         addMoney("3M", 3, 3);
@@ -79,7 +83,7 @@ public class Deck {
         addProperty("Short Line", PropertyColor.RAILROAD, 2, 1);
         addProperty("Electric Company", PropertyColor.UTILITY, 2, 1);
         addProperty("Water Works", PropertyColor.UTILITY, 2, 1);
-
+        // Wild property cards list all colors they are allowed to represent.
         addWild("Light Blue/Brown Wild", 1, Arrays.asList(PropertyColor.LIGHT_BLUE, PropertyColor.BROWN), 1);
         addWild("Light Blue/Railroad Wild", 4, Arrays.asList(PropertyColor.LIGHT_BLUE, PropertyColor.RAILROAD), 1);
         addWild("Pink/Orange Wild", 2, Arrays.asList(PropertyColor.PINK, PropertyColor.ORANGE), 2);
@@ -88,7 +92,7 @@ public class Deck {
         addWild("Railroad/Green Wild", 4, Arrays.asList(PropertyColor.RAILROAD, PropertyColor.GREEN), 1);
         addWild("Utility/Railroad Wild", 2, Arrays.asList(PropertyColor.UTILITY, PropertyColor.RAILROAD), 1);
         addWild("10 Color Wild", 0, PropertyColor.getColors(), 2);
-
+        // Action cards still have a bank value, because players may use them as money.
         addAction("Pass Go", ActionType.PASS_GO, 1, 2, 10, Collections.emptyList());
         addAction("Debt Collector", ActionType.DEBT_COLLECTOR, 3, 5, 3, Collections.emptyList());
         addAction("It's My Birthday!", ActionType.TODAY_IS_MY_BIRTHDAY, 2, 2, 3, Collections.emptyList());
@@ -99,7 +103,7 @@ public class Deck {
         addAction("Hotel", ActionType.HOTEL, 4, 0, 2, Collections.emptyList());
         addAction("Just Say No!", ActionType.JUST_SAY_NO, 4, 0, 3, Collections.emptyList());
         addAction("Double The Rent!", ActionType.DOUBLE_RENT, 1, 0, 2, Collections.emptyList());
-
+        // Rent cards store their valid colors; multi-rent uses all property colors.
         addAction("Light Blue/Brown Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(PropertyColor.LIGHT_BLUE, PropertyColor.BROWN));
         addAction("Pink/Orange Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(PropertyColor.PINK, PropertyColor.ORANGE));
         addAction("Red/Yellow Rent", ActionType.RENT, 1, 0, 2, Arrays.asList(PropertyColor.RED, PropertyColor.YELLOW));
@@ -109,6 +113,7 @@ public class Deck {
     }
 
     public void reset() {
+        // Rebuild from scratch so no cards from a previous game remain in either pile.
         drawPile.clear();
         discardPile.clear();
         initializeStandardDeck();
@@ -123,6 +128,7 @@ public class Deck {
     public Card draw() {
         if (drawPile.isEmpty()) {
             refillFromDiscard();
+            // Refill lazily only when a draw is attempted and the pile is empty
         }
         if (drawPile.isEmpty()) {
             return null;
@@ -138,6 +144,7 @@ public class Deck {
 
     public void putAtDrawPileBottom(Card card) {
         if (card != null) {
+            // End-turn discards are recycled to the bottom instead of the discard pile.
             drawPile.add(0, card);
         }
     }
@@ -170,6 +177,7 @@ public class Deck {
         if (discardPile.isEmpty()) {
             return;
         }
+        // Keep the latest discard visible, then shuffle the older discards back into the draw pile.
         Card lastDiscard = discardPile.remove(discardPile.size() - 1);
         drawPile.addAll(discardPile);
         discardPile.clear();
