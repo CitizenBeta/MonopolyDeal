@@ -767,17 +767,17 @@ public class GameController implements DecisionMaker {
             bank.getChildren().add(emptyBank);
         } else {
             FlowPane bankCards = new FlowPane(6, 6);
-            bankCards.setPrefWrapLength(160);
+            bankCards.setPrefWrapLength(120);
             for (Card card : player.getCardsAtBank()) {
                 bankCards.getChildren().add(newBankBox(card));
             }
             bank.getChildren().add(bankCards);
         }
-        bank.setMinWidth(0);
-        bank.setPrefWidth(0);
-        bank.setMaxWidth(Double.MAX_VALUE);
+        bank.setMinWidth(110);
+        bank.setPrefWidth(130);
+        bank.setMaxWidth(150);
         bank.setFillWidth(true);
-        HBox.setHgrow(bank, Priority.ALWAYS);
+        HBox.setHgrow(bank, Priority.NEVER);
 
         // Add property section
         VBox properties = new VBox(4);
@@ -789,10 +789,14 @@ public class GameController implements DecisionMaker {
         properties.getChildren().add(propertiesHeader);
 
         boolean hasProperties = false;
+        FlowPane propertyGroups = new FlowPane(10, 8);
+        propertyGroups.setMaxWidth(Double.MAX_VALUE);
+        propertyGroups.prefWrapLengthProperty().bind(properties.widthProperty());
+
         for (PropertySet propertySet : player.getPropertySets().values()) {
             if (!propertySet.getCards().isEmpty()) {
                 hasProperties = true;
-                properties.getChildren().add(newPropertySetBox(propertySet));
+                propertyGroups.getChildren().add(newPropertySetBox(propertySet));
             }
         }
 
@@ -801,6 +805,8 @@ public class GameController implements DecisionMaker {
             emptyProperties.setWrapText(true);
             emptyProperties.setTextFill(Color.rgb(100, 116, 139));
             properties.getChildren().add(emptyProperties);
+        } else {
+            properties.getChildren().add(propertyGroups);
         }
         properties.setMinWidth(0);
         properties.setPrefWidth(0);
@@ -808,7 +814,11 @@ public class GameController implements DecisionMaker {
         properties.setFillWidth(true);
         HBox.setHgrow(properties, Priority.ALWAYS);
 
-        HBox cardArea = new HBox(16, bank, properties);
+        Separator sectionLine = new Separator();
+        sectionLine.setOrientation(javafx.geometry.Orientation.VERTICAL);
+        sectionLine.setPadding(new Insets(0, 2, 0, 2));
+
+        HBox cardArea = new HBox(10, bank, sectionLine, properties);
         cardArea.setAlignment(Pos.TOP_LEFT);
         cardArea.setFillHeight(true);
         cardArea.setMinWidth(0);
@@ -841,11 +851,14 @@ public class GameController implements DecisionMaker {
         Label colorName = new Label(color.getName());
         colorName.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
         colorName.setTextFill(propertyColor(color));
+        colorName.setMinWidth(Region.USE_PREF_SIZE);
 
-        Label setStatus = newBadge("Cards " + propertySet.getCards().size()
-                + "/" + color.getSize() + " | Rent " + propertySet.calculateRent() + "M");
+        Label setStatus = new Label("Set " + propertySet.getCards().size()
+                + "/" + color.getSize() + " | " + propertySet.calculateRent() + "M");
+        setStatus.setFont(Font.font("Segoe UI", 11));
+        setStatus.setTextFill(Color.rgb(100, 116, 139));
 
-        HBox header = new HBox(6, colorName, setStatus);
+        VBox header = new VBox(1, colorName, setStatus);
         header.setAlignment(Pos.CENTER_LEFT);
 
         FlowPane cards = new FlowPane(6, 6);
@@ -859,6 +872,9 @@ public class GameController implements DecisionMaker {
 
         VBox box = new VBox(4, header, cards);
         box.setPadding(new Insets(4, 0, 0, 0));
+        box.setMinWidth(160);
+        box.setPrefWidth(185);
+        box.setMaxWidth(230);
         return box;
     }
 
@@ -1457,3 +1473,4 @@ public class GameController implements DecisionMaker {
         return owner.getName() + " must pay " + amount + "M. Selected " + selectedTotal + "M.";
     }
 }
+
