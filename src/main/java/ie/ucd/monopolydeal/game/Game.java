@@ -4,32 +4,33 @@ import ie.ucd.monopolydeal.model.*;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 public class Game {
+    private static final int INITIAL_HAND_SIZE = 5;
+    private static final int NORMAL_TURN_DRAW = 2;
+    private static final int PASS_GO_DRAW = 2;
+    private static final int DEBT_COLLECTOR_AMOUNT = 5;
+    private static final int BIRTHDAY_AMOUNT = 2;
+
     private List<Player> players = new ArrayList<>();
     private int currentPlayerIndex;
     private int actionsUsed;
     private int turnCount;
     private boolean started;
-    private Deck deck = new Deck() ;
+    private Deck deck = new Deck();
     private List<UsedCard> usedCards = new ArrayList<>();
     private boolean gameOver;
 
     public void setup(List<String> names) {
-        players.clear();
-        usedCards.clear();
-        deck = new Deck();
-        currentPlayerIndex = 0;
-        actionsUsed = 0;
-        turnCount = 0;
-        started = true;
-        gameOver = false;
+        resetState();
 
         for (int i = 0; i < names.size(); i++) {
             Player player = new Player(names.get(i), i + 1);
-            drawCards(player, 5);
+            drawCards(player, INITIAL_HAND_SIZE);
             players.add(player);
         }
 
@@ -40,7 +41,7 @@ public class Game {
         return new ArrayList<>(usedCards);
     }
 
-    public boolean isOver(){
+    public boolean isOver() {
         return gameOver;
     }
 
@@ -81,39 +82,27 @@ public class Game {
         return deck.getTotalCardNumber();
     }
 
-    public List<Player> getOtherPlayers(){
-        List<Player> otherPlayers = new ArrayList<>();
-        otherPlayers.addAll(getPlayers());
+    public List<Player> getOtherPlayers() {
+        List<Player> otherPlayers = new ArrayList<>(players);
         otherPlayers.remove(getCurrPlayer());
         return otherPlayers;
     }
 
     public boolean playCard(Card card, DecisionMaker dm) {
-        if (!started || gameOver || card == null) {
+        if (!canTryCardFromCurrentHand(card)) {
             return false;
         }
 
         Player current = getCurrPlayer();
-        if (!current.getCardsAtHand().contains(card)) {
-            return false;
-        }
-
-        if (actionsUsed >= Player.MAX_ACTIONS_PER_TURN) {
-            return false;
-        }
-
         GameSnapshot snapshot = new GameSnapshot();
+
+        // A card action can ask the user for several decisions. Roll back if any step is cancelled.
         if (!playSpecificCard(current, card, dm)) {
             snapshot.restore();
             return false;
         }
 
-        actionsUsed++;
-        current.removeCardFromHand(card);
-        addUsedCard(current, card, CardAction.PLAYED);
-        if (current.hasWon()) {
-            gameOver = true;
-        }
+        finishPlayedCard(current, card);
         return true;
     }
 
@@ -128,11 +117,12 @@ public class Game {
         }
 
         if (card instanceof WildPropertyCard wildCard) {
-            PropertyColor color = dm.selectColor("Choose a color for " + wildCard.getName(), wildCard.getPossibleColors());
-            if (color == null) {
-                return false;
-            }
-            return player.addWildProperty(wildCard, color);
+            PropertyColor color = chooseSingleOrPrompt(
+                    wildCard.getPossibleColors(),
+                    dm,
+                    "Choose a color for " + wildCard.getName()
+            );
+            return color != null && player.addWildProperty(wildCard, color);
         }
 
         if (card instanceof ActionCard actionCard) {
@@ -140,6 +130,69 @@ public class Game {
         }
 
         return false;
+    }
+
+    public boolean canPlayCard(Card card) {
+        if (!canTryCardFromCurrentHand(card)) {
+            return false;
+        }
+
+        Player current = getCurrPlayer();
+
+        if (card instanceof PropertyCard || card instanceof WildPropertyCard) {
+            return !receivableColors(current, card).isEmpty();
+        }
+
+        // Action cards are allowed here because the player may still choose to bank them.
+        return card instanceof MoneyCard || card instanceof ActionCard;
+    }
+
+    public int getCurrBankTotal() {
+        return totalValue(getCurrPlayer().getCardsAtBank());
+    }
+
+    public boolean endTurn(DecisionMaker dm) {
+        if (!started || players.isEmpty() || gameOver) {
+            return false;
+        }
+
+        Player current = getCurrPlayer();
+        int discardCount = current.getCardsAtHand().size() - Player.MAX_CARDS_AT_HAND;
+
+        if (discardCount > 0 && !discardExtraCards(current, discardCount, dm)) {
+            return false;
+        }
+
+        advanceToNextPlayer();
+        startTurn();
+        return true;
+    }
+
+    private void resetState() {
+        players.clear();
+        usedCards.clear();
+        deck = new Deck();
+        currentPlayerIndex = 0;
+        actionsUsed = 0;
+        turnCount = 0;
+        started = true;
+        gameOver = false;
+    }
+
+    private boolean canTryCardFromCurrentHand(Card card) {
+        return started
+                && !gameOver
+                && card != null
+                && !players.isEmpty()
+                && actionsUsed < Player.MAX_ACTIONS_PER_TURN
+                && getCurrPlayer().getCardsAtHand().contains(card);
+    }
+
+    private void finishPlayedCard(Player player, Card card) {
+        actionsUsed++;
+        player.removeCardFromHand(card);
+        addUsedCard(player, card, CardAction.PLAYED);
+        gameOver = player.hasWon();
     }
 
     private boolean playActionCard(Player player, ActionCard action, DecisionMaker dm) {
@@ -169,41 +222,25 @@ public class Game {
     }
 
     private boolean playPassGo(Player player) {
-        drawCards(player, 2);
+        drawCards(player, PASS_GO_DRAW);
         return true;
     }
 
     private boolean playDebtCollector(Player player, DecisionMaker dm) {
-        List<Player> targets = playersWithPaymentOptions(player);
-        Player target = dm.selectNextPlayer(player, targets, "Choose a player to pay you 5M.");
-        if (target == null) {
-            return false;
-        }
-
-        return collectPayment(target, player, 5, dm);
+        return collectFromChosenPlayer(
+                player,
+                DEBT_COLLECTOR_AMOUNT,
+                dm,
+                "Choose a player to pay you 5M."
+        );
     }
 
     private boolean playBirthday(Player player, DecisionMaker dm) {
-        List<Player> targets = playersWithPaymentOptions(player);
-        if (targets.isEmpty()) {
-            return false;
-        }
-
-        for (Player target : targets) {
-            if (!collectPayment(target, player, 2, dm)) {
-                return false;
-            }
-        }
-        return true;
+        return collectFromEveryAvailablePlayer(player, BIRTHDAY_AMOUNT, dm);
     }
 
     private boolean playRentCard(Player player, ActionCard action, DecisionMaker dm, int multiplier) {
-        List<PropertyColor> colors = getRentColors(player, action);
-        if (colors.isEmpty()) {
-            return false;
-        }
-
-        PropertyColor color = chooseRentColor(dm, colors);
+        PropertyColor color = chooseRentColor(player, action, dm);
         if (color == null) {
             return false;
         }
@@ -214,41 +251,25 @@ public class Game {
         }
 
         if (action.getActionType() == ActionType.MULTI_RENT) {
-            List<Player> targets = playersWithPaymentOptions(player);
-            Player target = dm.selectNextPlayer(player, targets, "Choose a player to pay " + amount + "M rent.");
-            if (target == null) {
-                return false;
-            }
-            return collectPayment(target, player, amount, dm);
+            return collectFromChosenPlayer(
+                    player,
+                    amount,
+                    dm,
+                    "Choose a player to pay " + amount + "M rent."
+            );
         }
 
-        boolean hasPayer = false;
-        for (Player target : getOtherPlayers()) {
-            if (!hasPaymentOptions(target, player)) {
-                continue;
-            }
-
-            hasPayer = true;
-            if (!collectPayment(target, player, amount, dm)) {
-                return false;
-            }
-        }
-        return hasPayer;
+        return collectFromEveryAvailablePlayer(player, amount, dm);
     }
 
-    private PropertyColor chooseRentColor(DecisionMaker dm, List<PropertyColor> colors) {
-        if (colors.size() == 1) {
-            return colors.getFirst();
-        }
-
-        return dm.selectColor("Choose rent color.", colors);
+    private PropertyColor chooseRentColor(Player player, ActionCard action, DecisionMaker dm) {
+        return chooseSingleOrPrompt(getRentColors(player, action), dm, "Choose rent color.");
     }
 
     private List<PropertyColor> getRentColors(Player player, ActionCard action) {
-        List<PropertyColor> sourceColors = action.getColors();
-        if (action.getActionType() == ActionType.MULTI_RENT) {
-            sourceColors = PropertyColor.getColors();
-        }
+        List<PropertyColor> sourceColors = action.getActionType() == ActionType.MULTI_RENT
+                ? PropertyColor.getColors()
+                : action.getColors();
 
         List<PropertyColor> colors = new ArrayList<>();
         for (PropertyColor color : sourceColors) {
@@ -265,13 +286,7 @@ public class Game {
             return false;
         }
 
-        List<Card> rentCards = new ArrayList<>();
-        for (Card card : player.getCardsAtHand()) {
-            if (card instanceof ActionCard actionCard && card != doubleRent && isRentCard(actionCard)) {
-                rentCards.add(card);
-            }
-        }
-
+        List<Card> rentCards = rentCardsInHandExcept(player, doubleRent);
         Card selected = dm.selectPropertyCard(player, rentCards, "Choose a rent card to double.");
         if (!(selected instanceof ActionCard rentCard)) {
             return false;
@@ -287,8 +302,19 @@ public class Game {
         return true;
     }
 
+    private List<Card> rentCardsInHandExcept(Player player, Card excludedCard) {
+        List<Card> rentCards = new ArrayList<>();
+        for (Card card : player.getCardsAtHand()) {
+            if (card instanceof ActionCard actionCard && card != excludedCard && isRentCard(actionCard)) {
+                rentCards.add(card);
+            }
+        }
+        return rentCards;
+    }
+
     private boolean isRentCard(ActionCard actionCard) {
-        return actionCard.getActionType() == ActionType.RENT || actionCard.getActionType() == ActionType.MULTI_RENT;
+        ActionType type = actionCard.getActionType();
+        return type == ActionType.RENT || type == ActionType.MULTI_RENT;
     }
 
     private boolean playSlyDeal(Player player, DecisionMaker dm) {
@@ -304,11 +330,7 @@ public class Game {
 
         List<Card> cards = stealableCards(target, player);
         Card card = dm.selectPropertyCard(target, cards, "Choose a property to steal.");
-        if (card == null) {
-            return false;
-        }
-
-        return transferPropertyCard(target, player, card, dm);
+        return card != null && transferPropertyCard(target, player, card, dm);
     }
 
     private boolean playForcedDeal(Player player, DecisionMaker dm) {
@@ -322,19 +344,21 @@ public class Game {
             return true;
         }
 
-        List<Card> ownCards = stealableCards(player, target);
-        Card ownCard = dm.selectPropertyCard(player, ownCards, "Choose one of your properties to give.");
+        Card ownCard = dm.selectPropertyCard(
+                player,
+                stealableCards(player, target),
+                "Choose one of your properties to give."
+        );
         if (ownCard == null) {
             return false;
         }
 
-        List<Card> targetCards = stealableCards(target, player);
-        Card targetCard = dm.selectPropertyCard(target, targetCards, "Choose one property to receive.");
-        if (targetCard == null) {
-            return false;
-        }
-
-        return swapProperties(player, ownCard, target, targetCard, dm);
+        Card targetCard = dm.selectPropertyCard(
+                target,
+                stealableCards(target, player),
+                "Choose one property to receive."
+        );
+        return targetCard != null && swapProperties(player, ownCard, target, targetCard, dm);
     }
 
     private boolean playDealBreaker(Player player, DecisionMaker dm) {
@@ -348,45 +372,37 @@ public class Game {
             return true;
         }
 
-        List<PropertyColor> colors = transferableFullSetColors(target, player);
-        PropertyColor color = dm.selectColor("Choose a full set to steal.", colors);
-        if (color == null) {
-            return false;
-        }
-
-        return target.transferFullSetTo(player, color);
+        PropertyColor color = chooseSingleOrPrompt(
+                transferableFullSetColors(target, player),
+                dm,
+                "Choose a full set to steal."
+        );
+        return color != null && target.transferFullSetTo(player, color);
     }
 
     private boolean playHouse(Player player, ActionCard house, DecisionMaker dm) {
-        List<PropertyColor> colors = buildableColors(player, true);
-        PropertyColor color = dm.selectColor("Choose a full set for House.", colors);
-        if (color == null) {
-            return false;
-        }
-        return player.addHouse(color, house);
+        PropertyColor color = chooseSingleOrPrompt(
+                buildableColors(player, true),
+                dm,
+                "Choose a full set for House."
+        );
+        return color != null && player.addHouse(color, house);
     }
 
     private boolean playHotel(Player player, ActionCard hotel, DecisionMaker dm) {
-        List<PropertyColor> colors = buildableColors(player, false);
-        PropertyColor color = dm.selectColor("Choose a full set for Hotel.", colors);
-        if (color == null) {
-            return false;
-        }
-        return player.addHotel(color, hotel);
+        PropertyColor color = chooseSingleOrPrompt(
+                buildableColors(player, false),
+                dm,
+                "Choose a full set for Hotel."
+        );
+        return color != null && player.addHotel(color, hotel);
     }
 
-    private List<PropertyColor> buildableColors(Player player, boolean house) {
+    private List<PropertyColor> buildableColors(Player player, boolean forHouse) {
         List<PropertyColor> colors = new ArrayList<>();
         for (PropertySet set : player.getPropertySets().values()) {
-            if (!canBuildOn(set.getColor())) {
-                continue;
-            }
-
-            if (house && set.canAddHouse()) {
-                colors.add(set.getColor());
-            }
-
-            if (!house && set.canAddHotel()) {
+            if (canBuildOn(set.getColor())
+                    && ((forHouse && set.canAddHouse()) || (!forHouse && set.canAddHotel()))) {
                 colors.add(set.getColor());
             }
         }
@@ -395,6 +411,26 @@ public class Game {
 
     private boolean canBuildOn(PropertyColor color) {
         return color != PropertyColor.RAILROAD && color != PropertyColor.UTILITY;
+    }
+
+    private boolean collectFromChosenPlayer(Player receiver, int amount, DecisionMaker dm, String prompt) {
+        List<Player> targets = playersWithPaymentOptions(receiver);
+        Player payer = dm.selectNextPlayer(receiver, targets, prompt);
+        return payer != null && collectPayment(payer, receiver, amount, dm);
+    }
+
+    private boolean collectFromEveryAvailablePlayer(Player receiver, int amount, DecisionMaker dm) {
+        List<Player> payers = playersWithPaymentOptions(receiver);
+        if (payers.isEmpty()) {
+            return false;
+        }
+
+        for (Player payer : payers) {
+            if (!collectPayment(payer, receiver, amount, dm)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean collectPayment(Player payer, Player receiver, int amount, DecisionMaker dm) {
@@ -413,26 +449,12 @@ public class Game {
 
         int requiredAmount = Math.min(amount, totalValue(options));
         List<Card> selectedCards = dm.selectPaymentCards(payer, options, requiredAmount);
-        if (selectedCards == null || selectedCards.isEmpty()) {
+        List<Card> validCards = validatePaymentSelection(options, selectedCards, requiredAmount);
+        if (validCards == null) {
             return false;
         }
 
-        List<Card> uniqueCards = new ArrayList<>();
-        int paid = 0;
-        for (Card selected : selectedCards) {
-            if (!options.contains(selected) || uniqueCards.contains(selected)) {
-                return false;
-            }
-
-            uniqueCards.add(selected);
-            paid += selected.getBankValue();
-        }
-
-        if (paid < requiredAmount) {
-            return false;
-        }
-
-        for (Card selected : uniqueCards) {
+        for (Card selected : validCards) {
             if (!transferPaymentCard(payer, receiver, selected, dm)) {
                 return false;
             }
@@ -440,46 +462,28 @@ public class Game {
         return true;
     }
 
-    public boolean canPlayCard(Card card) {
-        if (!started || gameOver || card == null) {
-            return false;
+    private List<Card> validatePaymentSelection(List<Card> options, List<Card> selectedCards, int requiredAmount) {
+        if (selectedCards == null || selectedCards.isEmpty()) {
+            return null;
         }
 
-        Player current = getCurrPlayer();
-        if (!current.getCardsAtHand().contains(card)) {
-            return false;
-        }
+        List<Card> uniqueCards = new ArrayList<>();
+        int paid = 0;
 
-        if (actionsUsed >= Player.MAX_ACTIONS_PER_TURN) {
-            return false;
-        }
-
-        if (card instanceof PropertyCard propertyCard) {
-            PropertySet set = current.getPropertySets().get(propertyCard.getColor());
-            return set != null && set.canAddProperty();
-        }
-
-        if (card instanceof WildPropertyCard wildCard) {
-            for (PropertyColor color : wildCard.getPossibleColors()) {
-                PropertySet set = current.getPropertySets().get(color);
-                if (set != null && set.canAddProperty()) {
-                    return true;
-                }
+        for (Card selected : selectedCards) {
+            if (!options.contains(selected) || uniqueCards.contains(selected)) {
+                return null;
             }
-            return false;
+
+            uniqueCards.add(selected);
+            paid += selected.getBankValue();
         }
 
-        return card instanceof MoneyCard || card instanceof ActionCard;
+        return paid >= requiredAmount ? uniqueCards : null;
     }
 
     private List<Player> playersWithPaymentOptions(Player receiver) {
-        List<Player> targets = new ArrayList<>();
-        for (Player player : getOtherPlayers()) {
-            if (hasPaymentOptions(player, receiver)) {
-                targets.add(player);
-            }
-        }
-        return targets;
+        return matchingOtherPlayers(player -> hasPaymentOptions(player, receiver));
     }
 
     private boolean hasPaymentOptions(Player player, Player receiver) {
@@ -495,8 +499,8 @@ public class Game {
     }
 
     private List<Card> paymentOptions(Player player, Player receiver) {
-        List<Card> options = new ArrayList<>();
-        options.addAll(player.getCardsAtBank());
+        List<Card> options = new ArrayList<>(player.getCardsAtBank());
+
         for (PropertySet set : player.getPropertySets().values()) {
             for (Card card : set.getAllCards()) {
                 if (canTransferPaymentCard(player, receiver, card)) {
@@ -504,6 +508,7 @@ public class Game {
                 }
             }
         }
+
         return options;
     }
 
@@ -530,11 +535,7 @@ public class Game {
         }
 
         PropertyColor receiveColor = chooseReceiveColor(receiver, card, dm);
-        if (receiveColor == null) {
-            return false;
-        }
-
-        if (!source.removePropertyCard(card)) {
+        if (receiveColor == null || !source.removePropertyCard(card)) {
             return false;
         }
 
@@ -543,24 +544,7 @@ public class Game {
     }
 
     private boolean transferUpgradeCard(Player source, Player receiver, ActionCard card, PropertyColor color) {
-        PropertySet receiverSet = receiver.getPropertySets().get(color);
-        if (receiverSet == null) {
-            return false;
-        }
-
-        boolean canReceive = false;
-        if (card.getActionType() == ActionType.HOUSE && receiverSet.canAddHouse()) {
-            canReceive = true;
-        }
-        if (card.getActionType() == ActionType.HOTEL && receiverSet.canAddHotel()) {
-            canReceive = true;
-        }
-        if (!canReceive) {
-            return false;
-        }
-
-        PropertySet sourceSet = source.getPropertySets().get(color);
-        if (card.getActionType() == ActionType.HOUSE && sourceSet != null && sourceSet.getHotelCard() != null) {
+        if (!canReceiveUpgradeCard(source, receiver, card, color)) {
             return false;
         }
 
@@ -568,22 +552,33 @@ public class Game {
             return false;
         }
 
-        if (card.getActionType() == ActionType.HOUSE) {
-            return receiverSet.addHouse(card);
-        }
-
-        return receiverSet.addHotel(card);
+        PropertySet receiverSet = receiver.getPropertySets().get(color);
+        return card.getActionType() == ActionType.HOUSE
+                ? receiverSet.addHouse(card)
+                : receiverSet.addHotel(card);
     }
 
-    private boolean swapProperties(Player firstPlayer, Card firstCard, Player secondPlayer, Card secondCard, DecisionMaker dm) {
-        PropertyColor firstColor = firstPlayer.getPropertyColor(firstCard);
-        PropertyColor secondColor = secondPlayer.getPropertyColor(secondCard);
-
-        if (!canReceiveAfterRemoving(firstPlayer, secondCard, secondColor, firstCard)) {
+    private boolean canReceiveUpgradeCard(Player source, Player receiver, ActionCard card, PropertyColor color) {
+        PropertySet receiverSet = receiver.getPropertySets().get(color);
+        if (receiverSet == null) {
             return false;
         }
 
-        if (!canReceiveAfterRemoving(secondPlayer, firstCard, firstColor, secondCard)) {
+        if (card.getActionType() == ActionType.HOUSE) {
+            PropertySet sourceSet = source.getPropertySets().get(color);
+            return (sourceSet == null || sourceSet.getHotelCard() == null) && receiverSet.canAddHouse();
+        }
+
+        if (card.getActionType() == ActionType.HOTEL) {
+            return receiverSet.canAddHotel();
+        }
+
+        return false;
+    }
+
+    private boolean swapProperties(Player firstPlayer, Card firstCard, Player secondPlayer, Card secondCard, DecisionMaker dm) {
+        if (!canReceiveAfterRemoving(firstPlayer, secondCard, firstCard)
+                || !canReceiveAfterRemoving(secondPlayer, firstCard, secondCard)) {
             return false;
         }
 
@@ -604,28 +599,12 @@ public class Game {
         return true;
     }
 
-    private boolean canReceiveAfterRemoving(Player receiver, Card incoming, PropertyColor incomingColor, Card outgoing) {
+    private boolean canReceiveAfterRemoving(Player receiver, Card incoming, Card outgoing) {
         return !receivableColorsAfterRemoving(receiver, incoming, outgoing).isEmpty();
     }
 
     private boolean canReceiveProperty(Player receiver, Card card, PropertyColor color) {
         return receivableColors(receiver, card).contains(color);
-    }
-
-    private boolean isValidPropertyColor(Card card, PropertyColor color) {
-        if (color == null) {
-            return false;
-        }
-
-        if (card instanceof WildPropertyCard wildCard) {
-            return wildCard.getPossibleColors().contains(color);
-        }
-
-        if (card instanceof PropertyCard propertyCard) {
-            return propertyCard.getColor() == color;
-        }
-
-        return false;
     }
 
     private boolean canTransferPaymentCard(Player source, Player receiver, Card card) {
@@ -635,57 +614,43 @@ public class Game {
         }
 
         if (card instanceof ActionCard actionCard) {
-            PropertySet set = receiver.getPropertySets().get(color);
-            if (set == null) {
-                return false;
-            }
-
-            if (actionCard.getActionType() == ActionType.HOUSE) {
-                PropertySet sourceSet = source.getPropertySets().get(color);
-                if (sourceSet != null && sourceSet.getHotelCard() != null) {
-                    return false;
-                }
-                return set.canAddHouse();
-            }
-
-            if (actionCard.getActionType() == ActionType.HOTEL) {
-                return set.canAddHotel();
-            }
-
-            return false;
+            return canReceiveUpgradeCard(source, receiver, actionCard, color);
         }
 
         return !receivableColors(receiver, card).isEmpty();
     }
 
     private PropertyColor chooseReceiveColor(Player receiver, Card card, DecisionMaker dm) {
-        List<PropertyColor> colors = receivableColors(receiver, card);
-        if (colors.isEmpty()) {
-            return null;
-        }
-
-        if (colors.size() == 1) {
-            return colors.getFirst();
-        }
-
-        return dm.selectColor("Choose a color for " + card.getName() + " in " + receiver.getName() + "'s table.", colors);
+        return chooseSingleOrPrompt(
+                receivableColors(receiver, card),
+                dm,
+                "Choose a color for " + card.getName() + " in " + receiver.getName() + "'s table."
+        );
     }
 
     private PropertyColor chooseReceiveColorAfterRemoving(Player receiver, Card incoming, Card outgoing, DecisionMaker dm) {
-        List<PropertyColor> colors = receivableColorsAfterRemoving(receiver, incoming, outgoing);
+        return chooseSingleOrPrompt(
+                receivableColorsAfterRemoving(receiver, incoming, outgoing),
+                dm,
+                "Choose a color for " + incoming.getName() + " in " + receiver.getName() + "'s table."
+        );
+    }
+
+    private PropertyColor chooseSingleOrPrompt(List<PropertyColor> colors, DecisionMaker dm, String prompt) {
         if (colors.isEmpty()) {
             return null;
         }
 
         if (colors.size() == 1) {
-            return colors.getFirst();
+            return colors.get(0);
         }
 
-        return dm.selectColor("Choose a color for " + incoming.getName() + " in " + receiver.getName() + "'s table.", colors);
+        return dm.selectColor(prompt, colors);
     }
 
     private List<PropertyColor> receivableColors(Player receiver, Card card) {
         List<PropertyColor> colors = new ArrayList<>();
+
         if (card instanceof PropertyCard propertyCard) {
             addReceivableColor(receiver, colors, propertyCard.getColor());
         }
@@ -701,9 +666,8 @@ public class Game {
 
     private List<PropertyColor> receivableColorsAfterRemoving(Player receiver, Card incoming, Card outgoing) {
         List<PropertyColor> colors = new ArrayList<>();
-        List<PropertyColor> sourceColors = possiblePropertyColors(incoming);
 
-        for (PropertyColor color : sourceColors) {
+        for (PropertyColor color : possiblePropertyColors(incoming)) {
             PropertySet set = receiver.getPropertySets().get(color);
             if (set == null) {
                 continue;
@@ -724,6 +688,7 @@ public class Game {
 
     private List<PropertyColor> possiblePropertyColors(Card card) {
         List<PropertyColor> colors = new ArrayList<>();
+
         if (card instanceof PropertyCard propertyCard) {
             colors.add(propertyCard.getColor());
         }
@@ -743,57 +708,58 @@ public class Game {
     }
 
     private List<Player> playersForForcedDeal(Player player) {
-        List<Player> targets = new ArrayList<>();
-        for (Player target : getOtherPlayers()) {
-            if (!stealableCards(player, target).isEmpty() && !stealableCards(target, player).isEmpty()) {
-                targets.add(target);
-            }
-        }
-        return targets;
+        return matchingOtherPlayers(target ->
+                !stealableCards(player, target).isEmpty()
+                        && !stealableCards(target, player).isEmpty()
+        );
     }
 
     private List<Player> playersWithStealableCards(Player receiver) {
-        List<Player> targets = new ArrayList<>();
-        for (Player player : getOtherPlayers()) {
-            if (!stealableCards(player, receiver).isEmpty()) {
-                targets.add(player);
-            }
-        }
-        return targets;
+        return matchingOtherPlayers(player -> !stealableCards(player, receiver).isEmpty());
     }
 
     private List<Card> stealableCards(Player source, Player receiver) {
         List<Card> cards = new ArrayList<>();
+
         for (Card card : source.getStealableCards()) {
             PropertyColor color = source.getPropertyColor(card);
             if (canReceiveProperty(receiver, card, color)) {
                 cards.add(card);
             }
         }
+
         return cards;
     }
 
     private List<Player> playersWithTransferableFullSets(Player receiver) {
-        List<Player> targets = new ArrayList<>();
-        for (Player player : getOtherPlayers()) {
-            if (!transferableFullSetColors(player, receiver).isEmpty()) {
-                targets.add(player);
-            }
-        }
-        return targets;
+        return matchingOtherPlayers(player -> !transferableFullSetColors(player, receiver).isEmpty());
     }
 
     private List<PropertyColor> transferableFullSetColors(Player source, Player receiver) {
         List<PropertyColor> colors = new ArrayList<>();
+
         for (PropertyColor color : source.getFullSetColors()) {
             PropertySet sourceSet = source.getPropertySets().get(color);
             PropertySet receiverSet = receiver.getPropertySets().get(color);
-            if (sourceSet != null && receiverSet != null
+
+            if (sourceSet != null
+                    && receiverSet != null
                     && receiverSet.getCards().size() + sourceSet.getCards().size() <= color.getSize()) {
                 colors.add(color);
             }
         }
+
         return colors;
+    }
+
+    private List<Player> matchingOtherPlayers(Predicate<Player> predicate) {
+        List<Player> matches = new ArrayList<>();
+        for (Player player : getOtherPlayers()) {
+            if (predicate.test(player)) {
+                matches.add(player);
+            }
+        }
+        return matches;
     }
 
     private boolean isBlockedByJustSayNo(Player target, Player actor, DecisionMaker dm) {
@@ -808,6 +774,8 @@ public class Game {
 
         target.removeCardFromHand(justSayNo);
         addUsedCard(target, justSayNo, CardAction.PLAYED);
+
+        // Just Say No can be countered by another Just Say No, so keep checking both sides.
         return !isBlockedByJustSayNo(actor, target, dm);
     }
 
@@ -821,79 +789,64 @@ public class Game {
         return null;
     }
 
-    public int getCurrBankTotal() {
-        int total = 0;
-        for (Card card : getCurrPlayer().getCardsAtBank()) {
-            total += card.getBankValue();
-        }
-        return total;
-    }
-
-    public boolean endTurn(DecisionMaker dm) {
-        if (!started || players.isEmpty() || gameOver) {
+    private boolean discardExtraCards(Player player, int discardCount, DecisionMaker dm) {
+        List<Card> discards = dm.selectDiscards(player, player.getCardsAtHand(), discardCount);
+        if (!isValidDiscardSelection(player, discards, discardCount)) {
             return false;
         }
-        Player currPlayer = getCurrPlayer();
-        int discardCount = currPlayer.getCardsAtHand().size() - Player.MAX_CARDS_AT_HAND;
 
-        if (discardCount > 0) {
-            List<Card> discards = dm.selectDiscards(currPlayer, currPlayer.getCardsAtHand(), discardCount);
-            if (discards == null || discards.size() != discardCount) {
+        for (Card discard : discards) {
+            player.removeCardFromHand(discard);
+            deck.putAtDrawPileBottom(discard);
+            addUsedCard(player, discard, CardAction.DISCARDED);
+        }
+
+        return true;
+    }
+
+    private boolean isValidDiscardSelection(Player player, List<Card> discards, int expectedCount) {
+        if (discards == null || discards.size() != expectedCount) {
+            return false;
+        }
+
+        List<Card> checkedCards = new ArrayList<>();
+        for (Card discard : discards) {
+            if (!player.getCardsAtHand().contains(discard) || checkedCards.contains(discard)) {
                 return false;
             }
-
-            for (Card discard : discards) {
-                if (discards.indexOf(discard) != discards.lastIndexOf(discard)) {
-                    return false;
-                }
-
-                if (!currPlayer.getCardsAtHand().contains(discard)) {
-                    return false;
-                }
-            }
-
-            for (Card discard : discards) {
-                currPlayer.removeCardFromHand(discard);
-                deck.putAtDrawPileBottom(discard);
-                addUsedCard(currPlayer, discard, CardAction.DISCARDED);
-            }
+            checkedCards.add(discard);
         }
 
-        currentPlayerIndex++;
-        if (currentPlayerIndex >= players.size()) {
-            currentPlayerIndex = 0;
-        }
-
-        actionsUsed = 0;
-        startTurn();
         return true;
+    }
+
+    private void advanceToNextPlayer() {
+        currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
+        actionsUsed = 0;
     }
 
     private void startTurn() {
         Player player = getCurrPlayer();
-        int drawCardsNumber = 2;
+        int cardsToDraw = player.getCardsAtHand().isEmpty() ? INITIAL_HAND_SIZE : NORMAL_TURN_DRAW;
 
-        if (player.getCardsAtHand().isEmpty()) {
-            drawCardsNumber = 5;
-        }
-
-        drawCards(player, drawCardsNumber);
+        drawCards(player, cardsToDraw);
         if (currentPlayerIndex == 0) {
             turnCount++;
         }
     }
 
-    private void drawCards(Player player, int number){
-        for(int i = 0; i < number; i++){
+    private void drawCards(Player player, int number) {
+        for (int i = 0; i < number; i++) {
             Card card = deck.draw();
-            if(card!=null){
+            if (card != null) {
                 player.addCardToHand(card);
             }
         }
     }
 
     private void addUsedCard(Player player, Card card, CardAction action) {
-        usedCards.addFirst(new UsedCard(action, player.getName(), card));
+        // Keep the newest record first while staying compatible with older Java versions.
+        usedCards.add(0, new UsedCard(action, player.getName(), card));
     }
 
     private class GameSnapshot {
@@ -945,10 +898,11 @@ public class Game {
             hand = new ArrayList<>(player.getCardsAtHand());
             bank = new ArrayList<>(player.getCardsAtBank());
             propertySets = new EnumMap<>(PropertyColor.class);
-            wildColors = new java.util.HashMap<>();
+            wildColors = new HashMap<>();
 
             rememberWildColors(player.getCardsAtHand());
             rememberWildColors(player.getCardsAtBank());
+
             for (Map.Entry<PropertyColor, PropertySet> entry : player.getPropertySets().entrySet()) {
                 PropertySet set = entry.getValue();
                 propertySets.put(entry.getKey(), new PropertySetSnapshot(
