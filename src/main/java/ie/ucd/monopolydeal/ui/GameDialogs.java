@@ -28,6 +28,7 @@ final class GameDialogs implements DecisionMaker {
 
     // Pop a dialog to ask players' name
     List<String> askPlayerNames() {
+        // Ask how many players will join
         ChoiceDialog<Integer> playerNumDialog = new ChoiceDialog<>(2,
                 FXCollections.observableArrayList(IntStream.rangeClosed(2, 5).boxed().toList()));
         playerNumDialog.setHeaderText("How many players?");
@@ -38,6 +39,7 @@ final class GameDialogs implements DecisionMaker {
         }
 
         List<String> names = new ArrayList<>();
+        // Ask each player's name one by one
         for (int i = 1; i <= count; i++) {
             TextInputDialog playerNameDialog = new TextInputDialog("Player " + i);
             playerNameDialog.setHeaderText("Enter name for player " + i);
@@ -49,6 +51,7 @@ final class GameDialogs implements DecisionMaker {
             }
 
             String name = result.trim();
+            // Use default name if input is blank
             if (name.isEmpty()) {
                 names.add("Player " + i);
             } else {
@@ -66,14 +69,17 @@ final class GameDialogs implements DecisionMaker {
     // Shared radio-button dialog
     private <T> T chooseOption(String title, String prompt, List<T> options, Function<T, String> text,
                                boolean autoChooseSingleOption) {
+        // No options means the action cannot continue
         if (options == null || options.isEmpty()) {
             return null;
         }
 
+        // Skip dialog when only one real choice exists
         if (autoChooseSingleOption && options.size() == 1) {
             return options.getFirst();
         }
 
+        // Build base dialog
         Dialog<T> dialog = new Dialog<>();
         dialog.setTitle(title);
         dialog.setHeaderText(prompt);
@@ -83,6 +89,7 @@ final class GameDialogs implements DecisionMaker {
         VBox optionsBox = new VBox(8);
         optionsBox.setPadding(new Insets(8));
 
+        // Create one radio button for each option
         List<RadioButton> radioButtons = new ArrayList<>();
         for (T option : options) {
             RadioButton radioButton = new RadioButton(text.apply(option));
@@ -94,17 +101,20 @@ final class GameDialogs implements DecisionMaker {
         }
         radioButtons.getFirst().setSelected(true);
 
+        // Use scroll area when the option list is long
         ScrollPane scrollPane = new ScrollPane(optionsBox);
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scrollPane.setPrefSize(420, Math.min(280, Math.max(120, options.size() * 38 + 24)));
 
+        // OK requires one selected radio button
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.disableProperty().bind(group.selectedToggleProperty().isNull());
 
         dialog.getDialogPane().setContent(scrollPane);
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
+                // Map selected radio button back to the original option
                 Toggle selectedToggle = group.getSelectedToggle();
                 for (int i = 0; i < radioButtons.size(); i++) {
                     if (radioButtons.get(i) == selectedToggle) {
@@ -131,6 +141,7 @@ final class GameDialogs implements DecisionMaker {
     @Override
     public UseMode useCard(ActionCard action) {
         List<UseMode> modes = new ArrayList<>();
+        // Build available use modes from action legality
         // Hide Play when action effect cannot resolve
         if (action.getActionType() != ActionType.JUST_SAY_NO && actionPlayChecker.test(action)) {
             modes.add(UseMode.PLAY);
@@ -170,19 +181,23 @@ final class GameDialogs implements DecisionMaker {
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.setDisable(true);
 
+        // Shared option container for radio or checkbox UI
         VBox optionsBox = new VBox(8);
         optionsBox.setPadding(new Insets(8));
 
+        // Use radio buttons for exactly one discard
         if (count == 1) {
             return selectSingleDiscard(dialog, okButton, optionsBox, cards);
         }
 
+        // Use check boxes when multiple cards must be discarded
         return selectMultipleDiscards(dialog, okButton, optionsBox, cards, count);
     }
 
     // Use radio buttons when discarding one card
     private List<Card> selectSingleDiscard(Dialog<List<Card>> dialog, Button okButton,
                                            VBox optionsBox, List<Card> cards) {
+        // Build one radio button per discardable card
         ToggleGroup group = new ToggleGroup();
         List<RadioButton> radioButtons = new ArrayList<>();
         for (Card card : cards) {
@@ -196,6 +211,7 @@ final class GameDialogs implements DecisionMaker {
 
         okButton.disableProperty().bind(group.selectedToggleProperty().isNull());
 
+        // Put options into a scroll area
         ScrollPane scrollPane = new ScrollPane(optionsBox);
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -204,6 +220,7 @@ final class GameDialogs implements DecisionMaker {
         dialog.getDialogPane().setContent(scrollPane);
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
+                // Return the chosen single card
                 Toggle selectedToggle = group.getSelectedToggle();
                 for (int i = 0; i < radioButtons.size(); i++) {
                     if (radioButtons.get(i) == selectedToggle) {
@@ -220,6 +237,7 @@ final class GameDialogs implements DecisionMaker {
     // Use check boxes when discarding multiple cards
     private List<Card> selectMultipleDiscards(Dialog<List<Card>> dialog, Button okButton,
                                               VBox optionsBox, List<Card> cards, int count) {
+        // Build one checkbox per discardable card
         List<CheckBox> checkBoxes = new ArrayList<>();
         for (Card card : cards) {
             CheckBox checkBox = new CheckBox(discardOptionText(card));
@@ -230,6 +248,7 @@ final class GameDialogs implements DecisionMaker {
             optionsBox.getChildren().add(checkBox);
         }
 
+        // Put options into a scroll area
         ScrollPane scrollPane = new ScrollPane(optionsBox);
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -238,6 +257,7 @@ final class GameDialogs implements DecisionMaker {
         dialog.getDialogPane().setContent(scrollPane);
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
+                // Return all selected discard cards
                 List<Card> selectedCards = new ArrayList<>();
                 for (int i = 0; i < checkBoxes.size(); i++) {
                     if (checkBoxes.get(i).isSelected()) {
@@ -254,6 +274,7 @@ final class GameDialogs implements DecisionMaker {
 
     // Enable OK only at the exact discard count
     private void updateDiscardChecks(List<CheckBox> checkBoxes, Button okButton, int count) {
+        // Count selected discard choices
         int selectedCount = 0;
         for (CheckBox checkBox : checkBoxes) {
             if (checkBox.isSelected()) {
@@ -263,6 +284,7 @@ final class GameDialogs implements DecisionMaker {
 
         okButton.setDisable(selectedCount != count);
 
+        // Lock extra choices after reaching the required number
         boolean limitReached = selectedCount >= count;
         for (CheckBox checkBox : checkBoxes) {
             checkBox.setDisable(limitReached && !checkBox.isSelected());
@@ -293,6 +315,7 @@ final class GameDialogs implements DecisionMaker {
         Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.setDisable(true);
 
+        // Create checkbox payment options
         VBox optionsBox = new VBox(8);
         optionsBox.setPadding(new Insets(8));
 
@@ -307,6 +330,7 @@ final class GameDialogs implements DecisionMaker {
             optionsBox.getChildren().add(checkBox);
         }
 
+        // Keep payment list scrollable
         ScrollPane scrollPane = new ScrollPane(optionsBox);
         scrollPane.setFitToWidth(true);
         scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
@@ -315,6 +339,7 @@ final class GameDialogs implements DecisionMaker {
         dialog.getDialogPane().setContent(scrollPane);
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
+                // Return selected payment cards
                 List<Card> selectedCards = new ArrayList<>();
                 for (int i = 0; i < checkBoxes.size(); i++) {
                     if (checkBoxes.get(i).isSelected()) {
@@ -337,6 +362,7 @@ final class GameDialogs implements DecisionMaker {
     }
 
     private String cardOptionText(Player owner, Card card) {
+        // Show current property color when the card is on table
         if (owner != null) {
             PropertyColor color = owner.getPropertyColor(card);
             if (color != null) {
@@ -347,6 +373,7 @@ final class GameDialogs implements DecisionMaker {
     }
 
     private String paymentOptionText(Player owner, Card card) {
+        // Find whether payment card is from bank or table
         String location;
         if (owner != null && owner.getCardsAtBank().contains(card)) {
             location = "Bank";
@@ -362,12 +389,14 @@ final class GameDialogs implements DecisionMaker {
             }
         }
 
+        // Include value because Monopoly Deal has no change
         return card.getName() + " - " + location + " - " + card.getBankValue() + "M";
     }
 
     // Disable extra payment choices after enough value is selected
     private void updatePaymentChecks(List<Card> cards, List<CheckBox> checkBoxes, Button okButton,
                                      Dialog<List<Card>> dialog, Player owner, int amount) {
+        // Sum selected payment value
         int selectedTotal = 0;
         for (int i = 0; i < checkBoxes.size(); i++) {
             if (checkBoxes.get(i).isSelected()) {
@@ -378,6 +407,7 @@ final class GameDialogs implements DecisionMaker {
         okButton.setDisable(selectedTotal < amount);
         dialog.setHeaderText(paymentPrompt(owner, amount, selectedTotal));
 
+        // Prevent selecting extra cards once payment is enough
         boolean enoughSelected = selectedTotal >= amount;
         for (CheckBox checkBox : checkBoxes) {
             checkBox.setDisable(enoughSelected && !checkBox.isSelected());

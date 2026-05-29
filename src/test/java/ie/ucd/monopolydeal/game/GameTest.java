@@ -152,4 +152,115 @@ class GameTest {
         assertTrue(current.getCardsAtHand().contains(debtCollector));
         assertEquals(PropertyColor.BROWN, wild.getCurrentColor());
     }
+
+    @Test
+    void debtCollectorShouldTransferPaymentToCurrentPlayer() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        ActionCard debtCollector = new ActionCard("Debt Collector", 3, ActionType.DEBT_COLLECTOR);
+        MoneyCard five = new MoneyCard("5M", 5);
+        current.addCardToHand(debtCollector);
+        target.addCardToBank(five);
+
+        assertTrue(game.playCard(debtCollector, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(current.getCardsAtBank().contains(five));
+        assertFalse(target.getCardsAtBank().contains(five));
+        assertFalse(current.getCardsAtHand().contains(debtCollector));
+        assertEquals(1, game.getActionsUsed());
+    }
+
+    @Test
+    void justSayNoShouldCancelDebtCollectorPayment() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        current.getCardsAtHand().removeIf(GameTest::isJustSayNo);
+        target.getCardsAtHand().removeIf(GameTest::isJustSayNo);
+
+        ActionCard debtCollector = new ActionCard("Debt Collector", 3, ActionType.DEBT_COLLECTOR);
+        ActionCard justSayNo = new ActionCard("Just Say No!", 4, ActionType.JUST_SAY_NO);
+        MoneyCard five = new MoneyCard("5M", 5);
+        current.addCardToHand(debtCollector);
+        target.addCardToHand(justSayNo);
+        target.addCardToBank(five);
+
+        assertTrue(game.playCard(debtCollector, new ScriptedDecisionMaker(UseMode.PLAY, true)));
+        assertFalse(current.getCardsAtBank().contains(five));
+        assertTrue(target.getCardsAtBank().contains(five));
+        assertFalse(target.getCardsAtHand().contains(justSayNo));
+        assertEquals(1, game.getActionsUsed());
+    }
+
+    @Test
+    void slyDealShouldStealOnePropertyOutsideFullSet() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        ActionCard slyDeal = new ActionCard("Sly Deal", 3, ActionType.SLY_DEAL);
+        PropertyCard property = new PropertyCard("Oriental Avenue", 1, PropertyColor.LIGHT_BLUE);
+        current.addCardToHand(slyDeal);
+        target.addCardToHand(property);
+        assertTrue(target.addProperty(property));
+
+        assertTrue(game.playCard(slyDeal, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(current.getPropertySets().get(PropertyColor.LIGHT_BLUE).getCards().contains(property));
+        assertFalse(target.getPropertySets().get(PropertyColor.LIGHT_BLUE).getCards().contains(property));
+        assertEquals(1, game.getActionsUsed());
+    }
+
+    @Test
+    void forcedDealShouldSwapTwoProperties() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        ActionCard forcedDeal = new ActionCard("Forced Deal", 3, ActionType.FORCED_DEAL);
+        PropertyCard currentProperty = new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN);
+        PropertyCard targetProperty = new PropertyCard("Oriental Avenue", 1, PropertyColor.LIGHT_BLUE);
+        current.addCardToHand(forcedDeal);
+        current.addCardToHand(currentProperty);
+        target.addCardToHand(targetProperty);
+        assertTrue(current.addProperty(currentProperty));
+        assertTrue(target.addProperty(targetProperty));
+
+        assertTrue(game.playCard(forcedDeal, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(current.getPropertySets().get(PropertyColor.LIGHT_BLUE).getCards().contains(targetProperty));
+        assertTrue(target.getPropertySets().get(PropertyColor.BROWN).getCards().contains(currentProperty));
+        assertFalse(current.getPropertySets().get(PropertyColor.BROWN).getCards().contains(currentProperty));
+        assertFalse(target.getPropertySets().get(PropertyColor.LIGHT_BLUE).getCards().contains(targetProperty));
+    }
+
+    @Test
+    void dealBreakerShouldMoveACompleteSet() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        ActionCard dealBreaker = new ActionCard("Deal Breaker", 5, ActionType.DEAL_BREAKER);
+        PropertyCard first = new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN);
+        PropertyCard second = new PropertyCard("Baltic Avenue", 1, PropertyColor.BROWN);
+        current.addCardToHand(dealBreaker);
+        target.addCardToHand(first);
+        target.addCardToHand(second);
+        assertTrue(target.addProperty(first));
+        assertTrue(target.addProperty(second));
+
+        assertTrue(game.playCard(dealBreaker, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(current.getPropertySets().get(PropertyColor.BROWN).getCards().contains(first));
+        assertTrue(current.getPropertySets().get(PropertyColor.BROWN).getCards().contains(second));
+        assertTrue(target.getPropertySets().get(PropertyColor.BROWN).getCards().isEmpty());
+    }
+
+    private static boolean isJustSayNo(Card card) {
+        return card instanceof ActionCard actionCard && actionCard.getActionType() == ActionType.JUST_SAY_NO;
+    }
 }

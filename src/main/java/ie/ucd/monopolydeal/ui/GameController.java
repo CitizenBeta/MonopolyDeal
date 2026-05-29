@@ -20,34 +20,44 @@ public class GameController {
     // Show at most three players before horizontal scrolling
     private static final int MAX_VISIBLE_PLAYERS = 3;
 
+    // Main game state
     private final Game game = new Game();
     // Handle all DecisionMaker prompts in GameDialogs
     private final GameDialogs dialogs = new GameDialogs();
     // Track highlighted hand card
     private Card selectedCard;
 
+    // Top status card
     @FXML private Label statusTitle;
     @FXML private Label statusText;
     @FXML private Label statusBadge;
+
+    // Global statistic cards
     @FXML private Label turnCount;
     @FXML private Label actions;
     @FXML private Label piles;
     @FXML private Label leadingPlayer;
+
+    // Bottom action buttons
     @FXML private Button newGameButton;
     @FXML private Button usedCardsButton;
     @FXML private Button playButton;
     @FXML private Button moveWildButton;
     @FXML private Button endTurnButton;
+
+    // Main content areas
     @FXML private Label handCardsTitle;
     @FXML private HBox handCardsBox;
     @FXML private HBox tableBox;
 
+    // Root and scroll containers
     @FXML private BorderPane rootPane;
     @FXML private ScrollPane cardsScroll;
     @FXML private ScrollPane tableScroll;
 
     @FXML
     private void initialize() {
+        // Connect UI decisions to backend action checks
         // Hide Play when an action has no legal target
         dialogs.setActionPlayChecker(game::canPlayActionCard);
         configureButtons();
@@ -58,7 +68,7 @@ public class GameController {
     }
 
     private void configureButtons() {
-        // Set buttons
+        // Set button colors and disabled styles
         GameUI.setActionButton(newGameButton, Color.rgb(37, 99, 235), true);
         GameUI.setActionButton(usedCardsButton, Color.rgb(37, 99, 235), false);
         GameUI.setActionButton(playButton, Color.rgb(22, 163, 74), true);
@@ -67,7 +77,7 @@ public class GameController {
     }
 
     private void configureStatusArea() {
-        // Set status
+        // Set status text styles
         statusTitle.setFont(Font.font("Segoe UI Semibold", 11));
         statusTitle.setTextFill(Color.rgb(71, 85, 105));
         statusText.setWrapText(true);
@@ -79,7 +89,7 @@ public class GameController {
     }
 
     private void configureHandArea() {
-        // Set hand card area
+        // Configure horizontal hand card strip
         handCardsBox.setFillHeight(false);
         handCardsBox.setAlignment(Pos.CENTER);
         cardsScroll.setFitToHeight(true);
@@ -113,7 +123,7 @@ public class GameController {
     }
 
     private void configureTableArea() {
-        // Set player table area
+        // Configure horizontally scrolling player table
         tableBox.setFillHeight(true);
         tableBox.setAlignment(Pos.TOP_CENTER);
         tableScroll.setFitToWidth(false);
@@ -131,7 +141,7 @@ public class GameController {
     @FXML
     private void onNewGame() {
         List<String> names = dialogs.askPlayerNames();
-        // Player >= 2
+        // Need at least two players
         if (names == null || names.size() < 2) {
             return;
         }
@@ -178,6 +188,7 @@ public class GameController {
     // Run when the user presses Play Selected button
     @FXML
     private void onPlaySelected() {
+        // Guard against disabled or stale selections
         if (!canPlaySelectedCard()) {
             if (selectedCard != null) {
                 statusText.setText("Cannot play " + GameUI.statusCardText(selectedCard) + ".");
@@ -188,6 +199,7 @@ public class GameController {
 
         if (game.playCard(selectedCard, dialogs)) {
             if (game.isOver()) {
+                // Show winner after the backend marks the game as over
                 Player winner = game.getWinner();
                 if (winner == null) {
                     statusText.setText("Game over.");
@@ -208,6 +220,7 @@ public class GameController {
     // Run when the user presses Move wild button
     @FXML
     private void onMoveWild() {
+        // Wild cards can only move during an active game
         if (!game.isStarted() || game.isOver()) {
             return;
         }
@@ -235,13 +248,16 @@ public class GameController {
         refresh();
     }
 
+    // Run when the user presses End Turn button
     @FXML
     private void onEndTurn() {
+        // Ignore end turn before the game starts or after it ends
         if (!game.isStarted() || game.isOver()) {
             return;
         }
 
         if (game.endTurn(dialogs)) {
+            // Successful end turn also clears any old hand selection
             selectedCard = null;
             statusText.setText("Turn ended.");
         } else {
@@ -252,6 +268,7 @@ public class GameController {
 
     // Refresh view after user's action
     private void refresh() {
+        // Choose between pregame and in-game layouts
         if (!game.isStarted()) {
             showPregame();
         } else {
@@ -262,6 +279,7 @@ public class GameController {
 
     // Show empty UI
     private void showPregame() {
+        // Reset labels to the initial screen state
         statusTitle.setText("Status");
         statusText.setText("Start a new game.");
         handCardsTitle.setText("Current Hand");
@@ -270,6 +288,7 @@ public class GameController {
         leadingPlayer.setText("-");
 
         selectedCard = null;
+        // Center empty placeholder cards
         handCardsBox.setAlignment(Pos.CENTER);
         tableBox.setAlignment(Pos.CENTER);
         handCardsBox.getChildren().setAll(GameUI.centeredEmptyBox(cardsScroll, "No cards yet", "Start a new game to render the active hand here"));
@@ -284,6 +303,7 @@ public class GameController {
     // Show in-game UI
     private void showGame() {
         Player player = game.getCurrPlayer();
+        // Rebuild labels and content from current backend state
         statusTitle.setText("Status");
         handCardsTitle.setText(player.getName() + " Hand");
         updateActionsBadge(game.getActionsUsed());
@@ -295,13 +315,15 @@ public class GameController {
         updateTable(game.getPlayers());
         updateTurnCount(game.getTurnCount());
         if (game.isOver()) {
+            // Red badge for finished game
             updateStatusBadge("Game Over", Color.rgb(254, 226, 226), Color.rgb(252, 165, 165), Color.rgb(153, 27, 27));
         } else {
+            // Blue badge for active turn
             updateStatusBadge("Turn Active", Color.rgb(219, 234, 254), Color.rgb(147, 197, 253), Color.rgb(29, 78, 216));
         }
     }
 
-    // Find the player who have highest completed sets, then highest bank total
+    // Find player with most completed sets, then highest bank total
     private String leadingPlayer() {
         Player highestPlayer = null;
         int highestSets = -1;
@@ -343,6 +365,7 @@ public class GameController {
         }
 
         handCardsBox.setAlignment(Pos.CENTER);
+        // Recreate every hand card because selection changes card styling
         for (Card handCard : handCards) {
             handCardsBox.getChildren().add(GameUI.newHandCard(handCard, selectedCard == handCard, this::toggleSelectedCard));
         }
@@ -370,6 +393,7 @@ public class GameController {
         }
 
         tableBox.setAlignment(Pos.TOP_CENTER);
+        // Add one player board per player
         for (Player player : players) {
             VBox playerBox = GameUI.newPlayerBox(player, player == game.getCurrPlayer(), playerBoxMinHeight());
             HBox.setHgrow(playerBox, Priority.NEVER);
@@ -381,9 +405,10 @@ public class GameController {
         Platform.runLater(this::scrollTableToCurrentPlayer);
     }
 
-    // Enable/diable a button
+    // Enable/disable action buttons
     private void updateButtonStatus() {
         playButton.setDisable(!canPlaySelectedCard());
+        // Move Wild is only useful if current player has placed wild cards
         boolean canMoveWild = false;
         if (game.isStarted() && !game.isOver()) {
             canMoveWild = !game.getCurrPlayer().getPlacedWildCards().isEmpty();
@@ -392,6 +417,7 @@ public class GameController {
         endTurnButton.setDisable(!game.isStarted() || game.isOver());
     }
 
+    // Check selected card before enabling Play button
     private boolean canPlaySelectedCard() {
         if (!game.isStarted() || game.isOver() || selectedCard == null) {
             return false;
@@ -400,11 +426,13 @@ public class GameController {
         return game.canPlayCard(selectedCard);
     }
 
+    // Update action badge color by used action count
     private void updateActionsBadge(int actionsUsed) {
         Color background;
         Color border;
         Color foreground;
 
+        // Red at 3, orange at 2, green at 0 or 1
         if (actionsUsed >= Player.MAX_ACTIONS_PER_TURN) {
             background = Color.rgb(254, 226, 226);
             border = Color.rgb(252, 165, 165);
@@ -425,14 +453,17 @@ public class GameController {
         actions.setTextFill(foreground);
     }
 
+    // Update turn counter label
     private void updateTurnCount(int count) {
         turnCount.setText(String.valueOf(count));
     }
 
+    // Update deck remaining and total card counter
     private void updateDeckCount() {
         piles.setText(game.getDrawPileNumber() + " / " + game.getTotalCardNumber());
     }
 
+    // Update main game status badge
     private void updateStatusBadge(String text, Color background, Color border, Color foreground) {
         statusBadge.setText(text);
         statusBadge.setBackground(GameUI.solidBackground(background));
@@ -440,6 +471,7 @@ public class GameController {
         statusBadge.setTextFill(foreground);
     }
 
+    // Keep hand content at least as large as its viewport
     private void resizeHandArea(double width, double height) {
         handCardsBox.setMinWidth(width);
         handCardsBox.setMinHeight(height);
@@ -454,10 +486,12 @@ public class GameController {
 
         double contentWidth = tableContentWidth(width, playerCount);
 
+        // Make table wider than viewport only when more than three players exist
         tableBox.setMinWidth(contentWidth);
         tableBox.setPrefWidth(contentWidth);
         tableBox.setMinHeight(height);
 
+        // Apply equal width and height to all visible player boards
         double playerWidth = tablePlayerWidth(width, playerCount);
         for (javafx.scene.Node child : tableBox.getChildren()) {
             if (child instanceof Region region) {
