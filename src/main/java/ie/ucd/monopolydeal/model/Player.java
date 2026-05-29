@@ -9,8 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Player {
-    public static final int MAX_HAND_SIZE = 7;
-    public static final int MAX_CARDS_AT_HAND = MAX_HAND_SIZE;
+    public static final int MAX_CARDS_AT_HAND = 7;
     public static final int MAX_ACTIONS_PER_TURN = 3;
 
     private final String name;
@@ -87,13 +86,13 @@ public class Player {
     }
 
     public boolean isHandFull() {
-        return hand.size() >= MAX_HAND_SIZE;
+        return hand.size() >= MAX_CARDS_AT_HAND;
     }
 
     public List<Card> discardExcessCards(Deck deck) {
         List<Card> discarded = new ArrayList<>();
         // Trims from the end of the hand, preserving the earlier card order.
-        while (hand.size() > MAX_HAND_SIZE) {
+        while (hand.size() > MAX_CARDS_AT_HAND) {
             Card toDiscard = hand.remove(hand.size() - 1);
             deck.discard(toDiscard);
             discarded.add(toDiscard);
@@ -150,61 +149,19 @@ public class Player {
     }
 
     public boolean receivePropertyCard(Card card, PropertyColor color) {
-        PropertySet set = propertySets.get(color);
-        if (set == null || !set.canAddProperty()) {
-            return false;
-        }
-
-        // Incoming wild cards must be configured to the recipient set's color.
-        if (card instanceof WildPropertyCard wild) {
-            if (!wild.getPossibleColors().contains(color)) {
-                return false;
-            }
-            wild.setCurrentColor(color);
-        }
-
-        // Fixed-color property cards cannot be received into a different color set.
-        if (card instanceof PropertyCard propertyCard && propertyCard.getColor() != color) {
-            return false;
-        }
-
-        set.addProperty(card);
-        return true;
+        return PlayerProperties.receivePropertyCard(propertySets, card, color);
     }
 
     public boolean removePropertyCard(Card card) {
-        // Upgrades are searched together with property cards because both live under PropertySet.
-        for (PropertySet set : propertySets.values()) {
-            if (set.getCards().contains(card)) {
-                set.removeProperty(card);
-                return true;
-            }
-            if (set.removeUpgradeCard(card)) {
-                return true;
-            }
-        }
-        return false;
+        return PlayerProperties.removePropertyCard(propertySets, card);
     }
 
     public PropertyColor getPropertyColor(Card card) {
-        // Checks all cards in a set so upgrades and wild cards can be resolved through the same lookup.
-        for (Map.Entry<PropertyColor, PropertySet> entry : propertySets.entrySet()) {
-            if (entry.getValue().getAllCards().contains(card)) {
-                return entry.getKey();
-            }
-        }
-        return null;
+        return PlayerProperties.getPropertyColor(propertySets, card);
     }
 
     public List<Card> getStealableCards() {
-        List<Card> stealable = new ArrayList<>();
-        for (PropertySet set : propertySets.values()) {
-            // Completed sets are protected from stealable-card effects.
-            if (!set.isFullSet()) {
-                stealable.addAll(set.getCards());
-            }
-        }
-        return stealable;
+        return PlayerProperties.getStealableCards(propertySets);
     }
 
     public boolean addHouse(PropertyColor color, ActionCard card) {
@@ -264,26 +221,7 @@ public class Player {
     }
 
     public boolean transferFullSetTo(Player recipient, PropertyColor color) {
-        PropertySet sourceSet = propertySets.get(color);
-        PropertySet targetSet = recipient.getPropertySets().get(color);
-        if (sourceSet == null || targetSet == null || !sourceSet.isFullSet()) {
-            return false;
-        }
-
-        // Prevents merging into a recipient set that would exceed the Monopoly color size.
-        if (targetSet.getCards().size() + sourceSet.getCards().size() > color.getSize()) {
-            return false;
-        }
-
-        sourceSet.transferUpgradesTo(targetSet);
-
-        // Copies first because the source set is mutated while the transfer loop runs.
-        List<Card> cardsToMove = new ArrayList<>(sourceSet.getCards());
-        for (Card card : cardsToMove) {
-            removePropertyCard(card);
-            recipient.receivePropertyCard(card, color);
-        }
-        return true;
+        return PlayerProperties.transferFullSetTo(propertySets, recipient, color);
     }
 
     public List<WildPropertyCard> getPlacedWildCards() {
@@ -321,17 +259,12 @@ public class Player {
         return total;
     }
 
-    @Deprecated
-    public int getBankTotal() {
-        return getTotalAssetValue();
-    }
-
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(String.format("Player %d: %s (Cash: %dM, Total Assets: %dM)%n",
                 number, name, getCashValue(), getTotalAssetValue()));
-        sb.append("  Hand: ").append(hand.size()).append("/").append(MAX_HAND_SIZE).append(" cards\n");
+        sb.append("  Hand: ").append(hand.size()).append("/").append(MAX_CARDS_AT_HAND).append(" cards\n");
         sb.append("  Properties:\n");
         for (PropertySet set : propertySets.values()) {
             if (!set.getCards().isEmpty()) {

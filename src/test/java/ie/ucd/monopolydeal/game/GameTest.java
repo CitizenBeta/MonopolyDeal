@@ -289,6 +289,28 @@ class GameTest {
     }
 
     @Test
+    void anyRentShouldCollectRentFromOneChosenPlayer() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        PropertyCard green = new PropertyCard("Pacific Avenue", 4, PropertyColor.GREEN);
+        ActionCard anyRent = new ActionCard("Any Rent", 3, ActionType.MULTI_RENT, PropertyColor.getColors());
+        MoneyCard two = new MoneyCard("2M", 2);
+
+        current.addCardToHand(green);
+        assertTrue(current.addProperty(green));
+        current.addCardToHand(anyRent);
+        target.addCardToBank(two);
+
+        assertTrue(game.playCard(anyRent, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(current.getCardsAtBank().contains(two));
+        assertTrue(target.getCardsAtBank().isEmpty());
+        assertFalse(current.getCardsAtHand().contains(anyRent));
+    }
+
+    @Test
     void houseAndHotelShouldIncreaseRentOnCompletePropertySet() {
         Game game = new Game();
         game.setup(List.of("Alice", "Bob"));
@@ -325,8 +347,8 @@ class GameTest {
         assertTrue(game.endTurn(new ScriptedDecisionMaker()));
         assertEquals(Player.MAX_CARDS_AT_HAND, game.getPlayers().get(0).getCardsAtHand().size());
         assertEquals("Bob", game.getCurrPlayer().getName());
-        assertEquals(Game.CardAction.DISCARDED, game.getUsedCards().get(0).action());
-        assertEquals(Game.CardAction.DISCARDED, game.getUsedCards().get(1).action());
+        assertEquals(CardHistory.CardAction.DISCARDED, game.getUsedCards().get(0).action());
+        assertEquals(CardHistory.CardAction.DISCARDED, game.getUsedCards().get(1).action());
     }
 
     @Test
@@ -394,6 +416,59 @@ class GameTest {
         assertTrue(current.getCardsAtHand().contains(debtCollector));
         assertTrue(target.getCardsAtBank().contains(five));
         assertFalse(current.getCardsAtBank().contains(five));
+        assertEquals(0, game.getActionsUsed());
+    }
+
+    @Test
+    void overpaymentShouldTransferFullCardValueWithoutChange() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        ActionCard debtCollector = new ActionCard("Debt Collector", 3, ActionType.DEBT_COLLECTOR);
+        MoneyCard ten = new MoneyCard("10M", 10);
+        current.addCardToHand(debtCollector);
+        target.addCardToBank(ten);
+
+        assertTrue(game.playCard(debtCollector, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(current.getCardsAtBank().contains(ten));
+        assertTrue(target.getCardsAtBank().isEmpty());
+        assertEquals(10, current.getBankTotalValue());
+    }
+
+    @Test
+    void failedMidPaymentPropertyTransferShouldRollBackEarlierPaymentCards() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        ActionCard debtCollector = new ActionCard("Debt Collector", 3, ActionType.DEBT_COLLECTOR);
+        MoneyCard one = new MoneyCard("1M", 1);
+        WildPropertyCard wild = new WildPropertyCard(
+                "Dark Blue/Green Wild",
+                List.of(PropertyColor.DARK_BLUE, PropertyColor.GREEN),
+                4
+        );
+        current.addCardToHand(debtCollector);
+        target.addCardToBank(one);
+        target.addCardToHand(wild);
+        assertTrue(target.addWildProperty(wild, PropertyColor.DARK_BLUE));
+
+        DecisionMaker cancelWildColor = new ScriptedDecisionMaker(UseMode.PLAY, false) {
+            @Override
+            public PropertyColor selectColor(String prompt, List<PropertyColor> colors) {
+                return null;
+            }
+        };
+
+        assertFalse(game.playCard(debtCollector, cancelWildColor));
+        assertTrue(current.getCardsAtHand().contains(debtCollector));
+        assertFalse(current.getCardsAtBank().contains(one));
+        assertTrue(target.getCardsAtBank().contains(one));
+        assertTrue(target.getPropertySets().get(PropertyColor.DARK_BLUE).getCards().contains(wild));
+        assertEquals(PropertyColor.DARK_BLUE, wild.getCurrentColor());
         assertEquals(0, game.getActionsUsed());
     }
 

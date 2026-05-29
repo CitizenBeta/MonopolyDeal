@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.function.Function;
 
 // Shared radio-button dialog helpers
-final class DialogChoices {
+public final class DialogChoices {
     private DialogChoices() {
     }
 

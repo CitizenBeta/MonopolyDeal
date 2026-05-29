@@ -11,7 +11,7 @@ import javafx.scene.layout.Region;
 import java.util.List;
 
 // Handles player-table sizing and horizontal scrolling
-final class TableLayout {
+public final class TableLayout {
     // Show at most three players before horizontal scrolling
     private static final int MAX_VISIBLE_PLAYERS = 3;
 

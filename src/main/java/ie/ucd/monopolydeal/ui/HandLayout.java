@@ -9,7 +9,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 
 // Handles the horizontal hand-card strip layout
-final class HandLayout {
+public final class HandLayout {
     private HandLayout() {
     }
 

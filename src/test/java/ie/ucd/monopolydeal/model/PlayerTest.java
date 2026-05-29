@@ -79,7 +79,7 @@ class PlayerTest {
 
         List<Card> discarded = player.discardExcessCards(deck);
 
-        assertEquals(Player.MAX_HAND_SIZE, player.getCardsAtHand().size());
+        assertEquals(Player.MAX_CARDS_AT_HAND, player.getCardsAtHand().size());
         assertEquals(2, discarded.size());
         assertEquals(2, deck.getDiscardPileCount());
     }

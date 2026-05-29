@@ -7,7 +7,6 @@ import ie.ucd.monopolydeal.model.PropertyColor;
 import ie.ucd.monopolydeal.model.WildPropertyCard;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -107,43 +106,15 @@ public class GameController {
             return;
         }
 
-        game.setup(names);
         statusText.setText("Game started.");
+        game.setup(names);
         refresh();
     }
 
     // Show used/discarded cards, newest first
     @FXML
     private void onUsedCards() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Used Cards");
-        alert.setHeaderText("Used cards in this game. Newest first");
-
-        ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setPrefSize(520, 420);
-
-        List<Game.UsedCard> usedCards = game.getUsedCards();
-        if (usedCards.isEmpty()) {
-            // Create an empty used cards box
-            StackPane box = new StackPane(GameUI.noCardBox("No cards yet", "No cards have been used or discarded yet"));
-            box.setAlignment(Pos.CENTER);
-            box.setPrefHeight(360);
-            scrollPane.setContent(box);
-        } else {
-            VBox cardsBox = new VBox(10);
-            cardsBox.setPadding(new Insets(10));
-            cardsBox.setFillWidth(true);
-
-            for (Game.UsedCard usedCard : usedCards) {
-                cardsBox.getChildren().add(GameUI.newUsedCardBox(usedCard));
-            }
-
-            scrollPane.setContent(cardsBox);
-        }
-        alert.getDialogPane().setContent(scrollPane);
-        alert.showAndWait();
+        UsedCardsDialog.show(game.getUsedCards());
     }
 
     // Run when the user presses Play Selected button
@@ -158,7 +129,8 @@ public class GameController {
             return;
         }
 
-        if (game.playCard(selectedCard, dialogs)) {
+        Card cardToPlay = selectedCard;
+        if (game.playCard(cardToPlay, dialogs)) {
             if (game.isOver()) {
                 // Show winner after the backend marks the game as over
                 Player winner = game.getWinner();
@@ -168,11 +140,11 @@ public class GameController {
                     statusText.setText(winner.getName() + " won.");
                 }
             } else {
-                statusText.setText("Played " + GameUI.statusCardText(selectedCard) + ".");
+                statusText.setText("Played " + GameUI.statusCardText(cardToPlay) + ".");
             }
             selectedCard = null;
         } else {
-            statusText.setText("Cannot play " + GameUI.statusCardText(selectedCard) + ".");
+            statusText.setText("Cannot play " + GameUI.statusCardText(cardToPlay) + ".");
         }
 
         refresh();

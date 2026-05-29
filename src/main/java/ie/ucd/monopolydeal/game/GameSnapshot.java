@@ -15,11 +15,11 @@ public final class GameSnapshot {
     private final int turnCount;
     private final boolean started;
     private final boolean gameOver;
-    private final List<Game.UsedCard> usedCards;
+    private final List<CardHistory.UsedCard> usedCards;
     private final List<PlayerSnapshot> players;
 
     public GameSnapshot(int currentPlayerIndex, int actionsUsed, int turnCount, boolean started,
-                        boolean gameOver, List<Game.UsedCard> usedCards, List<Player> players) {
+                        boolean gameOver, List<CardHistory.UsedCard> usedCards, List<Player> players) {
         this.currentPlayerIndex = currentPlayerIndex;
         this.actionsUsed = actionsUsed;
         this.turnCount = turnCount;

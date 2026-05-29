@@ -4,20 +4,21 @@ import ie.ucd.monopolydeal.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Predicate;
 
 // Resolves action-card legality and effects for Game
-final class ActionResolver {
+public final class ActionResolver {
     private static final int PASS_GO_DRAW = 2;
     private static final int DEBT_COLLECTOR_AMOUNT = 5;
     private static final int BIRTHDAY_AMOUNT = 2;
 
     private final Game game;
     private final Payment payments;
+    private final ActionTargets targets;
 
     ActionResolver(Game game, Payment payments) {
         this.game = game;
         this.payments = payments;
+        this.targets = new ActionTargets(game, payments);
     }
 
     // Handles action cards after the player chooses whether to use them as money or as actions
@@ -57,18 +58,18 @@ final class ActionResolver {
             case DEBT_COLLECTOR, TODAY_IS_MY_BIRTHDAY -> !payments.playersWithPaymentOptions(player).isEmpty();
             case RENT, MULTI_RENT -> canResolveRentCard(player, action);
             case DOUBLE_RENT -> canResolveDoubleRent(player, action);
-            case SLY_DEAL -> !playersWithStealableCards(player).isEmpty();
-            case FORCED_DEAL -> !playersForForcedDeal(player).isEmpty();
-            case DEAL_BREAKER -> !playersWithTransferableFullSets(player).isEmpty();
-            case HOUSE -> !buildableColors(player, true).isEmpty();
-            case HOTEL -> !buildableColors(player, false).isEmpty();
+            case SLY_DEAL -> !targets.playersWithStealableCards(player).isEmpty();
+            case FORCED_DEAL -> !targets.playersForForcedDeal(player).isEmpty();
+            case DEAL_BREAKER -> !targets.playersWithTransferableFullSets(player).isEmpty();
+            case HOUSE -> !targets.buildableColors(player, true).isEmpty();
+            case HOTEL -> !targets.buildableColors(player, false).isEmpty();
             case JUST_SAY_NO -> false;
         };
     }
 
     // Check rent card color and payment target
     private boolean canResolveRentCard(Player player, ActionCard action) {
-        return !getRentColors(player, action).isEmpty()
+        return !targets.getRentColors(player, action).isEmpty()
                 && !payments.playersWithPaymentOptions(player).isEmpty();
     }
 
@@ -130,23 +131,7 @@ final class ActionResolver {
     }
 
     private PropertyColor chooseRentColor(Player player, ActionCard action, DecisionMaker dm) {
-        return chooseSingleOrPrompt(getRentColors(player, action), dm, "Choose rent color.");
-    }
-
-    // Finds colors that can currently produce rent
-    private List<PropertyColor> getRentColors(Player player, ActionCard action) {
-        List<PropertyColor> sourceColors = action.getActionType() == ActionType.MULTI_RENT
-                ? PropertyColor.getColors()
-                : action.getColors();
-
-        List<PropertyColor> colors = new ArrayList<>();
-        for (PropertyColor color : sourceColors) {
-            PropertySet set = player.getPropertySets().get(color);
-            if (set != null && set.calculateRent() > 0) {
-                colors.add(color);
-            }
-        }
-        return colors;
+        return chooseSingleOrPrompt(targets.getRentColors(player, action), dm, "Choose rent color.");
     }
 
     // Double Rent consumes two actions: the Double Rent card and the selected rent card
@@ -166,7 +151,7 @@ final class ActionResolver {
         }
 
         player.removeCardFromHand(rentCard);
-        game.addUsedCard(player, rentCard, Game.CardAction.PLAYED);
+        game.addUsedCard(player, rentCard, CardHistory.CardAction.PLAYED);
         game.addActionUsed();
         return true;
     }
@@ -187,8 +172,8 @@ final class ActionResolver {
 
     // Sly Deal steals one transferable property from another player
     private boolean playSlyDeal(Player player, DecisionMaker dm) {
-        List<Player> targets = playersWithStealableCards(player);
-        Player target = dm.selectNextPlayer(player, targets, "Choose a player to steal from.");
+        List<Player> players = targets.playersWithStealableCards(player);
+        Player target = dm.selectNextPlayer(player, players, "Choose a player to steal from.");
         if (target == null) {
             return false;
         }
@@ -204,8 +189,8 @@ final class ActionResolver {
 
     // Forced Deal swaps one property from each player
     private boolean playForcedDeal(Player player, DecisionMaker dm) {
-        List<Player> targets = playersForForcedDeal(player);
-        Player target = dm.selectNextPlayer(player, targets, "Choose a player to trade with.");
+        List<Player> players = targets.playersForForcedDeal(player);
+        Player target = dm.selectNextPlayer(player, players, "Choose a player to trade with.");
         if (target == null) {
             return false;
         }
@@ -233,8 +218,8 @@ final class ActionResolver {
 
     // Deal Breaker transfers a complete set if the receiver has enough room for that set
     private boolean playDealBreaker(Player player, DecisionMaker dm) {
-        List<Player> targets = playersWithTransferableFullSets(player);
-        Player target = dm.selectNextPlayer(player, targets, "Choose a player with a full set.");
+        List<Player> players = targets.playersWithTransferableFullSets(player);
+        Player target = dm.selectNextPlayer(player, players, "Choose a player with a full set.");
         if (target == null) {
             return false;
         }
@@ -244,7 +229,7 @@ final class ActionResolver {
         }
 
         PropertyColor color = chooseSingleOrPrompt(
-                transferableFullSetColors(target, player),
+                targets.transferableFullSetColors(target, player),
                 dm,
                 "Choose a full set to steal."
         );
@@ -253,7 +238,7 @@ final class ActionResolver {
 
     private boolean playHouse(Player player, ActionCard house, DecisionMaker dm) {
         PropertyColor color = chooseSingleOrPrompt(
-                buildableColors(player, true),
+                targets.buildableColors(player, true),
                 dm,
                 "Choose a full set for House."
         );
@@ -262,27 +247,11 @@ final class ActionResolver {
 
     private boolean playHotel(Player player, ActionCard hotel, DecisionMaker dm) {
         PropertyColor color = chooseSingleOrPrompt(
-                buildableColors(player, false),
+                targets.buildableColors(player, false),
                 dm,
                 "Choose a full set for Hotel."
         );
         return color != null && player.addHotel(color, hotel);
-    }
-
-    // Returns full sets that can receive either a House or a Hotel
-    private List<PropertyColor> buildableColors(Player player, boolean forHouse) {
-        List<PropertyColor> colors = new ArrayList<>();
-        for (PropertySet set : player.getPropertySets().values()) {
-            if (canBuildOn(set.getColor())
-                    && ((forHouse && set.canAddHouse()) || (!forHouse && set.canAddHotel()))) {
-                colors.add(set.getColor());
-            }
-        }
-        return colors;
-    }
-
-    private boolean canBuildOn(PropertyColor color) {
-        return color != PropertyColor.RAILROAD && color != PropertyColor.UTILITY;
     }
 
     private PropertyColor chooseSingleOrPrompt(List<PropertyColor> colors, DecisionMaker dm, String prompt) {
@@ -295,48 +264,5 @@ final class ActionResolver {
         }
 
         return dm.selectColor(prompt, colors);
-    }
-
-    private List<Player> playersForForcedDeal(Player player) {
-        return matchingOtherPlayers(target ->
-                !payments.stealableCards(player, target).isEmpty()
-                        && !payments.stealableCards(target, player).isEmpty()
-        );
-    }
-
-    private List<Player> playersWithStealableCards(Player receiver) {
-        return matchingOtherPlayers(player -> !payments.stealableCards(player, receiver).isEmpty());
-    }
-
-    private List<Player> playersWithTransferableFullSets(Player receiver) {
-        return matchingOtherPlayers(player -> !transferableFullSetColors(player, receiver).isEmpty());
-    }
-
-    private List<PropertyColor> transferableFullSetColors(Player source, Player receiver) {
-        List<PropertyColor> colors = new ArrayList<>();
-
-        for (PropertyColor color : source.getFullSetColors()) {
-            PropertySet sourceSet = source.getPropertySets().get(color);
-            PropertySet receiverSet = receiver.getPropertySets().get(color);
-
-            if (sourceSet != null
-                    && receiverSet != null
-                    && receiverSet.getCards().size() + sourceSet.getCards().size() <= color.getSize()) {
-                colors.add(color);
-            }
-        }
-
-        return colors;
-    }
-
-    // Small filtering helper used by the action-card target search methods
-    private List<Player> matchingOtherPlayers(Predicate<Player> predicate) {
-        List<Player> matches = new ArrayList<>();
-        for (Player player : game.getOtherPlayers()) {
-            if (predicate.test(player)) {
-                matches.add(player);
-            }
-        }
-        return matches;
     }
 }

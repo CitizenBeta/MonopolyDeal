@@ -1,6 +1,6 @@
 package ie.ucd.monopolydeal.ui;
 
-import ie.ucd.monopolydeal.game.Game;
+import ie.ucd.monopolydeal.game.CardHistory;
 import ie.ucd.monopolydeal.model.Card;
 import ie.ucd.monopolydeal.model.Player;
 import ie.ucd.monopolydeal.model.PropertyColor;
@@ -21,7 +21,7 @@ public final class GameUI {
     private GameUI() {
     }
 
-    public static HBox newUsedCardBox(Game.UsedCard usedCard) {
+    public static HBox newUsedCardBox(CardHistory.UsedCard usedCard) {
         return CardUI.newUsedCardBox(usedCard);
     }
 

@@ -19,7 +19,7 @@ public class Game {
     private int turnCount;
     private boolean started;
     private Deck deck = new Deck();
-    private List<UsedCard> usedCards = new ArrayList<>();
+    private final CardHistory cardHistory = new CardHistory();
     private final Payment payments = new Payment(this);
     private final ActionResolver actionResolver = new ActionResolver(this, payments);
     private boolean gameOver;
@@ -33,7 +33,6 @@ public class Game {
         }
 
         resetState();
-
         for (int i = 0; i < names.size(); i++) {
             Player player = new Player(names.get(i), i + 1);
             drawCards(player, INITIAL_HAND_SIZE);
@@ -44,8 +43,8 @@ public class Game {
     }
 
     // Returns a defensive copy so callers cannot directly edit the history list.
-    public List<UsedCard> getUsedCards() {
-        return new ArrayList<>(usedCards);
+    public List<CardHistory.UsedCard> getUsedCards() {
+        return cardHistory.getUsedCards();
     }
 
     public boolean isOver() {
@@ -111,7 +110,7 @@ public class Game {
                 turnCount,
                 started,
                 gameOver,
-                usedCards,
+                cardHistory.getUsedCards(),
                 players
         );
 
@@ -206,7 +205,7 @@ public class Game {
     // Keeping this in one place avoids missing fields when setup() changes later.
     private void resetState() {
         players.clear();
-        usedCards.clear();
+        cardHistory.clear();
         deck = new Deck();
         currentPlayerIndex = 0;
         actionsUsed = 0;
@@ -231,7 +230,7 @@ public class Game {
     private void finishPlayedCard(Player player, Card card) {
         actionsUsed++;
         player.removeCardFromHand(card);
-        addUsedCard(player, card, CardAction.PLAYED);
+        addUsedCard(player, card, CardHistory.CardAction.PLAYED);
         gameOver = player.hasWon();
     }
 
@@ -270,7 +269,7 @@ public class Game {
         }
 
         target.removeCardFromHand(justSayNo);
-        addUsedCard(target, justSayNo, CardAction.PLAYED);
+        addUsedCard(target, justSayNo, CardHistory.CardAction.PLAYED);
 
         // Just Say No can be countered by another Just Say No, so keep checking both sides.
         return !isBlockedByJustSayNo(actor, target, dm);
@@ -296,13 +295,13 @@ public class Game {
         for (Card discard : discards) {
             player.removeCardFromHand(discard);
             deck.putAtDrawPileBottom(discard);
-            addUsedCard(player, discard, CardAction.DISCARDED);
+            addUsedCard(player, discard, CardHistory.CardAction.DISCARDED);
         }
 
         return true;
     }
 
-    // Ensures the discard choice has the right count, belongs to the player and contains no duplicates.
+    // Ensures the discard choice has the right count, belongs to the player and contains no duplicates
     private boolean isValidDiscardSelection(Player player, List<Card> discards, int expectedCount) {
         if (discards == null || discards.size() != expectedCount) {
             return false;
@@ -348,9 +347,8 @@ public class Game {
         }
     }
 
-    void addUsedCard(Player player, Card card, CardAction action) {
-        // Keep the newest record first while staying compatible with older Java versions.
-        usedCards.add(0, new UsedCard(action, player.getName(), card));
+    void addUsedCard(Player player, Card card, CardHistory.CardAction action) {
+        cardHistory.add(player, card, action);
     }
 
     void addActionUsed() {
@@ -358,29 +356,12 @@ public class Game {
     }
 
     public void restoreSnapshot(int currentPlayerIndex, int actionsUsed, int turnCount,
-                                boolean started, boolean gameOver, List<UsedCard> usedCards) {
+                                boolean started, boolean gameOver, List<CardHistory.UsedCard> usedCards) {
         this.currentPlayerIndex = currentPlayerIndex;
         this.actionsUsed = actionsUsed;
         this.turnCount = turnCount;
         this.started = started;
         this.gameOver = gameOver;
-        this.usedCards = new ArrayList<>(usedCards);
+        cardHistory.restore(usedCards);
     }
-
-    public enum CardAction {
-        PLAYED("Played"),
-        DISCARDED("Discarded");
-
-        private final String label;
-
-        CardAction(String label) {
-            this.label = label;
-        }
-
-        public String getLabel() {
-            return label;
-        }
-    }
-
-    public record UsedCard(CardAction action, String player, Card card) {}
 }
