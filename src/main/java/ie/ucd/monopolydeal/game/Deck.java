@@ -10,41 +10,48 @@ public class Deck {
     // The random object can be injected so tests can use a predictable shuffle.
     private final Random random;
     private int totalCardNumber;
+    private final CardFactory cardFactory;
+
 
     public Deck() {
-        this(new Random());
-
+        this(new Random(), new StandardCardFactory());
     }
 
     public Deck(Random random) {
+        this(random, new StandardCardFactory());
+    }
+
+    public Deck(Random random, CardFactory cardFactory) {
         this.random = random;
-        // Build a complete shuffled deck as soon as the deck object is created.
+        this.cardFactory = cardFactory;
         reset();
     }
 
+
     private void addMoney(String name, int amount, int copies) {
         for (int i = 0; i < copies; i++) {
-            drawPile.add(new MoneyCard(name, amount));
+            drawPile.add(cardFactory.createMoneyCard(name, amount));
         }
     }
 
     private void addProperty(String name, PropertyColor color, int bank, int copies) {
         for (int i = 0; i < copies; i++) {
-            drawPile.add(new PropertyCard(name, bank, color));
+            drawPile.add(cardFactory.createPropertyCard(name, bank, color));
         }
     }
 
     private void addAction(String name, ActionType type, int bank, int amount, int copies, List<PropertyColor> colors) {
         for (int i = 0; i < copies; i++) {
-            drawPile.add(new ActionCard(name, bank, type, colors));
+            drawPile.add(cardFactory.createActionCard(name, bank, type, colors));
         }
     }
 
     private void addWild(String name, int bank, List<PropertyColor> colors, int copies) {
         for (int i = 0; i < copies; i++) {
-            drawPile.add(new WildPropertyCard(name, colors, bank));
+            drawPile.add(cardFactory.createWildPropertyCard(name, colors, bank));
         }
     }
+
 
     private void initializeStandardDeck() {
         // The card counts below define the standard Monopoly Deal deck used by the game.
