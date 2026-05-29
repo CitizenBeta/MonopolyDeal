@@ -3,6 +3,7 @@ package ie.ucd.monopolydeal.model;
 import ie.ucd.monopolydeal.game.Deck;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -30,13 +31,13 @@ public class Player {
 
     public String getName() { return name; }
     public int getNumber() { return number; }
-    public List<Card> getHand() { return hand; }
+    public List<Card> getHand() { return Collections.unmodifiableList(hand); }
     // Compatibility alias for code/tests that still use the older hand naming.
-    public List<Card> getCardsAtHand() { return hand; }
-    public List<Card> getBankCash() { return bankCash; }
+    public List<Card> getCardsAtHand() { return Collections.unmodifiableList(hand); }
+    public List<Card> getBankCash() { return Collections.unmodifiableList(bankCash); }
     // Compatibility alias for code/tests that still use the older bank naming.
-    public List<Card> getCardsAtBank() { return bankCash; }
-    public Map<PropertyColor, PropertySet> getPropertySets() { return propertySets; }
+    public List<Card> getCardsAtBank() { return Collections.unmodifiableList(bankCash); }
+    public Map<PropertyColor, PropertySet> getPropertySets() { return Collections.unmodifiableMap(propertySets); }
 
     public void addCardToHand(Card card) {
         if (card != null) hand.add(card);
@@ -53,6 +54,18 @@ public class Player {
     public void addCardToBank(Card card) {
         if (card != null) {
             bankCash.add(card);
+        }
+    }
+
+    public void restoreCards(List<Card> handCards, List<Card> bankCards) {
+        hand.clear();
+        if (handCards != null) {
+            hand.addAll(handCards);
+        }
+
+        bankCash.clear();
+        if (bankCards != null) {
+            bankCash.addAll(bankCards);
         }
     }
 

@@ -9,7 +9,6 @@ import javafx.scene.layout.VBox;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
@@ -25,7 +24,6 @@ final class GameDialogs implements DecisionMaker {
 
         this.actionPlayChecker = actionPlayChecker;
     }
-
     // Pop a dialog to ask players' name
     List<String> askPlayerNames() {
         // Ask how many players will join
@@ -61,81 +59,13 @@ final class GameDialogs implements DecisionMaker {
 
         return names;
     }
-
-    private <T> T chooseOption(String title, String prompt, List<T> options, Function<T, String> text) {
-        return chooseOption(title, prompt, options, text, true);
-    }
-
-    // Shared radio-button dialog
-    private <T> T chooseOption(String title, String prompt, List<T> options, Function<T, String> text,
-                               boolean autoChooseSingleOption) {
-        // No options means the action cannot continue
-        if (options == null || options.isEmpty()) {
-            return null;
-        }
-
-        // Skip dialog when only one real choice exists
-        if (autoChooseSingleOption && options.size() == 1) {
-            return options.getFirst();
-        }
-
-        // Build base dialog
-        Dialog<T> dialog = new Dialog<>();
-        dialog.setTitle(title);
-        dialog.setHeaderText(prompt);
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-        ToggleGroup group = new ToggleGroup();
-        VBox optionsBox = new VBox(8);
-        optionsBox.setPadding(new Insets(8));
-
-        // Create one radio button for each option
-        List<RadioButton> radioButtons = new ArrayList<>();
-        for (T option : options) {
-            RadioButton radioButton = new RadioButton(text.apply(option));
-            radioButton.setToggleGroup(group);
-            radioButton.setWrapText(true);
-            radioButton.setMaxWidth(Double.MAX_VALUE);
-            radioButtons.add(radioButton);
-            optionsBox.getChildren().add(radioButton);
-        }
-        radioButtons.getFirst().setSelected(true);
-
-        // Use scroll area when the option list is long
-        ScrollPane scrollPane = new ScrollPane(optionsBox);
-        scrollPane.setFitToWidth(true);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        scrollPane.setPrefSize(420, Math.min(280, Math.max(120, options.size() * 38 + 24)));
-
-        // OK requires one selected radio button
-        Button okButton = (Button) dialog.getDialogPane().lookupButton(ButtonType.OK);
-        okButton.disableProperty().bind(group.selectedToggleProperty().isNull());
-
-        dialog.getDialogPane().setContent(scrollPane);
-        dialog.setResultConverter(button -> {
-            if (button == ButtonType.OK) {
-                // Map selected radio button back to the original option
-                Toggle selectedToggle = group.getSelectedToggle();
-                for (int i = 0; i < radioButtons.size(); i++) {
-                    if (radioButtons.get(i) == selectedToggle) {
-                        return options.get(i);
-                    }
-                }
-            }
-            return null;
-        });
-
-        return dialog.showAndWait().orElse(null);
-    }
-
     @Override
     public Player selectNextPlayer(Player currentPlayer, List<Player> players, String prompt) {
-        return chooseOption("Choose Player", prompt, players, Player::getName);
+        return DialogChoices.chooseOption("Choose Player", prompt, players, Player::getName);
     }
-
     @Override
     public PropertyColor selectColor(String prompt, List<PropertyColor> players) {
-        return chooseOption("Choose Color", prompt, players, PropertyColor::getName);
+        return DialogChoices.chooseOption("Choose Color", prompt, players, PropertyColor::getName);
     }
 
     @Override
@@ -149,7 +79,7 @@ final class GameDialogs implements DecisionMaker {
         modes.add(UseMode.BANK);
 
         // Do not auto-bank when Bank is the only option
-        return chooseOption("Use Card", "How do you want to use " + action.getName() + "?", modes, mode -> {
+        return DialogChoices.chooseOption("Use Card", "How do you want to use " + action.getName() + "?", modes, mode -> {
             if (mode == UseMode.PLAY) {
                 return "Play card";
             }
@@ -159,7 +89,7 @@ final class GameDialogs implements DecisionMaker {
 
     @Override
     public WildPropertyCard selectWildCardToMove(Player current, List<WildPropertyCard> wildCards) {
-        return chooseOption("Move Wild", "Choose a wild card to move for " + current.getName(), wildCards, card -> {
+        return DialogChoices.chooseOption("Move Wild", "Choose a wild card to move for " + current.getName(), wildCards, card -> {
             if (card.getCurrentColor() == null) {
                 return card.getName() + " - Not selected";
             }
@@ -297,7 +227,7 @@ final class GameDialogs implements DecisionMaker {
 
     @Override
     public Card selectPropertyCard(Player owner, List<Card> cards, String prompt) {
-        return chooseOption("Choose Card", prompt, cards, card -> cardOptionText(owner, card));
+        return DialogChoices.chooseOption("Choose Card", prompt, cards, card -> cardOptionText(owner, card));
     }
 
     // Enable OK once selected payment reaches required value

@@ -3,6 +3,7 @@ package ie.ucd.monopolydeal.game;
 import ie.ucd.monopolydeal.model.*;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -179,8 +180,8 @@ class GameTest {
         Player current = game.getCurrPlayer();
         Player target = game.getPlayers().get(1);
 
-        current.getCardsAtHand().removeIf(GameTest::isJustSayNo);
-        target.getCardsAtHand().removeIf(GameTest::isJustSayNo);
+        removeJustSayNoCards(current);
+        removeJustSayNoCards(target);
 
         ActionCard debtCollector = new ActionCard("Debt Collector", 3, ActionType.DEBT_COLLECTOR);
         ActionCard justSayNo = new ActionCard("Just Say No!", 4, ActionType.JUST_SAY_NO);
@@ -260,7 +261,171 @@ class GameTest {
         assertTrue(target.getPropertySets().get(PropertyColor.BROWN).getCards().isEmpty());
     }
 
+    @Test
+    void rentCardShouldCollectRentFromAvailableOpponent() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        PropertyCard brown = new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN);
+        ActionCard rent = new ActionCard(
+                "Light Blue/Brown Rent",
+                1,
+                ActionType.RENT,
+                List.of(PropertyColor.LIGHT_BLUE, PropertyColor.BROWN)
+        );
+        MoneyCard one = new MoneyCard("1M", 1);
+
+        current.addCardToHand(brown);
+        assertTrue(current.addProperty(brown));
+        current.addCardToHand(rent);
+        target.addCardToBank(one);
+
+        assertTrue(game.playCard(rent, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(current.getCardsAtBank().contains(one));
+        assertFalse(target.getCardsAtBank().contains(one));
+        assertEquals(1, game.getActionsUsed());
+    }
+
+    @Test
+    void houseAndHotelShouldIncreaseRentOnCompletePropertySet() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+
+        addPropertyToTable(current, new PropertyCard("Boardwalk", 4, PropertyColor.DARK_BLUE));
+        addPropertyToTable(current, new PropertyCard("Park Place", 4, PropertyColor.DARK_BLUE));
+
+        ActionCard house = new ActionCard("House", 3, ActionType.HOUSE);
+        ActionCard hotel = new ActionCard("Hotel", 4, ActionType.HOTEL);
+        current.addCardToHand(house);
+        current.addCardToHand(hotel);
+
+        assertTrue(game.playCard(house, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(game.playCard(hotel, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+
+        PropertySet set = current.getPropertySets().get(PropertyColor.DARK_BLUE);
+        assertEquals(1, set.getHouseCount());
+        assertEquals(1, set.getHotelCount());
+        assertEquals(15, set.calculateRent());
+    }
+
+    @Test
+    void endTurnShouldDiscardExtraCardsBeforeNextPlayerStarts() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+
+        MoneyCard firstExtra = new MoneyCard("9M", 9);
+        MoneyCard secondExtra = new MoneyCard("8M", 8);
+        current.addCardToHand(firstExtra);
+        current.addCardToHand(secondExtra);
+
+        assertTrue(game.endTurn(new ScriptedDecisionMaker()));
+        assertEquals(Player.MAX_CARDS_AT_HAND, game.getPlayers().get(0).getCardsAtHand().size());
+        assertEquals("Bob", game.getCurrPlayer().getName());
+        assertEquals(Game.CardAction.DISCARDED, game.getUsedCards().get(0).action());
+        assertEquals(Game.CardAction.DISCARDED, game.getUsedCards().get(1).action());
+    }
+
+    @Test
+    void birthdayShouldCollectFromMultipleAvailablePlayers() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob", "Cara"));
+        Player current = game.getCurrPlayer();
+        Player bob = game.getPlayers().get(1);
+        Player cara = game.getPlayers().get(2);
+
+        ActionCard birthday = new ActionCard("It's My Birthday!", 2, ActionType.TODAY_IS_MY_BIRTHDAY);
+        MoneyCard one = new MoneyCard("1M", 1);
+        MoneyCard two = new MoneyCard("2M", 2);
+        current.addCardToHand(birthday);
+        bob.addCardToBank(one);
+        cara.addCardToBank(two);
+
+        assertTrue(game.playCard(birthday, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(current.getCardsAtBank().contains(one));
+        assertTrue(current.getCardsAtBank().contains(two));
+        assertTrue(bob.getCardsAtBank().isEmpty());
+        assertTrue(cara.getCardsAtBank().isEmpty());
+    }
+
+    @Test
+    void completingThirdSetShouldEndGameWithWinner() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+
+        addPropertyToTable(current, new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN));
+        addPropertyToTable(current, new PropertyCard("Baltic Avenue", 1, PropertyColor.BROWN));
+        addPropertyToTable(current, new PropertyCard("Boardwalk", 4, PropertyColor.DARK_BLUE));
+        addPropertyToTable(current, new PropertyCard("Park Place", 4, PropertyColor.DARK_BLUE));
+        addPropertyToTable(current, new PropertyCard("Electric Company", 2, PropertyColor.UTILITY));
+
+        PropertyCard waterWorks = new PropertyCard("Water Works", 2, PropertyColor.UTILITY);
+        current.addCardToHand(waterWorks);
+
+        assertTrue(game.playCard(waterWorks, new ScriptedDecisionMaker()));
+        assertTrue(game.isOver());
+        assertSame(current, game.getWinner());
+    }
+
+    @Test
+    void cancelledPaymentShouldRollBackThePlayedAction() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        ActionCard debtCollector = new ActionCard("Debt Collector", 3, ActionType.DEBT_COLLECTOR);
+        MoneyCard five = new MoneyCard("5M", 5);
+        current.addCardToHand(debtCollector);
+        target.addCardToBank(five);
+
+        DecisionMaker cancelPayment = new ScriptedDecisionMaker(UseMode.PLAY, false) {
+            @Override
+            public List<Card> selectPaymentCards(Player owner, List<Card> cards, int amount) {
+                return List.of();
+            }
+        };
+
+        assertFalse(game.playCard(debtCollector, cancelPayment));
+        assertTrue(current.getCardsAtHand().contains(debtCollector));
+        assertTrue(target.getCardsAtBank().contains(five));
+        assertFalse(current.getCardsAtBank().contains(five));
+        assertEquals(0, game.getActionsUsed());
+    }
+
+    @Test
+    void exposedCollectionsShouldBeReadOnly() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        PropertySet brownSet = current.getPropertySets().get(PropertyColor.BROWN);
+
+        assertThrows(UnsupportedOperationException.class, () -> game.getPlayers().clear());
+        assertThrows(UnsupportedOperationException.class, () -> current.getCardsAtHand().clear());
+        assertThrows(UnsupportedOperationException.class, () -> current.getCardsAtBank().add(new MoneyCard("1M", 1)));
+        assertThrows(UnsupportedOperationException.class, () -> current.getPropertySets().clear());
+        assertThrows(UnsupportedOperationException.class, () -> brownSet.getCards().add(new MoneyCard("1M", 1)));
+    }
+
     private static boolean isJustSayNo(Card card) {
         return card instanceof ActionCard actionCard && actionCard.getActionType() == ActionType.JUST_SAY_NO;
+    }
+
+    private static void removeJustSayNoCards(Player player) {
+        List<Card> cards = new ArrayList<>(player.getCardsAtHand());
+        for (Card card : cards) {
+            if (isJustSayNo(card)) {
+                player.removeCardFromHand(card);
+            }
+        }
+    }
+
+    private static void addPropertyToTable(Player player, PropertyCard property) {
+        player.addCardToHand(property);
+        assertTrue(player.addProperty(property));
     }
 }

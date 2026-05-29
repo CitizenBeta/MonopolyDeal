@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-// Captures mutable game state so cancelled multi-step actions can roll back cleanly
+// Captures mutable game state so canceled multistep actions can roll back cleanly
 public final class GameSnapshot {
     private final int currentPlayerIndex;
     private final int actionsUsed;
@@ -79,10 +79,7 @@ public final class GameSnapshot {
         }
 
         private void restore() {
-            player.getCardsAtHand().clear();
-            player.getCardsAtHand().addAll(hand);
-            player.getCardsAtBank().clear();
-            player.getCardsAtBank().addAll(bank);
+            player.restoreCards(hand, bank);
 
             for (Map.Entry<PropertyColor, PropertySetSnapshot> entry : propertySets.entrySet()) {
                 PropertySet set = player.getPropertySets().get(entry.getKey());

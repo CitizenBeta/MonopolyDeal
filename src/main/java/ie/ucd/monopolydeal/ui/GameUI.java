@@ -38,11 +38,11 @@ public final class GameUI {
     }
 
     public static Color cardColor(Card card) {
-        return CardUI.cardColor(card);
+        return CardColorUI.cardColor(card);
     }
 
     public static Color propertyColor(PropertyColor color) {
-        return CardUI.propertyColor(color);
+        return CardColorUI.propertyColor(color);
     }
 
     public static VBox newPlayerBox(Player player, boolean isCurrent, double minHeight) {

@@ -1,6 +1,7 @@
 package ie.ucd.monopolydeal.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class PropertySet {
@@ -19,7 +20,7 @@ public class PropertySet {
     }
 
     public List<Card> getCards() {
-        return cards;
+        return Collections.unmodifiableList(cards);
     }
 
     public List<Card> getUpgradeCards() {
@@ -30,14 +31,14 @@ public class PropertySet {
         if (hotelCard != null) {
             upgrades.add(hotelCard);
         }
-        return upgrades;
+        return Collections.unmodifiableList(upgrades);
     }
 
     public List<Card> getAllCards() {
         // Combines base properties and upgrades for asset-value and ownership checks.
         List<Card> allCards = new ArrayList<>(cards);
         allCards.addAll(getUpgradeCards());
-        return allCards;
+        return Collections.unmodifiableList(allCards);
     }
 
     public ActionCard getHouseCard() {

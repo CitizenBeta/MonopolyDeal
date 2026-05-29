@@ -17,9 +17,6 @@ import javafx.scene.text.Font;
 import java.util.List;
 
 public class GameController {
-    // Show at most three players before horizontal scrolling
-    private static final int MAX_VISIBLE_PLAYERS = 3;
-
     // Main game state
     private final Game game = new Game();
     // Handle all DecisionMaker prompts in GameDialogs
@@ -89,33 +86,8 @@ public class GameController {
     }
 
     private void configureHandArea() {
-        // Configure horizontal hand card strip
-        handCardsBox.setFillHeight(false);
-        handCardsBox.setAlignment(Pos.CENTER);
-        cardsScroll.setFitToHeight(true);
-        cardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        cardsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-        cardsScroll.setPannable(false);
-        // Keep hand strip as tall as viewport
-        cardsScroll.viewportBoundsProperty().addListener((_, _, bounds) -> resizeHandArea(bounds.getWidth(), bounds.getHeight()));
-        cardsScroll.setVvalue(0);
-        cardsScroll.vvalueProperty().addListener((_, _, _) -> cardsScroll.setVvalue(0));
-        // Use mouse wheel to scroll hand horizontally
-        cardsScroll.setOnScroll(e -> {
-            if (e.getDeltaY() != 0) {
-                double nextValue = cardsScroll.getHvalue() - e.getDeltaY() / handCardsBox.getWidth();
-                cardsScroll.setHvalue(Math.clamp(nextValue, 0, 1));
-                e.consume();
-            }
-        });
-        cardsScroll.setBackground(GameUI.solidBackground(Color.WHITE));
-        cardsScroll.setBorder(Border.EMPTY);
-        cardsScroll.setFocusTraversable(false);
-        cardsScroll.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
-        cardsScroll.setOnMousePressed(e -> rootPane.requestFocus());
-        // Clear selected card when clicking empty hand space
-        cardsScroll.setOnMouseClicked(e -> {
-            if ((e.getTarget() == cardsScroll || e.getTarget() == handCardsBox) && selectedCard != null) {
+        HandLayout.configure(handCardsBox, cardsScroll, rootPane, () -> {
+            if (selectedCard != null) {
                 selectedCard = null;
                 refresh();
             }
@@ -123,18 +95,7 @@ public class GameController {
     }
 
     private void configureTableArea() {
-        // Configure horizontally scrolling player table
-        tableBox.setFillHeight(true);
-        tableBox.setAlignment(Pos.TOP_CENTER);
-        tableScroll.setFitToWidth(false);
-        tableScroll.setFitToHeight(false);
-        tableScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-        tableScroll.setPannable(true);
-        // Resize player boards when window changes
-        tableScroll.viewportBoundsProperty().addListener((_, _, bounds) -> resizeTableArea(bounds.getWidth(), bounds.getHeight()));
-        tableScroll.setFocusTraversable(false);
-        tableScroll.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
-        tableScroll.setOnMousePressed(e -> rootPane.requestFocus());
+        TableLayout.configure(tableBox, tableScroll, rootPane, this::resizeTableArea);
     }
 
     // Run when the user presses New Game button
@@ -293,8 +254,8 @@ public class GameController {
         tableBox.setAlignment(Pos.CENTER);
         handCardsBox.getChildren().setAll(GameUI.centeredEmptyBox(cardsScroll, "No cards yet", "Start a new game to render the active hand here"));
         tableBox.getChildren().setAll(GameUI.centeredEmptyBox(tableScroll, "No players yet", "Create a game to see hand, bank, and property areas"));
-        resizeHandArea(cardsScroll.getViewportBounds().getWidth(), cardsScroll.getViewportBounds().getHeight());
-        resizeTableArea(tableScroll.getViewportBounds().getWidth(), tableScroll.getViewportBounds().getHeight());
+        resizeHandArea();
+        resizeTableArea();
 
         updateTurnCount(0);
         updateStatusBadge("Ready", Color.rgb(224, 231, 255), Color.rgb(165, 180, 252), Color.rgb(67, 56, 202));
@@ -360,7 +321,7 @@ public class GameController {
         if (handCards.isEmpty()) {
             handCardsBox.setAlignment(Pos.CENTER);
             handCardsBox.getChildren().add(GameUI.centeredEmptyBox(cardsScroll, "No cards", "This player has no cards in hand"));
-            resizeHandArea(cardsScroll.getViewportBounds().getWidth(), cardsScroll.getViewportBounds().getHeight());
+            resizeHandArea();
             return;
         }
 
@@ -388,7 +349,7 @@ public class GameController {
         if (players.isEmpty()) {
             tableBox.setAlignment(Pos.CENTER);
             tableBox.getChildren().add(GameUI.centeredEmptyBox(tableScroll, "No players", "Start a new game to show player boards"));
-            resizeTableArea(tableScroll.getViewportBounds().getWidth(), tableScroll.getViewportBounds().getHeight());
+            resizeTableArea();
             return;
         }
 
@@ -400,7 +361,7 @@ public class GameController {
             tableBox.getChildren().add(playerBox);
         }
 
-        resizeTableArea(tableScroll.getViewportBounds().getWidth(), tableScroll.getViewportBounds().getHeight());
+        resizeTableArea();
         // Scroll to current player after layout
         Platform.runLater(this::scrollTableToCurrentPlayer);
     }
@@ -471,104 +432,19 @@ public class GameController {
         statusBadge.setTextFill(foreground);
     }
 
-    // Keep hand content at least as large as its viewport
-    private void resizeHandArea(double width, double height) {
-        handCardsBox.setMinWidth(width);
-        handCardsBox.setMinHeight(height);
+    private void resizeHandArea() {
+        HandLayout.resize(handCardsBox, cardsScroll);
     }
 
-    // Show up to three player boards before scrolling
-    private void resizeTableArea(double width, double height) {
-        int playerCount = 0;
-        if (game.isStarted()) {
-            playerCount = game.getPlayers().size();
-        }
-
-        double contentWidth = tableContentWidth(width, playerCount);
-
-        // Make table wider than viewport only when more than three players exist
-        tableBox.setMinWidth(contentWidth);
-        tableBox.setPrefWidth(contentWidth);
-        tableBox.setMinHeight(height);
-
-        // Apply equal width and height to all visible player boards
-        double playerWidth = tablePlayerWidth(width, playerCount);
-        for (javafx.scene.Node child : tableBox.getChildren()) {
-            if (child instanceof Region region) {
-                if (playerCount > 0 && !region.prefWidthProperty().isBound()) {
-                    region.setMinWidth(playerWidth);
-                    region.setPrefWidth(playerWidth);
-                    region.setMaxWidth(playerWidth);
-                }
-                region.setMinHeight(playerBoxMinHeight());
-            }
-        }
+    private void resizeTableArea() {
+        TableLayout.resize(game, tableBox, tableScroll);
     }
 
-    // Calculate one player board width
-    private double tablePlayerWidth(double viewportWidth, int playerCount) {
-        if (playerCount <= 0 || viewportWidth <= 0) {
-            return 0;
-        }
-
-        int visiblePlayers = Math.min(playerCount, MAX_VISIBLE_PLAYERS);
-        Insets padding = tableBox.getPadding();
-        double spacing = tableBox.getSpacing() * (visiblePlayers - 1);
-        double width = viewportWidth - padding.getLeft() - padding.getRight() - spacing;
-        return Math.max(260, width / visiblePlayers);
-    }
-
-    // Calculate total table content width
-    private double tableContentWidth(double viewportWidth, int playerCount) {
-        if (playerCount <= 0 || viewportWidth <= 0) {
-            return viewportWidth;
-        }
-
-        double playerWidth = tablePlayerWidth(viewportWidth, playerCount);
-        Insets padding = tableBox.getPadding();
-        double spacing = tableBox.getSpacing() * Math.max(0, playerCount - 1);
-        double contentWidth = padding.getLeft() + padding.getRight() + playerWidth * playerCount + spacing;
-        return Math.max(viewportWidth, contentWidth);
-    }
-
-    // Scroll table to keep current player visible
     private void scrollTableToCurrentPlayer() {
-        if (!game.isStarted() || tableBox.getChildren().isEmpty()) {
-            tableScroll.setHvalue(0);
-            return;
-        }
-
-        List<Player> players = game.getPlayers();
-        int playerCount = players.size();
-        if (playerCount <= MAX_VISIBLE_PLAYERS) {
-            tableScroll.setHvalue(0);
-            return;
-        }
-
-        int currentIndex = players.indexOf(game.getCurrPlayer());
-        if (currentIndex < 0) {
-            tableScroll.setHvalue(0);
-            return;
-        }
-
-        int maxStartIndex = playerCount - MAX_VISIBLE_PLAYERS;
-        int startIndex = currentIndex - 1;
-        if (startIndex < 0) {
-            startIndex = 0;
-        }
-        if (startIndex > maxStartIndex) {
-            startIndex = maxStartIndex;
-        }
-
-        tableScroll.setHvalue((double) startIndex / maxStartIndex);
+        TableLayout.scrollToCurrentPlayer(game, tableBox, tableScroll);
     }
 
-    // Match player board height to visible table area
     private double playerBoxMinHeight() {
-        double viewportHeight = tableScroll.getViewportBounds().getHeight();
-        if (viewportHeight <= 0) {
-            return 165;
-        }
-        return Math.max(165, viewportHeight - 18);
+        return TableLayout.playerBoxMinHeight(tableScroll);
     }
 }

@@ -157,7 +157,7 @@ public final class PlayerUI {
         // Set color title
         Label colorName = new Label(color.getName());
         colorName.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
-        colorName.setTextFill(CardUI.propertyColor(color));
+        colorName.setTextFill(CardColorUI.propertyColor(color));
         colorName.setMinWidth(Region.USE_PREF_SIZE);
 
         // Show set progress and current rent
@@ -198,15 +198,15 @@ public final class PlayerUI {
         name.setWrapText(true);
         name.setMaxWidth(120);
 
-        Color barColor = CardUI.propertyColor(color);
+        Color barColor = CardColorUI.propertyColor(color);
         // Upgrade cards use action-card color instead of property color
         if (card instanceof ActionCard actionCard
                 && (actionCard.getActionType() == ActionType.HOUSE || actionCard.getActionType() == ActionType.HOTEL)) {
-            barColor = CardUI.cardColor(card);
+            barColor = CardColorUI.cardColor(card);
         }
 
         // Pack color bar and card name
-        HBox box = new HBox(8, CardUI.newColorBar(barColor, 4, 20, true), name);
+        HBox box = new HBox(8, CardColorUI.newColorBar(barColor, 4, 20, true), name);
         box.setAlignment(Pos.CENTER_LEFT);
         box.setPadding(new Insets(5, 10, 5, 9));
         box.setBackground(GameUI.solidBackground(Color.WHITE));
@@ -235,10 +235,10 @@ public final class PlayerUI {
     private static Region newBankCardBar(Card card) {
         // Banked wild cards still show both possible colors
         if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() >= 2) {
-            return CardUI.newColorBar(wildCard.getPossibleColors().get(0), wildCard.getPossibleColors().get(1), 4, 20, true);
+            return CardColorUI.newColorBar(wildCard.getPossibleColors().get(0), wildCard.getPossibleColors().get(1), 4, 20, true);
         }
 
         // Other bank cards use their main display color
-        return CardUI.newColorBar(CardUI.cardColor(card), 4, 20, true);
+        return CardColorUI.newColorBar(CardColorUI.cardColor(card), 4, 20, true);
     }
 }
