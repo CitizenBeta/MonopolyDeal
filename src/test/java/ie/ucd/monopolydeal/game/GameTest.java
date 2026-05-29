@@ -25,6 +25,15 @@ class GameTest {
     }
 
     @Test
+    void setupShouldRequireTwoToFivePlayers() {
+        Game game = new Game();
+
+        assertThrows(IllegalArgumentException.class, () -> game.setup(List.of("Alice")));
+        assertThrows(IllegalArgumentException.class,
+                () -> game.setup(List.of("A", "B", "C", "D", "E", "F")));
+    }
+
+    @Test
     void playMoneyCardShouldMoveItToCurrentPlayerBank() {
         Game game = new Game();
         game.setup(List.of("Alice", "Bob"));
@@ -101,5 +110,46 @@ class GameTest {
         assertEquals(1, game.getActionsUsed());
         assertEquals(handSizeBefore + 1, current.getCardsAtHand().size());
         assertFalse(current.getCardsAtHand().contains(passGo));
+    }
+
+    @Test
+    void doubleRentShouldRequireStandardRentCard() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        PropertyCard property = new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN);
+        current.addCardToHand(property);
+        assertTrue(current.addProperty(property));
+        target.addCardToBank(new MoneyCard("5M", 5));
+
+        ActionCard doubleRent = new ActionCard("Double The Rent!", 1, ActionType.DOUBLE_RENT);
+        ActionCard anyRent = new ActionCard("Any Rent", 3, ActionType.MULTI_RENT, PropertyColor.getColors());
+        current.addCardToHand(doubleRent);
+        current.addCardToHand(anyRent);
+
+        assertFalse(game.playCard(doubleRent, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(current.getCardsAtHand().contains(doubleRent));
+        assertTrue(current.getCardsAtHand().contains(anyRent));
+    }
+
+    @Test
+    void zeroValueWildCardShouldNotBePayment() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        WildPropertyCard wild = new WildPropertyCard("10 Color Wild", PropertyColor.getColors(), 0);
+        target.addCardToHand(wild);
+        assertTrue(target.addWildProperty(wild, PropertyColor.BROWN));
+
+        ActionCard debtCollector = new ActionCard("Debt Collector", 3, ActionType.DEBT_COLLECTOR);
+        current.addCardToHand(debtCollector);
+
+        assertFalse(game.playCard(debtCollector, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(current.getCardsAtHand().contains(debtCollector));
+        assertEquals(PropertyColor.BROWN, wild.getCurrentColor());
     }
 }

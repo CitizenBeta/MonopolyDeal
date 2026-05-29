@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
 final class GameDialogs implements DecisionMaker {
+    // Get action-card legality check from Game
     private Predicate<ActionCard> actionPlayChecker = action -> true;
 
     void setActionPlayChecker(Predicate<ActionCard> actionPlayChecker) {
@@ -62,6 +63,7 @@ final class GameDialogs implements DecisionMaker {
         return chooseOption(title, prompt, options, text, true);
     }
 
+    // Shared radio-button dialog
     private <T> T chooseOption(String title, String prompt, List<T> options, Function<T, String> text,
                                boolean autoChooseSingleOption) {
         if (options == null || options.isEmpty()) {
@@ -129,11 +131,13 @@ final class GameDialogs implements DecisionMaker {
     @Override
     public UseMode useCard(ActionCard action) {
         List<UseMode> modes = new ArrayList<>();
+        // Hide Play when action effect cannot resolve
         if (action.getActionType() != ActionType.JUST_SAY_NO && actionPlayChecker.test(action)) {
             modes.add(UseMode.PLAY);
         }
         modes.add(UseMode.BANK);
 
+        // Do not auto-bank when Bank is the only option
         return chooseOption("Use Card", "How do you want to use " + action.getName() + "?", modes, mode -> {
             if (mode == UseMode.PLAY) {
                 return "Play card";
@@ -176,6 +180,7 @@ final class GameDialogs implements DecisionMaker {
         return selectMultipleDiscards(dialog, okButton, optionsBox, cards, count);
     }
 
+    // Use radio buttons when discarding one card
     private List<Card> selectSingleDiscard(Dialog<List<Card>> dialog, Button okButton,
                                            VBox optionsBox, List<Card> cards) {
         ToggleGroup group = new ToggleGroup();
@@ -212,6 +217,7 @@ final class GameDialogs implements DecisionMaker {
         return dialog.showAndWait().orElse(null);
     }
 
+    // Use check boxes when discarding multiple cards
     private List<Card> selectMultipleDiscards(Dialog<List<Card>> dialog, Button okButton,
                                               VBox optionsBox, List<Card> cards, int count) {
         List<CheckBox> checkBoxes = new ArrayList<>();
@@ -246,6 +252,7 @@ final class GameDialogs implements DecisionMaker {
         return dialog.showAndWait().orElse(null);
     }
 
+    // Enable OK only at the exact discard count
     private void updateDiscardChecks(List<CheckBox> checkBoxes, Button okButton, int count) {
         int selectedCount = 0;
         for (CheckBox checkBox : checkBoxes) {
@@ -271,6 +278,7 @@ final class GameDialogs implements DecisionMaker {
         return chooseOption("Choose Card", prompt, cards, card -> cardOptionText(owner, card));
     }
 
+    // Enable OK once selected payment reaches required value
     @Override
     public List<Card> selectPaymentCards(Player owner, List<Card> cards, int amount) {
         if (cards.isEmpty()) {
@@ -357,6 +365,7 @@ final class GameDialogs implements DecisionMaker {
         return card.getName() + " - " + location + " - " + card.getBankValue() + "M";
     }
 
+    // Disable extra payment choices after enough value is selected
     private void updatePaymentChecks(List<Card> cards, List<CheckBox> checkBoxes, Button okButton,
                                      Dialog<List<Card>> dialog, Player owner, int amount) {
         int selectedTotal = 0;

@@ -10,6 +10,9 @@ import java.util.Map;
 import java.util.function.Predicate;
 
 public class Game {
+    public static final int MIN_PLAYERS = 2;
+    public static final int MAX_PLAYERS = 5;
+
     private static final int INITIAL_HAND_SIZE = 5;
     private static final int NORMAL_TURN_DRAW = 2;
     private static final int PASS_GO_DRAW = 2;
@@ -29,6 +32,10 @@ public class Game {
     // This method resets all runtime state, so it should only be called when
     // starting or restarting a game.
     public void setup(List<String> names) {
+        if (names == null || names.size() < MIN_PLAYERS || names.size() > MAX_PLAYERS) {
+            throw new IllegalArgumentException("Monopoly Deal requires 2 to 5 players.");
+        }
+
         resetState();
 
         for (int i = 0; i < names.size(); i++) {
@@ -155,10 +162,11 @@ public class Game {
             return !receivableColors(current, card).isEmpty();
         }
 
-        // Action cards are allowed here because the player may still choose to bank them.
+        // Action cards are allowed here because the player may still choose to bank them
         return card instanceof MoneyCard || card instanceof ActionCard;
     }
 
+    // Check whether an action card can resolve as an action
     public boolean canPlayActionCard(ActionCard action) {
         if (!canTryCardFromCurrentHand(action)) {
             return false;
@@ -270,11 +278,13 @@ public class Game {
         };
     }
 
+    // Check rent card color and payment target
     private boolean canResolveRentCard(Player player, ActionCard action) {
         return !getRentColors(player, action).isEmpty()
                 && !playersWithPaymentOptions(player).isEmpty();
     }
 
+    // Check Double Rent card and remaining actions
     private boolean canResolveDoubleRent(Player player, ActionCard doubleRent) {
         if (actionsUsed + 2 > Player.MAX_ACTIONS_PER_TURN) {
             return false;
@@ -379,16 +389,15 @@ public class Game {
     private List<Card> rentCardsInHandExcept(Player player, Card excludedCard) {
         List<Card> rentCards = new ArrayList<>();
         for (Card card : player.getCardsAtHand()) {
-            if (card instanceof ActionCard actionCard && card != excludedCard && isRentCard(actionCard)) {
+            if (card instanceof ActionCard actionCard && card != excludedCard && isStandardRentCard(actionCard)) {
                 rentCards.add(card);
             }
         }
         return rentCards;
     }
 
-    private boolean isRentCard(ActionCard actionCard) {
-        ActionType type = actionCard.getActionType();
-        return type == ActionType.RENT || type == ActionType.MULTI_RENT;
+    private boolean isStandardRentCard(ActionCard actionCard) {
+        return actionCard.getActionType() == ActionType.RENT;
     }
 
     // Sly Deal steals one transferable property from another player.
@@ -590,11 +599,16 @@ public class Game {
     // Payment can come from the bank first, then from transferable properties.
     // Hand cards are never payment options in Monopoly Deal.
     private List<Card> paymentOptions(Player player, Player receiver) {
-        List<Card> options = new ArrayList<>(player.getCardsAtBank());
+        List<Card> options = new ArrayList<>();
+        for (Card card : player.getCardsAtBank()) {
+            if (card.getBankValue() > 0) {
+                options.add(card);
+            }
+        }
 
         for (PropertySet set : player.getPropertySets().values()) {
             for (Card card : set.getAllCards()) {
-                if (canTransferPaymentCard(player, receiver, card)) {
+                if (card.getBankValue() > 0 && canTransferPaymentCard(player, receiver, card)) {
                     options.add(card);
                 }
             }

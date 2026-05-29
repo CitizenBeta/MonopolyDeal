@@ -17,10 +17,13 @@ import javafx.scene.text.Font;
 import java.util.List;
 
 public class GameController {
+    // Show at most three players before horizontal scrolling
     private static final int MAX_VISIBLE_PLAYERS = 3;
 
     private final Game game = new Game();
+    // Handle all DecisionMaker prompts in GameDialogs
     private final GameDialogs dialogs = new GameDialogs();
+    // Track highlighted hand card
     private Card selectedCard;
 
     @FXML private Label statusTitle;
@@ -45,6 +48,7 @@ public class GameController {
 
     @FXML
     private void initialize() {
+        // Hide Play when an action has no legal target
         dialogs.setActionPlayChecker(game::canPlayActionCard);
         configureButtons();
         configureStatusArea();
@@ -82,9 +86,11 @@ public class GameController {
         cardsScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         cardsScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         cardsScroll.setPannable(false);
+        // Keep hand strip as tall as viewport
         cardsScroll.viewportBoundsProperty().addListener((_, _, bounds) -> resizeHandArea(bounds.getWidth(), bounds.getHeight()));
         cardsScroll.setVvalue(0);
         cardsScroll.vvalueProperty().addListener((_, _, _) -> cardsScroll.setVvalue(0));
+        // Use mouse wheel to scroll hand horizontally
         cardsScroll.setOnScroll(e -> {
             if (e.getDeltaY() != 0) {
                 double nextValue = cardsScroll.getHvalue() - e.getDeltaY() / handCardsBox.getWidth();
@@ -97,6 +103,7 @@ public class GameController {
         cardsScroll.setFocusTraversable(false);
         cardsScroll.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
         cardsScroll.setOnMousePressed(e -> rootPane.requestFocus());
+        // Clear selected card when clicking empty hand space
         cardsScroll.setOnMouseClicked(e -> {
             if ((e.getTarget() == cardsScroll || e.getTarget() == handCardsBox) && selectedCard != null) {
                 selectedCard = null;
@@ -113,6 +120,7 @@ public class GameController {
         tableScroll.setFitToHeight(false);
         tableScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         tableScroll.setPannable(true);
+        // Resize player boards when window changes
         tableScroll.viewportBoundsProperty().addListener((_, _, bounds) -> resizeTableArea(bounds.getWidth(), bounds.getHeight()));
         tableScroll.setFocusTraversable(false);
         tableScroll.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
@@ -133,6 +141,7 @@ public class GameController {
         refresh();
     }
 
+    // Show used/discarded cards, newest first
     @FXML
     private void onUsedCards() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -272,7 +281,7 @@ public class GameController {
         updateStatusBadge("Ready", Color.rgb(224, 231, 255), Color.rgb(165, 180, 252), Color.rgb(67, 56, 202));
     }
 
-    // Show in-game UI. Important!
+    // Show in-game UI
     private void showGame() {
         Player player = game.getCurrPlayer();
         statusTitle.setText("Status");
@@ -321,6 +330,7 @@ public class GameController {
         handCardsBox.getChildren().clear();
         List<Card> handCards = player.getCardsAtHand();
 
+        // Clear selection after card leaves hand
         if (selectedCard != null && !handCards.contains(selectedCard)) {
             selectedCard = null;
         }
@@ -348,6 +358,7 @@ public class GameController {
         refresh();
     }
 
+    // Rebuild player boards from game state
     private void updateTable(List<Player> players) {
         tableBox.getChildren().clear();
 
@@ -366,6 +377,7 @@ public class GameController {
         }
 
         resizeTableArea(tableScroll.getViewportBounds().getWidth(), tableScroll.getViewportBounds().getHeight());
+        // Scroll to current player after layout
         Platform.runLater(this::scrollTableToCurrentPlayer);
     }
 
@@ -433,6 +445,7 @@ public class GameController {
         handCardsBox.setMinHeight(height);
     }
 
+    // Show up to three player boards before scrolling
     private void resizeTableArea(double width, double height) {
         int playerCount = 0;
         if (game.isStarted()) {
@@ -458,6 +471,7 @@ public class GameController {
         }
     }
 
+    // Calculate one player board width
     private double tablePlayerWidth(double viewportWidth, int playerCount) {
         if (playerCount <= 0 || viewportWidth <= 0) {
             return 0;
@@ -470,6 +484,7 @@ public class GameController {
         return Math.max(260, width / visiblePlayers);
     }
 
+    // Calculate total table content width
     private double tableContentWidth(double viewportWidth, int playerCount) {
         if (playerCount <= 0 || viewportWidth <= 0) {
             return viewportWidth;
@@ -482,6 +497,7 @@ public class GameController {
         return Math.max(viewportWidth, contentWidth);
     }
 
+    // Scroll table to keep current player visible
     private void scrollTableToCurrentPlayer() {
         if (!game.isStarted() || tableBox.getChildren().isEmpty()) {
             tableScroll.setHvalue(0);
@@ -513,6 +529,7 @@ public class GameController {
         tableScroll.setHvalue((double) startIndex / maxStartIndex);
     }
 
+    // Match player board height to visible table area
     private double playerBoxMinHeight() {
         double viewportHeight = tableScroll.getViewportBounds().getHeight();
         if (viewportHeight <= 0) {

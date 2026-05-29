@@ -42,6 +42,28 @@ class PropertySetTest {
     }
 
     @Test
+    void railroadAndUtilityShouldNotAcceptBuildings() {
+        PropertySet railroad = new PropertySet(PropertyColor.RAILROAD);
+        PropertySet utility = new PropertySet(PropertyColor.UTILITY);
+        ActionCard house = new ActionCard("House", 3, ActionType.HOUSE);
+        ActionCard hotel = new ActionCard("Hotel", 4, ActionType.HOTEL);
+
+        railroad.addProperty(new PropertyCard("Reading Railroad", 2, PropertyColor.RAILROAD));
+        railroad.addProperty(new PropertyCard("Pennsylvania Railroad", 2, PropertyColor.RAILROAD));
+        railroad.addProperty(new PropertyCard("B. & O. Railroad", 2, PropertyColor.RAILROAD));
+        railroad.addProperty(new PropertyCard("Short Line", 2, PropertyColor.RAILROAD));
+        utility.addProperty(new PropertyCard("Electric Company", 2, PropertyColor.UTILITY));
+        utility.addProperty(new PropertyCard("Water Works", 2, PropertyColor.UTILITY));
+
+        assertTrue(railroad.isFullSet());
+        assertTrue(utility.isFullSet());
+        assertFalse(railroad.addHouse(house));
+        assertFalse(railroad.addHotel(hotel));
+        assertFalse(utility.addHouse(house));
+        assertFalse(utility.addHotel(hotel));
+    }
+
+    @Test
     void cannotAddMorePropertiesThanColorSize() {
         PropertySet set = new PropertySet(PropertyColor.BROWN);
 

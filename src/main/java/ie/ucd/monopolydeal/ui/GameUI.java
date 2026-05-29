@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 final class GameUI {
+    // Static helper class for JavaFX controls
     private GameUI() {
     }
 
@@ -85,6 +86,7 @@ final class GameUI {
         name.setWrapText(true);
         name.setMaxWidth(86);
 
+        // Keep card title centered
         StackPane titleBox = new StackPane(name);
         titleBox.setMinHeight(Region.USE_PREF_SIZE);
         titleBox.setPadding(new Insets(0, 0, 3, 0));
@@ -140,6 +142,7 @@ final class GameUI {
         }
 
         box.setOnMouseClicked(e -> {
+            // Send clicked card back to GameController
             onCardClicked.accept(card);
             e.consume();
         });
@@ -157,6 +160,7 @@ final class GameUI {
         return card.getName().replace("/", "/\u200B");
     }
 
+    // Show property color and rent table
     private static VBox newPropertyDetailBox(PropertyColor color) {
         Label colorName = newSmallCardText(color.getName());
         VBox box = new VBox(1, colorName);
@@ -167,6 +171,7 @@ final class GameUI {
         return box;
     }
 
+    // Split longer rent tables into two columns
     private static HBox newRentGrid(String[] rents) {
         if (rents.length <= 2) {
             VBox singleColumn = new VBox(0);
@@ -213,6 +218,7 @@ final class GameUI {
         return label;
     }
 
+    // Show wild card rents on two sides
     private static HBox newWildRentBox(WildPropertyCard wildCard) {
         PropertyColor leftColor = wildCard.getPossibleColors().get(0);
         PropertyColor rightColor = wildCard.getPossibleColors().get(1);
@@ -243,6 +249,7 @@ final class GameUI {
         return newColorBar(cardColor(card), 84, 6, false);
     }
 
+    // Use split bar for two-color cards
     private static List<PropertyColor> getCardColors(Card card) {
         if (card instanceof WildPropertyCard wildCard && wildCard.getPossibleColors().size() == 2) {
             return wildCard.getPossibleColors();
@@ -255,6 +262,7 @@ final class GameUI {
         return null;
     }
 
+    // Create horizontal or vertical split color bar
     private static Region newColorBar(PropertyColor firstColor, PropertyColor secondColor,
                                       double width, double height, boolean vertical) {
         Color leftColor = propertyColor(firstColor);
@@ -280,6 +288,7 @@ final class GameUI {
         return bar;
     }
 
+    // Create single-color bar
     private static Region newColorBar(Color color, double width, double height, boolean vertical) {
         Region bar = new Region();
         bar.setPrefSize(width, height);
@@ -296,6 +305,7 @@ final class GameUI {
         return bar;
     }
 
+    // Short text for card faces and used-card history
     static String cardDetail(Card card) {
         return switch (card) {
             case PropertyCard propertyCard -> propertyCard.getColor().getName() + "\n" + propertyCard.getColor().getRentDescription();
@@ -313,6 +323,7 @@ final class GameUI {
         };
     }
 
+    // Short status text for top status card
     static String statusCardText(Card card) {
         return switch (card) {
             case MoneyCard moneyCard -> moneyCard.getName();
@@ -323,6 +334,7 @@ final class GameUI {
         };
     }
 
+    // Main display color for card border and bar
     static Color cardColor(Card card) {
         return switch (card) {
             case MoneyCard _ -> Color.rgb(22, 163, 74);
@@ -346,6 +358,7 @@ final class GameUI {
         };
     }
 
+    // Map property colors to JavaFX colors
     static Color propertyColor(PropertyColor color) {
         return switch (color) {
             case BROWN -> Color.rgb(120, 72, 45);
@@ -361,6 +374,7 @@ final class GameUI {
         };
     }
 
+    // Convert JavaFX Color to CSS rgb
     private static String cssColor(Color color) {
         int red = (int) Math.round(color.getRed() * 255);
         int green = (int) Math.round(color.getGreen() * 255);
@@ -420,6 +434,7 @@ final class GameUI {
         return box;
     }
 
+    // Create compact bank column
     private static VBox newBankSection(Player player) {
         VBox bank = new VBox(4);
         Label bankTitle = new Label("Bank");
@@ -450,6 +465,7 @@ final class GameUI {
         return bank;
     }
 
+    // Create properties column
     private static VBox newPropertiesSection(Player player) {
         VBox properties = new VBox(4);
         Label propertiesTitle = new Label("Properties");
@@ -462,6 +478,7 @@ final class GameUI {
         boolean hasProperties = false;
         FlowPane propertyGroups = new FlowPane(10, 8);
         propertyGroups.setMaxWidth(Double.MAX_VALUE);
+        // Wrap according to properties column width
         propertyGroups.prefWrapLengthProperty().bind(properties.widthProperty());
 
         for (PropertySet propertySet : player.getPropertySets().values()) {
@@ -487,6 +504,7 @@ final class GameUI {
         return properties;
     }
 
+    // Create one property set group
     private static VBox newPropertySetBox(PropertySet propertySet) {
         PropertyColor color = propertySet.getColor();
 
@@ -520,6 +538,7 @@ final class GameUI {
         return box;
     }
 
+    // Create small card pill
     private static HBox newPropertyMiniBox(Card card, PropertyColor color) {
         Label name = new Label(card.getName());
         name.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 11));

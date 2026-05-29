@@ -37,7 +37,11 @@ public enum PropertyColor {
     }
 
     public int getRent(int propertyCount) {
-        int bounded = Math.max(1, Math.min(propertyCount, rents.length));
+        if (propertyCount <= 0 || rents.length == 0) {
+            return 0;
+        }
+
+        int bounded = Math.min(propertyCount, rents.length);
         return rents[bounded - 1];
     }
 

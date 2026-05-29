@@ -96,8 +96,8 @@ public class Deck {
         addWild("Pink/Orange Wild", 2, Arrays.asList(PropertyColor.PINK, PropertyColor.ORANGE), 2);
         addWild("Red/Yellow Wild", 3, Arrays.asList(PropertyColor.RED, PropertyColor.YELLOW), 2);
         addWild("Dark Blue/Green Wild", 4, Arrays.asList(PropertyColor.DARK_BLUE, PropertyColor.GREEN), 1);
-        addWild("Railroad/Green Wild", 4, Arrays.asList(PropertyColor.RAILROAD, PropertyColor.GREEN), 1);
-        addWild("Utility/Railroad Wild", 2, Arrays.asList(PropertyColor.UTILITY, PropertyColor.RAILROAD), 1);
+        addWild("Green/Railroad Wild", 4, Arrays.asList(PropertyColor.GREEN, PropertyColor.RAILROAD), 1);
+        addWild("Railroad/Utility Wild", 2, Arrays.asList(PropertyColor.RAILROAD, PropertyColor.UTILITY), 1);
         addWild("10 Color Wild", 0, PropertyColor.getColors(), 2);
         // Action cards still have a bank value, because players may use them as money.
         addAction("Pass Go", ActionType.PASS_GO, 1, 2, 10, Collections.emptyList());

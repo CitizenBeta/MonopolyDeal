@@ -133,11 +133,15 @@ public class PropertySet {
     }
 
     public boolean canAddHouse() {
-        return isFullSet() && houseCard == null && hotelCard == null;
+        return canHaveBuildings() && isFullSet() && houseCard == null && hotelCard == null;
     }
 
     public boolean canAddHotel() {
-        return isFullSet() && hotelCard == null && houseCard != null;
+        return canHaveBuildings() && isFullSet() && hotelCard == null && houseCard != null;
+    }
+
+    private boolean canHaveBuildings() {
+        return color != PropertyColor.RAILROAD && color != PropertyColor.UTILITY;
     }
 
     private void clearUpgrades() {
