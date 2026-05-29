@@ -159,6 +159,14 @@ public class Game {
         return card instanceof MoneyCard || card instanceof ActionCard;
     }
 
+    public boolean canPlayActionCard(ActionCard action) {
+        if (!canTryCardFromCurrentHand(action)) {
+            return false;
+        }
+
+        return canResolveActionCard(getCurrPlayer(), action);
+    }
+
     public int getCurrBankTotal() {
         return totalValue(getCurrPlayer().getCardsAtBank());
     }
@@ -241,6 +249,44 @@ public class Game {
             case HOTEL -> playHotel(player, action, dm);
             case JUST_SAY_NO -> false;
         };
+    }
+
+    private boolean canResolveActionCard(Player player, ActionCard action) {
+        if (action == null) {
+            return false;
+        }
+
+        return switch (action.getActionType()) {
+            case PASS_GO -> true;
+            case DEBT_COLLECTOR, TODAY_IS_MY_BIRTHDAY -> !playersWithPaymentOptions(player).isEmpty();
+            case RENT, MULTI_RENT -> canResolveRentCard(player, action);
+            case DOUBLE_RENT -> canResolveDoubleRent(player, action);
+            case SLY_DEAL -> !playersWithStealableCards(player).isEmpty();
+            case FORCED_DEAL -> !playersForForcedDeal(player).isEmpty();
+            case DEAL_BREAKER -> !playersWithTransferableFullSets(player).isEmpty();
+            case HOUSE -> !buildableColors(player, true).isEmpty();
+            case HOTEL -> !buildableColors(player, false).isEmpty();
+            case JUST_SAY_NO -> false;
+        };
+    }
+
+    private boolean canResolveRentCard(Player player, ActionCard action) {
+        return !getRentColors(player, action).isEmpty()
+                && !playersWithPaymentOptions(player).isEmpty();
+    }
+
+    private boolean canResolveDoubleRent(Player player, ActionCard doubleRent) {
+        if (actionsUsed + 2 > Player.MAX_ACTIONS_PER_TURN) {
+            return false;
+        }
+
+        for (Card card : rentCardsInHandExcept(player, doubleRent)) {
+            if (card instanceof ActionCard rentCard && canResolveRentCard(player, rentCard)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private boolean playPassGo(Player player) {
