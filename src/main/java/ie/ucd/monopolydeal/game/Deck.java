@@ -102,8 +102,4 @@ public class Deck {
         shuffle();
     }
 
-    public void printDeckSummary() {
-        System.out.printf("Draw pile: %d cards, Discard pile: %d cards%n",
-                drawPile.size(), discardPile.size());
-    }
 }

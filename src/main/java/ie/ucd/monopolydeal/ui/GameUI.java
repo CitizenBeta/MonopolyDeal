@@ -45,8 +45,8 @@ public final class GameUI {
         return CardColorUI.propertyColor(color);
     }
 
-    public static VBox newPlayerBox(Player player, boolean isCurrent, double minHeight) {
-        return PlayerUI.newPlayerBox(player, isCurrent, minHeight);
+    public static VBox newPlayerBox(Player player, boolean isCurrent, boolean isWinner, double minHeight) {
+        return PlayerUI.newPlayerBox(player, isCurrent, isWinner, minHeight);
     }
 
     // Gray badge by default

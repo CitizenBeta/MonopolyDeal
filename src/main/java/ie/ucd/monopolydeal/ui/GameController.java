@@ -248,8 +248,8 @@ public class GameController {
         updateTable(game.getPlayers());
         updateTurnCount(game.getTurnCount());
         if (game.isOver()) {
-            // Red badge for finished game
-            updateStatusBadge("Game Over", Color.rgb(254, 226, 226), Color.rgb(252, 165, 165), Color.rgb(153, 27, 27));
+            // Green badge for finished game
+            updateStatusBadge("Game Over", Color.rgb(220, 252, 231), Color.rgb(134, 239, 172), Color.rgb(22, 101, 52));
         } else {
             // Blue badge for active turn
             updateStatusBadge("Turn Active", Color.rgb(219, 234, 254), Color.rgb(147, 197, 253), Color.rgb(29, 78, 216));
@@ -326,9 +326,15 @@ public class GameController {
         }
 
         tableBox.setAlignment(Pos.TOP_CENTER);
+        Player winner = game.getWinner();
         // Add one player board per player
         for (Player player : players) {
-            VBox playerBox = GameUI.newPlayerBox(player, player == game.getCurrPlayer(), playerBoxMinHeight());
+            VBox playerBox = GameUI.newPlayerBox(
+                    player,
+                    player == game.getCurrPlayer(),
+                    game.isOver() && player == winner,
+                    playerBoxMinHeight()
+            );
             HBox.setHgrow(playerBox, Priority.NEVER);
             tableBox.getChildren().add(playerBox);
         }
@@ -365,7 +371,7 @@ public class GameController {
         Color border;
         Color foreground;
 
-        // Red at 3, orange at 2, green at 0 or 1
+        // Red at 3, orange at 2, blue at 0 or 1
         if (actionsUsed >= Player.MAX_ACTIONS_PER_TURN) {
             background = Color.rgb(254, 226, 226);
             border = Color.rgb(252, 165, 165);
@@ -375,9 +381,9 @@ public class GameController {
             border = Color.rgb(253, 186, 116);
             foreground = Color.rgb(194, 65, 12);
         } else {
-            background = Color.rgb(220, 252, 231);
-            border = Color.rgb(134, 239, 172);
-            foreground = Color.rgb(22, 101, 52);
+            background = Color.rgb(219, 234, 254);
+            border = Color.rgb(147, 197, 253);
+            foreground = Color.rgb(29, 78, 216);
         }
 
         actions.setText("Actions " + actionsUsed + " / " + Player.MAX_ACTIONS_PER_TURN);

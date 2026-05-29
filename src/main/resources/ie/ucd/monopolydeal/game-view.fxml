@@ -144,8 +144,8 @@
                                 <Label fx:id="handCardsTitle" text="Current Hand" textFill="#0f172a">
                                     <font><Font name="Segoe UI Bold" size="17.0" /></font>
                                 </Label>
-                                <Label fx:id="actions" text="0 / 3" textFill="#0f172a"
-                                       style="-fx-padding: 3 8 3 8; -fx-background-color: #dcfce7; -fx-border-color: #86efac; -fx-border-radius: 12; -fx-background-radius: 12;">
+                                <Label fx:id="actions" text="0 / 3" textFill="#1d4ed8"
+                                       style="-fx-padding: 3 8 3 8; -fx-background-color: #dbeafe; -fx-border-color: #93c5fd; -fx-border-radius: 12; -fx-background-radius: 12;">
                                     <font><Font name="Segoe UI Semibold" size="12.0" /></font>
                                 </Label>
                             </children>

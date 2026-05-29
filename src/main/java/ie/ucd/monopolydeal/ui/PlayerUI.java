@@ -15,7 +15,7 @@ public final class PlayerUI {
     }
 
     // Create a player box for each player
-    public static VBox newPlayerBox(Player player, boolean isCurrent, double minHeight) {
+    public static VBox newPlayerBox(Player player, boolean isCurrent, boolean isWinner, double minHeight) {
         Label name = new Label(player.getName());
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
         name.setTextFill(Color.rgb(15, 23, 42));
@@ -57,10 +57,13 @@ public final class PlayerUI {
         box.setMaxHeight(Double.MAX_VALUE);
         box.setMaxWidth(Double.MAX_VALUE);
 
-        // Add focus for player
-        if (isCurrent) {
+        // Add winner focus after the game ends
+        if (isWinner) {
             box.setBackground(GameUI.solidBackground(Color.rgb(240, 253, 244)));
             box.setBorder(GameUI.roundCorner(Color.rgb(34, 197, 94)));
+        } else if (isCurrent) {
+            box.setBackground(GameUI.solidBackground(Color.rgb(239, 246, 255)));
+            box.setBorder(GameUI.roundCorner(Color.rgb(37, 99, 235)));
         } else {
             box.setBackground(GameUI.solidBackground(Color.WHITE));
             box.setBorder(GameUI.roundCorner(Color.rgb(203, 213, 225)));

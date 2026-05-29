@@ -237,7 +237,7 @@ public final class ActionResolver {
     }
 
     private boolean playHouse(Player player, ActionCard house, DecisionMaker dm) {
-        PropertyColor color = chooseSingleOrPrompt(
+        PropertyColor color = chooseBuildColor(
                 targets.buildableColors(player, true),
                 dm,
                 "Choose a full set for House."
@@ -246,12 +246,20 @@ public final class ActionResolver {
     }
 
     private boolean playHotel(Player player, ActionCard hotel, DecisionMaker dm) {
-        PropertyColor color = chooseSingleOrPrompt(
+        PropertyColor color = chooseBuildColor(
                 targets.buildableColors(player, false),
                 dm,
                 "Choose a full set for Hotel."
         );
         return color != null && player.addHotel(color, hotel);
+    }
+
+    private PropertyColor chooseBuildColor(List<PropertyColor> colors, DecisionMaker dm, String prompt) {
+        if (colors.isEmpty()) {
+            return null;
+        }
+
+        return dm.selectColor(prompt, colors);
     }
 
     private PropertyColor chooseSingleOrPrompt(List<PropertyColor> colors, DecisionMaker dm, String prompt) {
