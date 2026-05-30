@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // Dialog used when a player must choose cards for payment
-final class PaymentDialog {
+public final class PaymentDialog {
     private PaymentDialog() {
     }
 

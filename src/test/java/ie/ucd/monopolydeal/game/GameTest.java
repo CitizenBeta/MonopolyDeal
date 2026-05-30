@@ -512,6 +512,36 @@ class GameTest {
         assertSame(target, game.getWinner());
     }
 
+    // Moving a wild card can also complete the winning third set
+    @Test
+    void movingWildCardToThirdSetShouldEndGameWithWinner() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+
+        addPropertyToTable(current, new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN));
+        addPropertyToTable(current, new PropertyCard("Baltic Avenue", 1, PropertyColor.BROWN));
+        addPropertyToTable(current, new PropertyCard("Boardwalk", 4, PropertyColor.DARK_BLUE));
+        addPropertyToTable(current, new PropertyCard("Park Place", 4, PropertyColor.DARK_BLUE));
+        addPropertyToTable(current, new PropertyCard("St. James Place", 2, PropertyColor.ORANGE));
+        addPropertyToTable(current, new PropertyCard("Tennessee Avenue", 2, PropertyColor.ORANGE));
+
+        WildPropertyCard wild = new WildPropertyCard(
+                "Pink/Orange Wild",
+                List.of(PropertyColor.PINK, PropertyColor.ORANGE),
+                2
+        );
+        current.addCardToHand(wild);
+        assertTrue(current.addWildProperty(wild, PropertyColor.PINK));
+
+        assertFalse(game.isOver());
+
+        assertTrue(game.moveWildCard(wild, PropertyColor.ORANGE));
+
+        assertTrue(game.isOver());
+        assertSame(current, game.getWinner());
+    }
+
     // Cancelled payment rolls back the action
     @Test
     void cancelledPaymentShouldRollBackThePlayedAction() {

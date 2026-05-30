@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 // Dialog used when a player must discard down to seven cards
-final class DiscardDialog {
+public final class DiscardDialog {
     private DiscardDialog() {
     }
 

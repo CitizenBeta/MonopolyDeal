@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 // Finds legal targets and colors for action-card resolution
-final class ActionTargets {
+public final class ActionTargets {
     private final Game game;
     private final Payment payments;
 

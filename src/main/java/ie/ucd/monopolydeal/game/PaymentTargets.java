@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.function.Predicate;
 
 // Finds legal payment cards, property targets and receivers
-final class PaymentTargets {
+public final class PaymentTargets {
     private final Game game;
 
     PaymentTargets(Game game) {

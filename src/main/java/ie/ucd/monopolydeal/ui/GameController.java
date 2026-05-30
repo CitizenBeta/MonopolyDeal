@@ -14,6 +14,8 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 public class GameController {
@@ -171,9 +173,19 @@ public class GameController {
             return;
         }
 
-        current.moveExistingWild(wildCard, newColor);
-        if (wildCard.getCurrentColor() != oldColor && wildCard.getCurrentColor() == newColor) {
-            statusText.setText("Moved wild card.");
+        if (game.moveWildCard(wildCard, newColor)
+                && wildCard.getCurrentColor() != oldColor
+                && wildCard.getCurrentColor() == newColor) {
+            if (game.isOver()) {
+                Player winner = game.getWinner();
+                if (winner == null) {
+                    statusText.setText("Game over.");
+                } else {
+                    statusText.setText(winner.getName() + " won.");
+                }
+            } else {
+                statusText.setText("Moved wild card.");
+            }
         } else {
             statusText.setText("Wild card not moved.");
         }
@@ -257,29 +269,30 @@ public class GameController {
         }
     }
 
-    // Find leader by completed sets, partial set progress, then bank value
+    // Find leader by completed sets, all partial set progress, then bank value
     private String leadingPlayer() {
         Player leader = null;
         int bestSets = -1;
-        int bestProgress = -1;
+        List<Integer> bestProgress = List.of();
         int bestBank = -1;
         boolean tied = false;
 
         for (Player player : game.getPlayers()) {
             int completedSets = player.countCompletedSets();
-            int progress = unfinishedProgress(player);
+            List<Integer> progress = unfinishedProgress(player);
             int bankTotal = player.getBankTotalValue();
+            int progressResult = compareProgress(progress, bestProgress);
 
             if (leader == null
                     || completedSets > bestSets
-                    || (completedSets == bestSets && progress > bestProgress)
-                    || (completedSets == bestSets && progress == bestProgress && bankTotal > bestBank)) {
+                    || (completedSets == bestSets && progressResult > 0)
+                    || (completedSets == bestSets && progressResult == 0 && bankTotal > bestBank)) {
                 leader = player;
                 bestSets = completedSets;
                 bestProgress = progress;
                 bestBank = bankTotal;
                 tied = false;
-            } else if (completedSets == bestSets && progress == bestProgress && bankTotal == bestBank) {
+            } else if (completedSets == bestSets && progressResult == 0 && bankTotal == bestBank) {
                 tied = true;
             }
         }
@@ -291,16 +304,38 @@ public class GameController {
         return leader.getName();
     }
 
-    private int unfinishedProgress(Player player) {
-        int progress = 0;
+    private List<Integer> unfinishedProgress(Player player) {
+        List<Integer> progress = new ArrayList<>();
 
         for (PropertySet set : player.getPropertySets().values()) {
             if (!set.isFullSet() && set.getPropertyCount() > 0) {
-                progress += set.getPropertyCount() * 12 / set.getColor().getSize();
+                progress.add(set.getPropertyCount() * 100 / set.getColor().getSize());
             }
         }
 
+        progress.sort(Comparator.reverseOrder());
         return progress;
+    }
+
+    private int compareProgress(List<Integer> first, List<Integer> second) {
+        int size = Math.max(first.size(), second.size());
+        for (int i = 0; i < size; i++) {
+            int firstValue = progressAt(first, i);
+            int secondValue = progressAt(second, i);
+            if (firstValue != secondValue) {
+                return Integer.compare(firstValue, secondValue);
+            }
+        }
+
+        return 0;
+    }
+
+    private int progressAt(List<Integer> progress, int index) {
+        if (index >= progress.size()) {
+            return 0;
+        }
+
+        return progress.get(index);
     }
 
     // Update player's hand from backend

@@ -7,7 +7,7 @@ import java.util.Collections;
 import java.util.List;
 
 // Builds the standard Monopoly Deal card list
-final class DeckBuilder {
+public final class DeckBuilder {
     private DeckBuilder() {
     }
 

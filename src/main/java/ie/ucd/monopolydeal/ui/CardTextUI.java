@@ -6,7 +6,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 
 // Shared card text helpers for card views and status text
-final class CardTextUI {
+public final class CardTextUI {
     private CardTextUI() {
     }
 
@@ -44,7 +44,7 @@ final class CardTextUI {
             case WildPropertyCard wildCard -> {
                 String currentColor;
                 if (wildCard.getCurrentColor() == null) {
-                    currentColor = "Not selected";
+                    currentColor = "Any property color";
                 } else {
                     currentColor = wildCard.getCurrentColor().getName();
                 }

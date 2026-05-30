@@ -11,7 +11,7 @@ import javafx.scene.layout.VBox;
 import java.util.List;
 
 // Dialog for showing used and discarded cards
-final class UsedCardsDialog {
+public final class UsedCardsDialog {
     private UsedCardsDialog() {
     }
 

@@ -131,7 +131,7 @@ public final class ActionResolver {
     }
 
     private PropertyColor chooseRentColor(Player player, ActionCard action, DecisionMaker dm) {
-        return chooseSingleOrPrompt(targets.getRentColors(player, action), dm, "Choose rent color.");
+        return chooseActionColor(targets.getRentColors(player, action), dm, "Choose rent color.");
     }
 
     // Double Rent consumes two actions: the Double Rent card and the selected rent card
@@ -141,7 +141,7 @@ public final class ActionResolver {
         }
 
         List<Card> rentCards = rentCardsInHandExcept(player, doubleRent);
-        Card selected = dm.selectPropertyCard(player, rentCards, "Choose a rent card to double.");
+        Card selected = dm.selectRentCard(player, rentCards, "Choose a rent card to double.");
         if (!(selected instanceof ActionCard rentCard)) {
             return false;
         }
@@ -228,7 +228,7 @@ public final class ActionResolver {
             return true;
         }
 
-        PropertyColor color = chooseSingleOrPrompt(
+        PropertyColor color = chooseActionColor(
                 targets.transferableFullSetColors(target, player),
                 dm,
                 "Choose a full set to steal."
@@ -255,22 +255,14 @@ public final class ActionResolver {
     }
 
     private PropertyColor chooseBuildColor(List<PropertyColor> colors, DecisionMaker dm, String prompt) {
-        if (colors.isEmpty()) {
-            return null;
-        }
-
-        return dm.selectColor(prompt, colors);
+        return chooseActionColor(colors, dm, prompt);
     }
 
-    private PropertyColor chooseSingleOrPrompt(List<PropertyColor> colors, DecisionMaker dm, String prompt) {
+    private PropertyColor chooseActionColor(List<PropertyColor> colors, DecisionMaker dm, String prompt) {
         if (colors.isEmpty()) {
             return null;
         }
 
-        if (colors.size() == 1) {
-            return colors.get(0);
-        }
-
-        return dm.selectColor(prompt, colors);
+        return dm.selectActionColor(prompt, colors);
     }
 }

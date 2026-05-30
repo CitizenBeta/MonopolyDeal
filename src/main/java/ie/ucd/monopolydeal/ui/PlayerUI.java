@@ -1,6 +1,7 @@
 package ie.ucd.monopolydeal.ui;
 
 import ie.ucd.monopolydeal.model.*;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -136,8 +137,8 @@ public final class PlayerUI {
         FlowPane propertyGroups = new FlowPane(10, 8);
         propertyGroups.setMaxWidth(Double.MAX_VALUE);
 
-        // Wrap property groups based on available column width
-        propertyGroups.prefWrapLengthProperty().bind(properties.widthProperty());
+        // Prefer two property columns once there is enough room
+        propertyGroups.prefWrapLengthProperty().bind(Bindings.max(310, properties.widthProperty()));
 
         // Add property section
         for (PropertySet propertySet : player.getPropertySets().values()) {
@@ -214,9 +215,9 @@ public final class PlayerUI {
         // Pack one color group
         VBox box = new VBox(4, header, cards);
         box.setPadding(new Insets(4, 0, 0, 0));
-        box.setMinWidth(160);
-        box.setPrefWidth(185);
-        box.setMaxWidth(230);
+        box.setMinWidth(140);
+        box.setPrefWidth(150);
+        box.setMaxWidth(190);
         return box;
     }
 
@@ -227,7 +228,8 @@ public final class PlayerUI {
         name.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 11));
         name.setTextFill(Color.rgb(15, 23, 42));
         name.setWrapText(true);
-        name.setMaxWidth(120);
+        name.setMinWidth(0);
+        name.setMaxWidth(104);
 
         Color barColor = CardColorUI.propertyColor(color);
         // Upgrade cards use action-card color instead of property color

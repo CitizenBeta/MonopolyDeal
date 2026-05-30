@@ -70,6 +70,11 @@ public final class GameDialogs implements DecisionMaker {
     }
 
     @Override
+    public PropertyColor selectActionColor(String prompt, List<PropertyColor> colors) {
+        return DialogChoices.chooseOption("Choose Color", prompt, colors, PropertyColor::getName, false);
+    }
+
+    @Override
     public UseMode useCard(ActionCard action) {
         List<UseMode> modes = new ArrayList<>();
         // Build available use modes from action legality
@@ -105,7 +110,12 @@ public final class GameDialogs implements DecisionMaker {
 
     @Override
     public Card selectPropertyCard(Player owner, List<Card> cards, String prompt) {
-        return DialogChoices.chooseOption("Choose Card", prompt, cards, card -> cardOptionText(owner, card));
+        return DialogChoices.chooseOption("Choose Card", prompt, cards, card -> cardOptionText(owner, card), false);
+    }
+
+    @Override
+    public Card selectRentCard(Player owner, List<Card> cards, String prompt) {
+        return DialogChoices.chooseOption("Choose Card", prompt, cards, card -> cardOptionText(owner, card), false);
     }
 
     @Override

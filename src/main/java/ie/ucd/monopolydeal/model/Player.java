@@ -123,29 +123,31 @@ public class Player {
         return true;
     }
 
-    public void moveExistingWild(WildPropertyCard card, PropertyColor newColor) {
+    public boolean moveExistingWild(WildPropertyCard card, PropertyColor newColor) {
         // Repositioning an existing wild card is ignored instead of failing loudly for invalid moves.
         if (newColor == null || !card.getPossibleColors().contains(newColor)) {
-            return;
+            return false;
         }
 
         PropertyColor currentColor = card.getCurrentColor();
         if (currentColor == newColor) {
-            return;
+            return false;
         }
 
         PropertySet targetSet = propertySets.get(newColor);
         if (targetSet == null || !targetSet.canAddProperty()) {
-            return;
+            return false;
+        }
+
+        if (currentColor == null || !propertySets.get(currentColor).getCards().contains(card)) {
+            return false;
         }
 
         // Remove from the previous color bucket before assigning the new color.
-        if (currentColor != null) {
-            propertySets.get(currentColor).removeProperty(card);
-        }
-
+        propertySets.get(currentColor).removeProperty(card);
         card.setCurrentColor(newColor);
         targetSet.addProperty(card);
+        return true;
     }
 
     public boolean receivePropertyCard(Card card, PropertyColor color) {

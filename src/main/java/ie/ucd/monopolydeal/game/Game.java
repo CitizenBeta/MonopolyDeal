@@ -182,6 +182,18 @@ public class Game {
         return getCurrPlayer().getBankTotalValue();
     }
 
+    public boolean moveWildCard(WildPropertyCard wildCard, PropertyColor newColor) {
+        if (!started || players.isEmpty() || gameOver) {
+            return false;
+        }
+
+        boolean moved = getCurrPlayer().moveExistingWild(wildCard, newColor);
+        if (moved) {
+            updateGameOver();
+        }
+        return moved;
+    }
+
     // Ends the current turn after forcing the player to discard down to the hand limit.
     // The next player's draw happens inside startTurn().
     public boolean endTurn(DecisionMaker dm) {

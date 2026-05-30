@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 // Builds the compact cards shown in the current player's hand
-final class HandCardUI {
+public final class HandCardUI {
     private HandCardUI() {
     }
 
@@ -45,6 +45,8 @@ final class HandCardUI {
                 textBox.getChildren().add(newWildRentBox(wildCard));
             } else if (card instanceof PropertyCard propertyCard) {
                 textBox.getChildren().add(newPropertyDetailBox(propertyCard.getColor()));
+            } else if (card instanceof ActionCard actionCard) {
+                textBox.getChildren().add(newActionDetailBox(actionCard));
             } else {
                 String detailText = CardTextUI.cardDetail(card);
                 if (!detailText.isEmpty()) {
@@ -90,10 +92,26 @@ final class HandCardUI {
         return box;
     }
 
+    // Show action value first and color it by card type
+    private static VBox newActionDetailBox(ActionCard actionCard) {
+        Label value = CardTextUI.newSmallCardText(actionCard.getBankValue() + "M");
+        value.setTextFill(CardColorUI.cardColor(actionCard));
+
+        Label detail = CardTextUI.newSmallCardText(actionCard.getActionType().getDescription());
+        detail.setWrapText(true);
+        detail.setMaxWidth(94);
+        detail.setMinHeight(Region.USE_PREF_SIZE);
+
+        VBox box = new VBox(1, value, detail);
+        box.setMaxWidth(94);
+        return box;
+    }
+
     // Show property color and rent table
     private static VBox newPropertyDetailBox(PropertyColor color) {
         // Show color name first
         Label colorName = CardTextUI.newSmallCardText(color.getName());
+        colorName.setTextFill(CardColorUI.propertyColor(color));
         VBox box = new VBox(1, colorName);
 
         // Convert rent text into compact card rows
@@ -146,11 +164,17 @@ final class HandCardUI {
         return rentGrid;
     }
 
-    // Show wild card rents on two sides
-    private static HBox newWildRentBox(WildPropertyCard wildCard) {
+    // Show wild card color names and rents on two sides
+    private static VBox newWildRentBox(WildPropertyCard wildCard) {
         // Read both possible colors
         PropertyColor leftColor = wildCard.getPossibleColors().get(0);
         PropertyColor rightColor = wildCard.getPossibleColors().get(1);
+
+        // Match each color name with its rent column
+        Label leftName = newWildColorName(leftColor, Pos.CENTER_LEFT);
+        Label rightName = newWildColorName(rightColor, Pos.CENTER_RIGHT);
+        HBox colorBox = new HBox(leftName, rightName);
+        colorBox.setMaxWidth(94);
 
         // Left color rent stays left aligned
         Label leftRent = CardTextUI.newSmallCardText(leftColor.getRentDescription());
@@ -168,7 +192,19 @@ final class HandCardUI {
         HBox rentBox = new HBox(leftRent, rightRent);
         rentBox.setMaxWidth(94);
         rentBox.setAlignment(Pos.CENTER);
-        return rentBox;
+
+        VBox box = new VBox(1, colorBox, rentBox);
+        box.setMaxWidth(94);
+        return box;
+    }
+
+    private static Label newWildColorName(PropertyColor color, Pos alignment) {
+        Label label = CardTextUI.newSmallCardText(color.getName());
+        label.setTextFill(CardColorUI.propertyColor(color));
+        label.setAlignment(alignment);
+        label.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(label, Priority.ALWAYS);
+        return label;
     }
 
     // Add color bar for cards
