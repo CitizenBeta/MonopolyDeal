@@ -25,7 +25,7 @@ final class HandCardUI {
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
         name.setTextFill(Color.rgb(15, 23, 42));
         name.setWrapText(true);
-        name.setMaxWidth(104);
+        name.setMaxWidth(86);
 
         StackPane titleBox = new StackPane(name);
         titleBox.setMinHeight(Region.USE_PREF_SIZE);
@@ -52,7 +52,7 @@ final class HandCardUI {
                     detail.setFont(Font.font("Segoe UI", 12));
                     detail.setTextFill(Color.rgb(71, 85, 105));
                     detail.setWrapText(true);
-                    detail.setMaxWidth(94);
+                    detail.setMaxWidth(86);
                     detail.setMinHeight(Region.USE_PREF_SIZE);
                     textBox.getChildren().add(detail);
                 }
@@ -68,9 +68,9 @@ final class HandCardUI {
         VBox box = new VBox(6, textBox, blank, newCardBar(card));
         box.setAlignment(Pos.TOP_LEFT);
         box.setPadding(new Insets(8));
-        box.setPrefSize(112, 154);
-        box.setMinSize(104, 146);
-        box.setMaxSize(120, 162);
+        box.setPrefSize(104, 154);
+        box.setMinSize(96, 146);
+        box.setMaxSize(112, 162);
 
         // Set focus
         if (selected) {
@@ -113,7 +113,7 @@ final class HandCardUI {
             }
 
             HBox rentGrid = new HBox(singleColumn);
-            rentGrid.setMaxWidth(94);
+            rentGrid.setMaxWidth(86);
             return rentGrid;
         }
 
@@ -142,7 +142,7 @@ final class HandCardUI {
 
         // Pack both rent columns inside card detail width
         HBox rentGrid = new HBox(8, leftColumn, rightColumn);
-        rentGrid.setMaxWidth(94);
+        rentGrid.setMaxWidth(86);
         return rentGrid;
     }
 
@@ -166,7 +166,7 @@ final class HandCardUI {
 
         // Pack two rent tables into one card detail row
         HBox rentBox = new HBox(leftRent, rightRent);
-        rentBox.setMaxWidth(94);
+        rentBox.setMaxWidth(86);
         rentBox.setAlignment(Pos.CENTER);
         return rentBox;
     }
@@ -176,9 +176,9 @@ final class HandCardUI {
         // Use split color bar for wild and two-color rent cards
         List<PropertyColor> colors = CardColorUI.getCardColors(card);
         if (colors != null) {
-            return CardColorUI.newColorBar(colors.get(0), colors.get(1), 92, 6, false);
+            return CardColorUI.newColorBar(colors.get(0), colors.get(1), 84, 6, false);
         }
 
-        return CardColorUI.newColorBar(CardColorUI.cardColor(card), 92, 6, false);
+        return CardColorUI.newColorBar(CardColorUI.cardColor(card), 84, 6, false);
     }
 }

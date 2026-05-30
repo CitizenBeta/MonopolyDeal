@@ -18,24 +18,7 @@ final class CardTextUI {
             return leftColor.getName() + "/\n" + rightColor.getName() + " Wild";
         }
 
-        if (card instanceof ActionCard actionCard && actionCard.getColors().size() == 2) {
-            PropertyColor leftColor = actionCard.getColors().get(0);
-            PropertyColor rightColor = actionCard.getColors().get(1);
-            return leftColor.getName() + "/\n" + rightColor.getName() + " Rent";
-        }
-
-        return compactTitle(card.getName());
-    }
-
-    private static String compactTitle(String name) {
-        if (name.endsWith(" Avenue")) {
-            String street = name.substring(0, name.length() - " Avenue".length());
-            if (street.length() > 10) {
-                return street + "\nAvenue";
-            }
-        }
-
-        return name.replace("/", "/\n");
+        return card.getName().replace("/", "/\u200B");
     }
 
     static String cardDetail(Card card) {
@@ -50,7 +33,7 @@ final class CardTextUI {
                 }
                 yield currentColor;
             }
-            case ActionCard actionCard -> actionCard.getBankValue() + "M\n" + actionCard.getActionType().getDescription();
+            case ActionCard actionCard -> actionCard.getActionType().getDescription();
             default -> "";
         };
     }
