@@ -3,40 +3,25 @@ package ie.ucd.monopolydeal.model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ActionCard implements Card {
-    private final String name;
-    private final int bankValue;
+public class ActionCard extends Card {
     private final ActionType actionType;
     private final List<PropertyColor> colors;
 
     public ActionCard(String name, int bankValue, ActionType actionType) {
-        this.name = name;
-        this.bankValue = bankValue;
+        super(name, bankValue);
         this.actionType = actionType;
         this.colors = new ArrayList<>();
     }
 
-    public ActionCard(String name, int bankValue, ActionType actionType,List<PropertyColor> colors){
-        this.name = name;
-        this.bankValue = bankValue;
+    public ActionCard(String name, int bankValue, ActionType actionType, List<PropertyColor> colors) {
+        super(name, bankValue);
         this.actionType = actionType;
         this.colors = colors;
     }
 
-
-    @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public int getBankValue() {
-        return bankValue;
-    }
-
     @Override
     public String getDetail() {
-        return name + " [Action, " + actionType + ", bank " + bankValue + "M]";
+        return getName() + " [Action, " + actionType + ", bank " + getBankValue() + "M]";
     }
 
     public ActionType getActionType() {
@@ -45,10 +30,5 @@ public class ActionCard implements Card {
 
     public List<PropertyColor> getColors() {
         return colors;
-    }
-
-    @Override
-    public String toString() {
-        return getDetail();
     }
 }

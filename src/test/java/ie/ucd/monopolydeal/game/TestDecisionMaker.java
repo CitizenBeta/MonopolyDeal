@@ -7,17 +7,17 @@ import java.util.Collections;
 import java.util.List;
 
 // Test decision maker that returns predictable choices
-public class ScriptedDecisionMaker implements DecisionMaker {
+public class TestDecisionMaker implements DecisionMaker {
     private final UseMode useMode;
     private final boolean reconfirmAnswer;
 
     // Default test flow plays cards and does not counter actions
-    public ScriptedDecisionMaker() {
+    public TestDecisionMaker() {
         this(UseMode.PLAY, false);
     }
 
     // Allow a test to choose play or bank and Just Say No behavior
-    public ScriptedDecisionMaker(UseMode useMode, boolean reconfirmAnswer) {
+    public TestDecisionMaker(UseMode useMode, boolean reconfirmAnswer) {
         this.useMode = useMode;
         this.reconfirmAnswer = reconfirmAnswer;
     }

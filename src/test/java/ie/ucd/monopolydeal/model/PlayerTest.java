@@ -74,6 +74,33 @@ class PlayerTest {
         assertTrue(player.getPropertySets().get(PropertyColor.LIGHT_BLUE).getCards().contains(wild));
     }
 
+    // Receiving a property rejects the wrong fixed color
+    @Test
+    void receivePropertyCardShouldRejectWrongFixedColor() {
+        Player player = new Player("Alice", 1);
+        PropertyCard property = new PropertyCard("Boardwalk", 4, PropertyColor.DARK_BLUE);
+
+        assertFalse(player.receivePropertyCard(property, PropertyColor.BROWN));
+
+        assertTrue(player.getPropertySets().get(PropertyColor.BROWN).getCards().isEmpty());
+        assertTrue(player.getPropertySets().get(PropertyColor.DARK_BLUE).getCards().isEmpty());
+    }
+
+    // Full-set transfer is blocked when the receiver has no room
+    @Test
+    void transferFullSetShouldRejectOverfilledReceiver() {
+        Player source = new Player("Alice", 1);
+        Player receiver = new Player("Bob", 2);
+        addAndPlayProperty(source, new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN));
+        addAndPlayProperty(source, new PropertyCard("Baltic Avenue", 1, PropertyColor.BROWN));
+        addAndPlayProperty(receiver, new PropertyCard("Extra Brown", 1, PropertyColor.BROWN));
+
+        assertFalse(source.transferFullSetTo(receiver, PropertyColor.BROWN));
+
+        assertEquals(2, source.getPropertySets().get(PropertyColor.BROWN).getCards().size());
+        assertEquals(1, receiver.getPropertySets().get(PropertyColor.BROWN).getCards().size());
+    }
+
     // Three completed sets make the player win
     @Test
     void playerShouldWinAfterCompletingThreePropertySets() {

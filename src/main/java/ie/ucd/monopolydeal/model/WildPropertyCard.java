@@ -5,18 +5,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class WildPropertyCard implements Card {
-    private final String name;
+public class WildPropertyCard extends Card {
     private final List<PropertyColor> possibleColors;
-    private final int bankValue;
     // Null means the wild card has not yet been assigned to a property set on the table.
     private PropertyColor currentColor;
 
     public WildPropertyCard(String name, List<PropertyColor> possibleColors, int bankValue) {
-        this.name = name;
+        super(name, bankValue);
         // Defensive copy prevents later external changes from altering this card's valid colors.
         this.possibleColors = new ArrayList<>(possibleColors);
-        this.bankValue = bankValue;
     }
 
     public List<PropertyColor> getPossibleColors() {
@@ -43,26 +40,12 @@ public class WildPropertyCard implements Card {
     }
 
     @Override
-    public String getName() {
-        return name;
-    }
-
-    @Override
-    public int getBankValue() {
-        return bankValue;
-    }
-
-    @Override
     public String getDetail() {
         // Joins possible colors into the same compact format used by card descriptions.
         String colors = possibleColors.stream().map(PropertyColor::getName).collect(Collectors.joining("/"));
         // Keeps the detail string meaningful before the card is placed into a set.
         String current = currentColor == null ? "unplaced" : currentColor.getName();
-        return name + " [Wild, " + colors + ", current " + current + ", bank " + bankValue + "M]";
-    }
-
-    @Override
-    public String toString() {
-        return getDetail();
+        return getName() + " [Wild, " + colors + ", current " + current + ", bank "
+                + getBankValue() + "M]";
     }
 }

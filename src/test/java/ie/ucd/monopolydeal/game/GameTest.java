@@ -45,7 +45,7 @@ class GameTest {
         MoneyCard money = new MoneyCard("5M", 5);
         current.addCardToHand(money);
 
-        boolean played = game.playCard(money, new ScriptedDecisionMaker());
+        boolean played = game.playCard(money, new TestDecisionMaker());
 
         assertTrue(played);
         assertEquals(1, game.getActionsUsed());
@@ -71,10 +71,10 @@ class GameTest {
         current.addCardToHand(third);
         current.addCardToHand(fourth);
 
-        assertTrue(game.playCard(first, new ScriptedDecisionMaker()));
-        assertTrue(game.playCard(second, new ScriptedDecisionMaker()));
-        assertTrue(game.playCard(third, new ScriptedDecisionMaker()));
-        assertFalse(game.playCard(fourth, new ScriptedDecisionMaker()));
+        assertTrue(game.playCard(first, new TestDecisionMaker()));
+        assertTrue(game.playCard(second, new TestDecisionMaker()));
+        assertTrue(game.playCard(third, new TestDecisionMaker()));
+        assertFalse(game.playCard(fourth, new TestDecisionMaker()));
         assertEquals(Player.MAX_ACTIONS_PER_TURN, game.getActionsUsed());
     }
 
@@ -87,11 +87,11 @@ class GameTest {
 
         MoneyCard money = new MoneyCard("1M", 1);
         alice.addCardToHand(money);
-        game.playCard(money, new ScriptedDecisionMaker());
+        game.playCard(money, new TestDecisionMaker());
 
         assertEquals(1, game.getActionsUsed());
 
-        boolean ended = game.endTurn(new ScriptedDecisionMaker());
+        boolean ended = game.endTurn(new TestDecisionMaker());
 
         assertTrue(ended);
         assertEquals("Bob", game.getCurrPlayer().getName());
@@ -109,7 +109,7 @@ class GameTest {
 
         int drawPileBefore = game.getDrawPileNumber();
 
-        assertTrue(game.endTurn(new ScriptedDecisionMaker()));
+        assertTrue(game.endTurn(new TestDecisionMaker()));
 
         assertSame(bob, game.getCurrPlayer());
         assertEquals(5, bob.getCardsAtHand().size());
@@ -122,7 +122,7 @@ class GameTest {
         Game game = new Game();
         game.setup(List.of("Alice", "Bob"));
 
-        assertTrue(game.endTurn(new ScriptedDecisionMaker()));
+        assertTrue(game.endTurn(new TestDecisionMaker()));
 
         assertEquals("Bob", game.getCurrPlayer().getName());
         assertEquals(0, game.getActionsUsed());
@@ -140,7 +140,7 @@ class GameTest {
 
         int handSizeBefore = current.getCardsAtHand().size();
 
-        boolean played = game.playCard(passGo, new ScriptedDecisionMaker(UseMode.PLAY, false));
+        boolean played = game.playCard(passGo, new TestDecisionMaker(UseMode.PLAY, false));
 
         assertTrue(played);
         assertEquals(1, game.getActionsUsed());
@@ -166,7 +166,7 @@ class GameTest {
         current.addCardToHand(doubleRent);
         current.addCardToHand(anyRent);
 
-        assertFalse(game.playCard(doubleRent, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertFalse(game.playCard(doubleRent, new TestDecisionMaker(UseMode.PLAY, false)));
         assertTrue(current.getCardsAtHand().contains(doubleRent));
         assertTrue(current.getCardsAtHand().contains(anyRent));
     }
@@ -186,7 +186,7 @@ class GameTest {
         ActionCard debtCollector = new ActionCard("Debt Collector", 3, ActionType.DEBT_COLLECTOR);
         current.addCardToHand(debtCollector);
 
-        assertFalse(game.playCard(debtCollector, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertFalse(game.playCard(debtCollector, new TestDecisionMaker(UseMode.PLAY, false)));
         assertTrue(current.getCardsAtHand().contains(debtCollector));
         assertEquals(PropertyColor.BROWN, wild.getCurrentColor());
     }
@@ -204,7 +204,7 @@ class GameTest {
         current.addCardToHand(debtCollector);
         target.addCardToBank(five);
 
-        assertTrue(game.playCard(debtCollector, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(game.playCard(debtCollector, new TestDecisionMaker(UseMode.PLAY, false)));
         assertTrue(current.getCardsAtBank().contains(five));
         assertFalse(target.getCardsAtBank().contains(five));
         assertFalse(current.getCardsAtHand().contains(debtCollector));
@@ -229,7 +229,7 @@ class GameTest {
         target.addCardToHand(justSayNo);
         target.addCardToBank(five);
 
-        assertTrue(game.playCard(debtCollector, new ScriptedDecisionMaker(UseMode.PLAY, true)));
+        assertTrue(game.playCard(debtCollector, new TestDecisionMaker(UseMode.PLAY, true)));
         assertFalse(current.getCardsAtBank().contains(five));
         assertTrue(target.getCardsAtBank().contains(five));
         assertFalse(target.getCardsAtHand().contains(justSayNo));
@@ -250,7 +250,7 @@ class GameTest {
         target.addCardToHand(property);
         assertTrue(target.addProperty(property));
 
-        assertTrue(game.playCard(slyDeal, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(game.playCard(slyDeal, new TestDecisionMaker(UseMode.PLAY, false)));
         assertTrue(current.getPropertySets().get(PropertyColor.LIGHT_BLUE).getCards().contains(property));
         assertFalse(target.getPropertySets().get(PropertyColor.LIGHT_BLUE).getCards().contains(property));
         assertEquals(1, game.getActionsUsed());
@@ -273,7 +273,7 @@ class GameTest {
         assertTrue(current.addProperty(currentProperty));
         assertTrue(target.addProperty(targetProperty));
 
-        assertTrue(game.playCard(forcedDeal, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(game.playCard(forcedDeal, new TestDecisionMaker(UseMode.PLAY, false)));
         assertTrue(current.getPropertySets().get(PropertyColor.LIGHT_BLUE).getCards().contains(targetProperty));
         assertTrue(target.getPropertySets().get(PropertyColor.BROWN).getCards().contains(currentProperty));
         assertFalse(current.getPropertySets().get(PropertyColor.BROWN).getCards().contains(currentProperty));
@@ -297,7 +297,7 @@ class GameTest {
         assertTrue(target.addProperty(first));
         assertTrue(target.addProperty(second));
 
-        assertTrue(game.playCard(dealBreaker, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(game.playCard(dealBreaker, new TestDecisionMaker(UseMode.PLAY, false)));
         assertTrue(current.getPropertySets().get(PropertyColor.BROWN).getCards().contains(first));
         assertTrue(current.getPropertySets().get(PropertyColor.BROWN).getCards().contains(second));
         assertTrue(target.getPropertySets().get(PropertyColor.BROWN).getCards().isEmpty());
@@ -325,7 +325,7 @@ class GameTest {
         current.addCardToHand(rent);
         target.addCardToBank(one);
 
-        assertTrue(game.playCard(rent, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(game.playCard(rent, new TestDecisionMaker(UseMode.PLAY, false)));
         assertTrue(current.getCardsAtBank().contains(one));
         assertFalse(target.getCardsAtBank().contains(one));
         assertEquals(1, game.getActionsUsed());
@@ -348,7 +348,7 @@ class GameTest {
         current.addCardToHand(anyRent);
         target.addCardToBank(two);
 
-        assertTrue(game.playCard(anyRent, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(game.playCard(anyRent, new TestDecisionMaker(UseMode.PLAY, false)));
         assertTrue(current.getCardsAtBank().contains(two));
         assertTrue(target.getCardsAtBank().isEmpty());
         assertFalse(current.getCardsAtHand().contains(anyRent));
@@ -369,8 +369,8 @@ class GameTest {
         current.addCardToHand(house);
         current.addCardToHand(hotel);
 
-        assertTrue(game.playCard(house, new ScriptedDecisionMaker(UseMode.PLAY, false)));
-        assertTrue(game.playCard(hotel, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(game.playCard(house, new TestDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(game.playCard(hotel, new TestDecisionMaker(UseMode.PLAY, false)));
 
         PropertySet set = current.getPropertySets().get(PropertyColor.DARK_BLUE);
         assertEquals(1, set.getHouseCount());
@@ -389,7 +389,7 @@ class GameTest {
         current.addCardToHand(firstExtra);
         current.addCardToHand(secondExtra);
 
-        DecisionMaker invalidDiscard = new ScriptedDecisionMaker() {
+        DecisionMaker invalidDiscard = new TestDecisionMaker() {
             @Override
             public List<Card> selectDiscards(Player player, List<Card> cards, int count) {
                 return List.of(firstExtra, firstExtra);
@@ -415,7 +415,7 @@ class GameTest {
         current.addCardToHand(firstExtra);
         current.addCardToHand(secondExtra);
 
-        assertTrue(game.endTurn(new ScriptedDecisionMaker()));
+        assertTrue(game.endTurn(new TestDecisionMaker()));
         assertEquals(Player.MAX_CARDS_AT_HAND, game.getPlayers().get(0).getCardsAtHand().size());
         assertEquals("Bob", game.getCurrPlayer().getName());
         assertEquals(CardHistory.CardAction.DISCARDED, game.getUsedCards().get(0).action());
@@ -435,7 +435,7 @@ class GameTest {
 
         int drawPileBefore = game.getDrawPileNumber();
 
-        assertTrue(game.endTurn(new ScriptedDecisionMaker()));
+        assertTrue(game.endTurn(new TestDecisionMaker()));
 
         assertEquals(drawPileBefore, game.getDrawPileNumber());
         assertEquals(Player.MAX_CARDS_AT_HAND, current.getCardsAtHand().size());
@@ -459,7 +459,7 @@ class GameTest {
         bob.addCardToBank(one);
         cara.addCardToBank(two);
 
-        assertTrue(game.playCard(birthday, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(game.playCard(birthday, new TestDecisionMaker(UseMode.PLAY, false)));
         assertTrue(current.getCardsAtBank().contains(one));
         assertTrue(current.getCardsAtBank().contains(two));
         assertTrue(bob.getCardsAtBank().isEmpty());
@@ -482,7 +482,7 @@ class GameTest {
         PropertyCard waterWorks = new PropertyCard("Water Works", 2, PropertyColor.UTILITY);
         current.addCardToHand(waterWorks);
 
-        assertTrue(game.playCard(waterWorks, new ScriptedDecisionMaker()));
+        assertTrue(game.playCard(waterWorks, new TestDecisionMaker()));
         assertTrue(game.isOver());
         assertSame(current, game.getWinner());
     }
@@ -507,7 +507,7 @@ class GameTest {
         ActionCard forcedDeal = new ActionCard("Forced Deal", 3, ActionType.FORCED_DEAL);
         current.addCardToHand(forcedDeal);
 
-        assertTrue(game.playCard(forcedDeal, new ScriptedDecisionMaker()));
+        assertTrue(game.playCard(forcedDeal, new TestDecisionMaker()));
         assertTrue(game.isOver());
         assertSame(target, game.getWinner());
     }
@@ -525,7 +525,7 @@ class GameTest {
         current.addCardToHand(debtCollector);
         target.addCardToBank(five);
 
-        DecisionMaker cancelPayment = new ScriptedDecisionMaker(UseMode.PLAY, false) {
+        DecisionMaker cancelPayment = new TestDecisionMaker(UseMode.PLAY, false) {
             @Override
             public List<Card> selectPaymentCards(Player owner, List<Card> cards, int amount) {
                 return List.of();
@@ -552,7 +552,7 @@ class GameTest {
         current.addCardToHand(debtCollector);
         target.addCardToBank(ten);
 
-        assertTrue(game.playCard(debtCollector, new ScriptedDecisionMaker(UseMode.PLAY, false)));
+        assertTrue(game.playCard(debtCollector, new TestDecisionMaker(UseMode.PLAY, false)));
         assertTrue(current.getCardsAtBank().contains(ten));
         assertTrue(target.getCardsAtBank().isEmpty());
         assertEquals(10, current.getBankTotalValue());
@@ -578,7 +578,7 @@ class GameTest {
         target.addCardToHand(wild);
         assertTrue(target.addWildProperty(wild, PropertyColor.DARK_BLUE));
 
-        DecisionMaker cancelWildColor = new ScriptedDecisionMaker(UseMode.PLAY, false) {
+        DecisionMaker cancelWildColor = new TestDecisionMaker(UseMode.PLAY, false) {
             @Override
             public PropertyColor selectColor(String prompt, List<PropertyColor> colors) {
                 return null;
