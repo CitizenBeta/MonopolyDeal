@@ -6,7 +6,22 @@ target/
 .kotlin
 
 ### IntelliJ IDEA ###
-.idea
+.idea/*
+!.idea/compiler.xml
+!.idea/encodings.xml
+!.idea/jarRepositories.xml
+!.idea/misc.xml
+!.idea/vcs.xml
+!.idea/runConfigurations/
+!.idea/runConfigurations/*.xml
+
+.idea/workspace.xml
+.idea/copilot*.xml
+.idea/shelf/
+.idea/tasks.xml
+.idea/usage.statistics.xml
+.idea/dataSources/
+.idea/httpRequests/
 
 ### Eclipse ###
 .apt_generated
