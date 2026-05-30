@@ -20,6 +20,12 @@ public final class PlayerUI {
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 18));
         name.setTextFill(Color.rgb(15, 23, 42));
 
+        HBox titleBox = new HBox(8, name);
+        titleBox.setAlignment(Pos.CENTER_LEFT);
+        if (isWinner) {
+            titleBox.getChildren().add(newWinnerBadge());
+        }
+
         // Add summary
         HBox summaryBox = new HBox(8, GameUI.newBadge("Hand " + player.getCardsAtHand().size()));
         summaryBox.setAlignment(Pos.CENTER_LEFT);
@@ -27,7 +33,7 @@ public final class PlayerUI {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox header = new HBox(12, name, spacer, summaryBox);
+        HBox header = new HBox(12, titleBox, spacer, summaryBox);
         header.setAlignment(Pos.CENTER_LEFT);
 
         // Show cards in bank
@@ -70,6 +76,13 @@ public final class PlayerUI {
         }
 
         return box;
+    }
+
+    private static Label newWinnerBadge() {
+        Label badge = GameUI.newBadge("Winner", Color.rgb(220, 252, 231), Color.rgb(22, 101, 52));
+        badge.setBorder(GameUI.roundCorner(Color.rgb(134, 239, 172)));
+        badge.setFont(Font.font("Segoe UI Semibold", 12));
+        return badge;
     }
 
     // Create compact bank column
@@ -115,7 +128,7 @@ public final class PlayerUI {
         Label propertiesTitle = new Label("Properties");
         propertiesTitle.setFont(Font.font("Segoe UI", FontWeight.BOLD, 14));
         propertiesTitle.setTextFill(Color.rgb(71, 85, 105));
-        HBox propertiesHeader = new HBox(8, propertiesTitle, GameUI.newBadge("Sets " + player.countCompletedSets() + "/3"));
+        HBox propertiesHeader = new HBox(8, propertiesTitle, newSetsBadge(player.countCompletedSets()));
         propertiesHeader.setAlignment(Pos.CENTER_LEFT);
         properties.getChildren().add(propertiesHeader);
 
@@ -151,6 +164,21 @@ public final class PlayerUI {
         properties.setFillWidth(true);
         HBox.setHgrow(properties, Priority.ALWAYS);
         return properties;
+    }
+
+    private static Label newSetsBadge(int completedSets) {
+        Label badge;
+        if (completedSets >= 3) {
+            badge = GameUI.newBadge("Sets " + completedSets + "/3", Color.rgb(220, 252, 231), Color.rgb(22, 101, 52));
+            badge.setBorder(GameUI.roundCorner(Color.rgb(134, 239, 172)));
+        } else if (completedSets == 2) {
+            badge = GameUI.newBadge("Sets " + completedSets + "/3", Color.rgb(219, 234, 254), Color.rgb(29, 78, 216));
+            badge.setBorder(GameUI.roundCorner(Color.rgb(147, 197, 253)));
+        } else {
+            badge = GameUI.newBadge("Sets " + completedSets + "/3");
+        }
+
+        return badge;
     }
 
     // Create one property set group
@@ -220,7 +248,7 @@ public final class PlayerUI {
     // Create a small card box for bank
     private static HBox newBankBox(Card card) {
         // Set card name
-        Label name = new Label(card.getName());
+        Label name = new Label(bankCardText(card));
         name.setFont(Font.font("Segoe UI", FontWeight.SEMI_BOLD, 11));
         name.setTextFill(Color.rgb(15, 23, 42));
 
@@ -232,6 +260,10 @@ public final class PlayerUI {
         box.setBackground(GameUI.solidBackground(Color.WHITE));
         box.setBorder(GameUI.roundCorner(Color.rgb(203, 213, 225)));
         return box;
+    }
+
+    private static String bankCardText(Card card) {
+        return card.getBankValue() + "M";
     }
 
     // Add color bar for small card in bank

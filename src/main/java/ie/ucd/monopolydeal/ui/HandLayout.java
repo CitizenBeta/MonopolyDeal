@@ -56,5 +56,6 @@ public final class HandLayout {
         Bounds bounds = cardsScroll.getViewportBounds();
         handCardsBox.setMinWidth(bounds.getWidth());
         handCardsBox.setMinHeight(bounds.getHeight());
+        handCardsBox.setPrefHeight(bounds.getHeight());
     }
 }
