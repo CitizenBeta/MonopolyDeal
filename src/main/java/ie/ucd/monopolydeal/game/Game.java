@@ -125,8 +125,8 @@ public class Game {
     }
 
     // Applies the actual effect of a card.
-    // Public visibility is kept because other parts of the project may call this method directly.
-    public boolean playSpecificCard(Player player, Card card, DecisionMaker dm) {
+    // Keep this private so all card plays pass through the ownership and rollback checks in playCard()
+    private boolean playSpecificCard(Player player, Card card, DecisionMaker dm) {
         if (card instanceof MoneyCard) {
             player.addCardToBank(card);
             return true;
@@ -274,7 +274,11 @@ public class Game {
             return colors.get(0);
         }
 
-        return dm.selectColor(prompt, colors);
+        PropertyColor selected = dm.selectColor(prompt, colors);
+        if (colors.contains(selected)) {
+            return selected;
+        }
+        return null;
     }
 
     // Resolves a Just Say No chain.

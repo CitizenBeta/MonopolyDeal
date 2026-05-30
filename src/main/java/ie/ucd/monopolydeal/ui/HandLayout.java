@@ -24,9 +24,9 @@ public final class HandLayout {
         cardsScroll.setPannable(false);
 
         // Keep hand strip as tall as viewport
-        cardsScroll.viewportBoundsProperty().addListener((_, _, _) -> resize(handCardsBox, cardsScroll));
+        cardsScroll.viewportBoundsProperty().addListener((observable, oldBounds, newBounds) -> resize(handCardsBox, cardsScroll));
         cardsScroll.setVvalue(0);
-        cardsScroll.vvalueProperty().addListener((_, _, _) -> cardsScroll.setVvalue(0));
+        cardsScroll.vvalueProperty().addListener((observable, oldValue, newValue) -> cardsScroll.setVvalue(0));
 
         // Use mouse wheel to scroll hand horizontally
         cardsScroll.setOnScroll(e -> {

@@ -115,7 +115,7 @@ public final class GameUI {
         button.setOpacity(1);
 
         // Reapply style whenever disabled state changes
-        button.disabledProperty().addListener((_, _, _) -> applyActionButtonStyle(button, color, isFilled));
+        button.disabledProperty().addListener((observable, oldValue, newValue) -> applyActionButtonStyle(button, color, isFilled));
         applyActionButtonStyle(button, color, isFilled);
     }
 

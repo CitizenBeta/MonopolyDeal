@@ -105,8 +105,8 @@ public class Player {
         if (!hand.contains(card)) return false;
         PropertySet set = propertySets.get(card.getColor());
         if (!set.canAddProperty()) return false;
+        if (!set.addProperty(card)) return false;
         hand.remove(card);
-        set.addProperty(card);
         return true;
     }
 
@@ -117,9 +117,8 @@ public class Player {
         PropertySet set = propertySets.get(color);
         if (set == null) return false;
         if (!set.canAddProperty()) return false;
-        card.setCurrentColor(color);
+        if (!set.addProperty(card)) return false;
         hand.remove(card);
-        set.addProperty(card);
         return true;
     }
 
@@ -145,9 +144,11 @@ public class Player {
 
         // Remove from the previous color bucket before assigning the new color.
         propertySets.get(currentColor).removeProperty(card);
-        card.setCurrentColor(newColor);
-        targetSet.addProperty(card);
-        return true;
+        if (targetSet.addProperty(card)) {
+            return true;
+        }
+        propertySets.get(currentColor).addProperty(card);
+        return false;
     }
 
     public boolean receivePropertyCard(Card card, PropertyColor color) {

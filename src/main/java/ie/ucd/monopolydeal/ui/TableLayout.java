@@ -28,7 +28,7 @@ public final class TableLayout {
         tableScroll.setPannable(true);
 
         // Resize player boards when window changes
-        tableScroll.viewportBoundsProperty().addListener((_, _, _) -> resizeTable.run());
+        tableScroll.viewportBoundsProperty().addListener((observable, oldBounds, newBounds) -> resizeTable.run());
         tableScroll.setFocusTraversable(false);
         tableScroll.setStyle("-fx-background-color: transparent; -fx-background-insets: 0; -fx-focus-color: transparent; -fx-faint-focus-color: transparent;");
         tableScroll.setOnMousePressed(e -> rootPane.requestFocus());

@@ -19,7 +19,7 @@ public final class Payment {
     public boolean collectFromChosenPlayer(Player receiver, int amount, DecisionMaker dm, String prompt) {
         List<Player> players = playersWithPaymentOptions(receiver);
         Player payer = dm.selectNextPlayer(receiver, players, prompt);
-        return payer != null && collectPayment(payer, receiver, amount, dm);
+        return players.contains(payer) && collectPayment(payer, receiver, amount, dm);
     }
 
     // Collects from every opponent who has at least one valid payment option
@@ -128,12 +128,20 @@ public final class Payment {
         }
 
         PropertyColor receiveColor = chooseReceiveColor(receiver, card, dm);
-        if (receiveColor == null || !source.removePropertyCard(card)) {
+        if (receiveColor == null || !targets.canReceiveProperty(receiver, card, receiveColor)) {
             return false;
         }
 
-        receiver.receivePropertyCard(card, receiveColor);
-        return true;
+        if (!source.removePropertyCard(card)) {
+            return false;
+        }
+
+        if (receiver.receivePropertyCard(card, receiveColor)) {
+            return true;
+        }
+
+        source.receivePropertyCard(card, sourceColor);
+        return false;
     }
 
     // Transfers a House or Hotel that is already attached to a property set
@@ -146,11 +154,21 @@ public final class Payment {
             return false;
         }
 
+        PropertySet sourceSet = source.getPropertySets().get(color);
         PropertySet receiverSet = receiver.getPropertySets().get(color);
         if (card.getActionType() == ActionType.HOUSE) {
-            return receiverSet.addHouse(card);
+            if (receiverSet.addHouse(card)) {
+                return true;
+            }
+            sourceSet.addHouse(card);
+            return false;
         }
-        return receiverSet.addHotel(card);
+
+        if (receiverSet.addHotel(card)) {
+            return true;
+        }
+        sourceSet.addHotel(card);
+        return false;
     }
 
     // Swaps two properties as one atomic operation
@@ -170,11 +188,35 @@ public final class Payment {
             return false;
         }
 
-        firstPlayer.removePropertyCard(firstCard);
-        secondPlayer.removePropertyCard(secondCard);
-        firstPlayer.receivePropertyCard(secondCard, firstReceiveColor);
-        secondPlayer.receivePropertyCard(firstCard, secondReceiveColor);
-        return true;
+        PropertyColor firstOriginalColor = firstPlayer.getPropertyColor(firstCard);
+        PropertyColor secondOriginalColor = secondPlayer.getPropertyColor(secondCard);
+        if (firstOriginalColor == null || secondOriginalColor == null) {
+            return false;
+        }
+
+        if (!firstPlayer.removePropertyCard(firstCard)) {
+            return false;
+        }
+
+        if (!secondPlayer.removePropertyCard(secondCard)) {
+            firstPlayer.receivePropertyCard(firstCard, firstOriginalColor);
+            return false;
+        }
+
+        if (!firstPlayer.receivePropertyCard(secondCard, firstReceiveColor)) {
+            firstPlayer.receivePropertyCard(firstCard, firstOriginalColor);
+            secondPlayer.receivePropertyCard(secondCard, secondOriginalColor);
+            return false;
+        }
+
+        if (secondPlayer.receivePropertyCard(firstCard, secondReceiveColor)) {
+            return true;
+        }
+
+        firstPlayer.removePropertyCard(secondCard);
+        firstPlayer.receivePropertyCard(firstCard, firstOriginalColor);
+        secondPlayer.receivePropertyCard(secondCard, secondOriginalColor);
+        return false;
     }
 
     public boolean canReceiveProperty(Player receiver, Card card, PropertyColor color) {
@@ -210,7 +252,11 @@ public final class Payment {
             return colors.get(0);
         }
 
-        return dm.selectColor(prompt, colors);
+        PropertyColor selected = dm.selectColor(prompt, colors);
+        if (colors.contains(selected)) {
+            return selected;
+        }
+        return null;
     }
 
     public List<Card> stealableCards(Player source, Player receiver) {

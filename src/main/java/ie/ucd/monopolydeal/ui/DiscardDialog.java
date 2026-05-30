@@ -89,7 +89,7 @@ public final class DiscardDialog {
             CheckBox checkBox = new CheckBox(discardOptionText(card));
             checkBox.setWrapText(true);
             checkBox.setMaxWidth(Double.MAX_VALUE);
-            checkBox.selectedProperty().addListener((_, _, _) -> updateDiscardChecks(checkBoxes, okButton, count));
+            checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> updateDiscardChecks(checkBoxes, okButton, count));
             checkBoxes.add(checkBox);
             optionsBox.getChildren().add(checkBox);
         }

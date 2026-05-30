@@ -28,8 +28,7 @@ final class PlayerProperties {
             return false;
         }
 
-        set.addProperty(card);
-        return true;
+        return set.addProperty(card);
     }
 
     static boolean removePropertyCard(Map<PropertyColor, PropertySet> propertySets, Card card) {
@@ -86,7 +85,9 @@ final class PlayerProperties {
         List<Card> cardsToMove = new ArrayList<>(sourceSet.getCards());
         for (Card card : cardsToMove) {
             removePropertyCard(propertySets, card);
-            recipient.receivePropertyCard(card, color);
+            if (!recipient.receivePropertyCard(card, color)) {
+                return false;
+            }
         }
         return true;
     }

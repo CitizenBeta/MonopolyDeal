@@ -79,7 +79,7 @@ public final class CardColorUI {
     // Main display color for card border and bar
     public static Color cardColor(Card card) {
         return switch (card) {
-            case MoneyCard _ -> Color.rgb(21, 128, 61);
+            case MoneyCard moneyCard -> Color.rgb(21, 128, 61);
             case PropertyCard propertyCard -> propertyColor(propertyCard.getColor());
             case WildPropertyCard wildCard -> {
                 if (wildCard.getCurrentColor() == null) {

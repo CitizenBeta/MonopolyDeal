@@ -3,6 +3,7 @@ package ie.ucd.monopolydeal.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class PropertySet {
     private final PropertyColor color;
@@ -12,7 +13,7 @@ public class PropertySet {
     private ActionCard hotelCard;
 
     public PropertySet(PropertyColor color) {
-        this.color = color;
+        this.color = Objects.requireNonNull(color, "color");
     }
 
     public PropertyColor getColor() {
@@ -73,11 +74,26 @@ public class PropertySet {
 
     public boolean addProperty(Card card) {
         // Refuses extra cards once the set has reached the Monopoly color size.
-        if (!canAddProperty()) {
+        if (!canAddProperty() || !canAcceptProperty(card)) {
             return false;
+        }
+        if (card instanceof WildPropertyCard wildCard) {
+            wildCard.setCurrentColor(color);
         }
         cards.add(card);
         return true;
+    }
+
+    private boolean canAcceptProperty(Card card) {
+        if (card instanceof PropertyCard propertyCard) {
+            return propertyCard.getColor() == color;
+        }
+
+        if (card instanceof WildPropertyCard wildCard) {
+            return wildCard.getPossibleColors().contains(color);
+        }
+
+        return false;
     }
 
     public void removeProperty(Card card) {

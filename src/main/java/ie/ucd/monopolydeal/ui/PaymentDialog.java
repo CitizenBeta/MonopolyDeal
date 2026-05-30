@@ -37,7 +37,7 @@ public final class PaymentDialog {
             CheckBox checkBox = new CheckBox(paymentOptionText(owner, card));
             checkBox.setWrapText(true);
             checkBox.setMaxWidth(Double.MAX_VALUE);
-            checkBox.selectedProperty().addListener((_, _, _) ->
+            checkBox.selectedProperty().addListener((observable, oldValue, newValue) ->
                     updatePaymentChecks(cards, checkBoxes, okButton, dialog, owner, amount));
             checkBoxes.add(checkBox);
             optionsBox.getChildren().add(checkBox);

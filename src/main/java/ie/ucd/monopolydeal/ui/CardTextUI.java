@@ -58,8 +58,8 @@ public final class CardTextUI {
     static String statusCardText(Card card) {
         return switch (card) {
             case MoneyCard moneyCard -> moneyCard.getName();
-            case PropertyCard _ -> "property card";
-            case WildPropertyCard _ -> "wild card";
+            case PropertyCard propertyCard -> "property card";
+            case WildPropertyCard wildCard -> "wild card";
             case ActionCard actionCard -> actionCard.getName();
             case null, default -> "card";
         };

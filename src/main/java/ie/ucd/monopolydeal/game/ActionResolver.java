@@ -142,7 +142,7 @@ public final class ActionResolver {
 
         List<Card> rentCards = rentCardsInHandExcept(player, doubleRent);
         Card selected = dm.selectRentCard(player, rentCards, "Choose a rent card to double.");
-        if (!(selected instanceof ActionCard rentCard)) {
+        if (!rentCards.contains(selected) || !(selected instanceof ActionCard rentCard)) {
             return false;
         }
 
@@ -174,7 +174,7 @@ public final class ActionResolver {
     private boolean playSlyDeal(Player player, DecisionMaker dm) {
         List<Player> players = targets.playersWithStealableCards(player);
         Player target = dm.selectNextPlayer(player, players, "Choose a player to steal from.");
-        if (target == null) {
+        if (!players.contains(target)) {
             return false;
         }
 
@@ -184,14 +184,14 @@ public final class ActionResolver {
 
         List<Card> cards = payments.stealableCards(target, player);
         Card card = dm.selectPropertyCard(target, cards, "Choose a property to steal.");
-        return card != null && payments.transferPropertyCard(target, player, card, dm);
+        return cards.contains(card) && payments.transferPropertyCard(target, player, card, dm);
     }
 
     // Forced Deal swaps one property from each player
     private boolean playForcedDeal(Player player, DecisionMaker dm) {
         List<Player> players = targets.playersForForcedDeal(player);
         Player target = dm.selectNextPlayer(player, players, "Choose a player to trade with.");
-        if (target == null) {
+        if (!players.contains(target)) {
             return false;
         }
 
@@ -199,28 +199,30 @@ public final class ActionResolver {
             return true;
         }
 
+        List<Card> ownCards = payments.stealableCards(player, target);
         Card ownCard = dm.selectPropertyCard(
                 player,
-                payments.stealableCards(player, target),
+                ownCards,
                 "Choose one of your properties to give."
         );
-        if (ownCard == null) {
+        if (!ownCards.contains(ownCard)) {
             return false;
         }
 
+        List<Card> targetCards = payments.stealableCards(target, player);
         Card targetCard = dm.selectPropertyCard(
                 target,
-                payments.stealableCards(target, player),
+                targetCards,
                 "Choose one property to receive."
         );
-        return targetCard != null && payments.swapProperties(player, ownCard, target, targetCard, dm);
+        return targetCards.contains(targetCard) && payments.swapProperties(player, ownCard, target, targetCard, dm);
     }
 
     // Deal Breaker transfers a complete set if the receiver has enough room for that set
     private boolean playDealBreaker(Player player, DecisionMaker dm) {
         List<Player> players = targets.playersWithTransferableFullSets(player);
         Player target = dm.selectNextPlayer(player, players, "Choose a player with a full set.");
-        if (target == null) {
+        if (!players.contains(target)) {
             return false;
         }
 
@@ -263,6 +265,10 @@ public final class ActionResolver {
             return null;
         }
 
-        return dm.selectActionColor(prompt, colors);
+        PropertyColor selected = dm.selectActionColor(prompt, colors);
+        if (colors.contains(selected)) {
+            return selected;
+        }
+        return null;
     }
 }

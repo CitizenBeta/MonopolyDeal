@@ -1,7 +1,7 @@
 package ie.ucd.monopolydeal.model;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class ActionCard extends Card {
     private final ActionType actionType;
@@ -9,14 +9,18 @@ public class ActionCard extends Card {
 
     public ActionCard(String name, int bankValue, ActionType actionType) {
         super(name, bankValue);
-        this.actionType = actionType;
-        this.colors = new ArrayList<>();
+        this.actionType = Objects.requireNonNull(actionType, "actionType");
+        this.colors = List.of();
     }
 
     public ActionCard(String name, int bankValue, ActionType actionType, List<PropertyColor> colors) {
         super(name, bankValue);
-        this.actionType = actionType;
-        this.colors = colors;
+        this.actionType = Objects.requireNonNull(actionType, "actionType");
+        if (colors == null) {
+            this.colors = List.of();
+        } else {
+            this.colors = List.copyOf(colors);
+        }
     }
 
     @Override
