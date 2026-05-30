@@ -6,8 +6,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+// Tests basic card model data
 class CardModelTest {
 
+    // Money card exposes name, value and detail text
     @Test
     void moneyCardShouldReturnBasicInformation() {
         MoneyCard card = new MoneyCard("5M", 5);
@@ -18,6 +20,7 @@ class CardModelTest {
         assertTrue(card.toString().contains("5M"));
     }
 
+    // Action card stores its action type and color list
     @Test
     void actionCardShouldStoreActionTypeAndColors() {
         ActionCard card = new ActionCard(
@@ -34,6 +37,7 @@ class CardModelTest {
         assertTrue(card.getDetail().contains("Action"));
     }
 
+    // Wild property card accepts only one of its possible colors
     @Test
     void wildPropertyCardShouldAcceptOnlyAllowedColors() {
         WildPropertyCard card = new WildPropertyCard(

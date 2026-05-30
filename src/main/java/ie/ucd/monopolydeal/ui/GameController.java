@@ -145,7 +145,7 @@ public class GameController {
             }
             selectedCard = null;
         } else {
-            statusText.setText("Cannot play " + GameUI.statusCardText(cardToPlay) + ".");
+            statusText.setText("Play cancelled.");
         }
 
         refresh();

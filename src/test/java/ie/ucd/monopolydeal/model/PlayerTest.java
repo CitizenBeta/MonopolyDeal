@@ -7,8 +7,10 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+// Tests player-owned hand, bank and property behavior
 class PlayerTest {
 
+    // Money cards move from hand to bank
     @Test
     void bankMoneyCardShouldMoveCardFromHandToBank() {
         Player player = new Player("Alice", 1);
@@ -22,6 +24,7 @@ class PlayerTest {
         assertEquals(5, player.getCashValue());
     }
 
+    // Property cards move from hand to the matching set
     @Test
     void addPropertyShouldMoveCardFromHandToCorrectPropertySet() {
         Player player = new Player("Alice", 1);
@@ -35,6 +38,7 @@ class PlayerTest {
         assertEquals(PropertyColor.DARK_BLUE, player.getPropertyColor(property));
     }
 
+    // Wild cards store the color chosen by the player
     @Test
     void addWildPropertyShouldAssignChosenColor() {
         Player player = new Player("Alice", 1);
@@ -51,6 +55,26 @@ class PlayerTest {
         assertTrue(player.getPropertySets().get(PropertyColor.BROWN).getCards().contains(wild));
     }
 
+    // A placed wild card can move between its allowed sets
+    @Test
+    void ownerCanMovePlacedWildCardBetweenAllowedSets() {
+        Player player = new Player("Alice", 1);
+        WildPropertyCard wild = new WildPropertyCard(
+                "Light Blue/Brown Wild",
+                List.of(PropertyColor.LIGHT_BLUE, PropertyColor.BROWN),
+                1
+        );
+        player.addCardToHand(wild);
+        assertTrue(player.addWildProperty(wild, PropertyColor.BROWN));
+
+        player.moveExistingWild(wild, PropertyColor.LIGHT_BLUE);
+
+        assertEquals(PropertyColor.LIGHT_BLUE, wild.getCurrentColor());
+        assertTrue(player.getPropertySets().get(PropertyColor.BROWN).getCards().isEmpty());
+        assertTrue(player.getPropertySets().get(PropertyColor.LIGHT_BLUE).getCards().contains(wild));
+    }
+
+    // Three completed sets make the player win
     @Test
     void playerShouldWinAfterCompletingThreePropertySets() {
         Player player = new Player("Alice", 1);
@@ -68,6 +92,7 @@ class PlayerTest {
         assertTrue(player.hasWon());
     }
 
+    // Excess cards are discarded down to the hand limit
     @Test
     void discardExcessCardsShouldReduceHandToMaximumSize() {
         Player player = new Player("Alice", 1);
@@ -84,6 +109,7 @@ class PlayerTest {
         assertEquals(2, deck.getDiscardPileCount());
     }
 
+    // Place a property directly onto a player's table
     private void addAndPlayProperty(Player player, PropertyCard property) {
         player.addCardToHand(property);
         assertTrue(player.addProperty(property));

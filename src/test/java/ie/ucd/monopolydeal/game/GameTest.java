@@ -10,6 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class GameTest {
 
+    // Setup creates players, deals cards and starts the first turn
     @Test
     void setupShouldCreatePlayersDealCardsAndStartFirstTurn() {
         Game game = new Game();
@@ -25,6 +26,7 @@ class GameTest {
         assertEquals(1, game.getTurnCount());
     }
 
+    // Setup rejects invalid player counts
     @Test
     void setupShouldRequireTwoToFivePlayers() {
         Game game = new Game();
@@ -34,6 +36,7 @@ class GameTest {
                 () -> game.setup(List.of("A", "B", "C", "D", "E", "F")));
     }
 
+    // Money cards move from hand to bank when played
     @Test
     void playMoneyCardShouldMoveItToCurrentPlayerBank() {
         Game game = new Game();
@@ -51,6 +54,7 @@ class GameTest {
         assertEquals(5, current.getCashValue());
     }
 
+    // A turn cannot use more than three actions
     @Test
     void cannotPlayMoreThanThreeCardsInOneTurn() {
         Game game = new Game();
@@ -74,6 +78,7 @@ class GameTest {
         assertEquals(Player.MAX_ACTIONS_PER_TURN, game.getActionsUsed());
     }
 
+    // Ending a turn advances the player and resets actions
     @Test
     void endTurnShouldMoveToNextPlayerAndResetActions() {
         Game game = new Game();
@@ -94,6 +99,36 @@ class GameTest {
         assertEquals(7, game.getCurrPlayer().getCardsAtHand().size());
     }
 
+    // Empty hand draws five at the start of turn
+    @Test
+    void playerWithEmptyHandShouldDrawFiveAtStartOfTurn() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player bob = game.getPlayers().get(1);
+        clearHand(bob);
+
+        int drawPileBefore = game.getDrawPileNumber();
+
+        assertTrue(game.endTurn(new ScriptedDecisionMaker()));
+
+        assertSame(bob, game.getCurrPlayer());
+        assertEquals(5, bob.getCardsAtHand().size());
+        assertEquals(drawPileBefore - 5, game.getDrawPileNumber());
+    }
+
+    // Player may end turn without playing cards
+    @Test
+    void playerMayEndTurnWithoutPlayingCards() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+
+        assertTrue(game.endTurn(new ScriptedDecisionMaker()));
+
+        assertEquals("Bob", game.getCurrPlayer().getName());
+        assertEquals(0, game.getActionsUsed());
+    }
+
+    // Pass Go draws two cards and costs one action
     @Test
     void passGoActionShouldDrawTwoCardsAndUseOneAction() {
         Game game = new Game();
@@ -113,6 +148,7 @@ class GameTest {
         assertFalse(current.getCardsAtHand().contains(passGo));
     }
 
+    // Double Rent needs a standard rent card
     @Test
     void doubleRentShouldRequireStandardRentCard() {
         Game game = new Game();
@@ -135,6 +171,7 @@ class GameTest {
         assertTrue(current.getCardsAtHand().contains(anyRent));
     }
 
+    // Zero-value wild cards cannot be used as payment
     @Test
     void zeroValueWildCardShouldNotBePayment() {
         Game game = new Game();
@@ -154,6 +191,7 @@ class GameTest {
         assertEquals(PropertyColor.BROWN, wild.getCurrentColor());
     }
 
+    // Debt Collector transfers payment to the actor
     @Test
     void debtCollectorShouldTransferPaymentToCurrentPlayer() {
         Game game = new Game();
@@ -173,6 +211,7 @@ class GameTest {
         assertEquals(1, game.getActionsUsed());
     }
 
+    // Just Say No cancels an action against the target
     @Test
     void justSayNoShouldCancelDebtCollectorPayment() {
         Game game = new Game();
@@ -197,6 +236,7 @@ class GameTest {
         assertEquals(1, game.getActionsUsed());
     }
 
+    // Sly Deal steals one unprotected property
     @Test
     void slyDealShouldStealOnePropertyOutsideFullSet() {
         Game game = new Game();
@@ -216,6 +256,7 @@ class GameTest {
         assertEquals(1, game.getActionsUsed());
     }
 
+    // Forced Deal swaps one property from each player
     @Test
     void forcedDealShouldSwapTwoProperties() {
         Game game = new Game();
@@ -239,6 +280,7 @@ class GameTest {
         assertFalse(target.getPropertySets().get(PropertyColor.LIGHT_BLUE).getCards().contains(targetProperty));
     }
 
+    // Deal Breaker moves a complete set
     @Test
     void dealBreakerShouldMoveACompleteSet() {
         Game game = new Game();
@@ -261,6 +303,7 @@ class GameTest {
         assertTrue(target.getPropertySets().get(PropertyColor.BROWN).getCards().isEmpty());
     }
 
+    // Standard rent collects from an available opponent
     @Test
     void rentCardShouldCollectRentFromAvailableOpponent() {
         Game game = new Game();
@@ -288,6 +331,7 @@ class GameTest {
         assertEquals(1, game.getActionsUsed());
     }
 
+    // Any Rent collects from one chosen player
     @Test
     void anyRentShouldCollectRentFromOneChosenPlayer() {
         Game game = new Game();
@@ -310,6 +354,7 @@ class GameTest {
         assertFalse(current.getCardsAtHand().contains(anyRent));
     }
 
+    // House and Hotel increase rent on a complete set
     @Test
     void houseAndHotelShouldIncreaseRentOnCompletePropertySet() {
         Game game = new Game();
@@ -333,6 +378,32 @@ class GameTest {
         assertEquals(15, set.calculateRent());
     }
 
+    // End-turn discard must choose exact unique cards
+    @Test
+    void endTurnDiscardMustChooseExactUniqueCards() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        MoneyCard firstExtra = new MoneyCard("8M", 8);
+        MoneyCard secondExtra = new MoneyCard("9M", 9);
+        current.addCardToHand(firstExtra);
+        current.addCardToHand(secondExtra);
+
+        DecisionMaker invalidDiscard = new ScriptedDecisionMaker() {
+            @Override
+            public List<Card> selectDiscards(Player player, List<Card> cards, int count) {
+                return List.of(firstExtra, firstExtra);
+            }
+        };
+
+        assertFalse(game.endTurn(invalidDiscard));
+        assertSame(current, game.getCurrPlayer());
+        assertTrue(current.getCardsAtHand().contains(firstExtra));
+        assertTrue(current.getCardsAtHand().contains(secondExtra));
+        assertTrue(game.getUsedCards().isEmpty());
+    }
+
+    // End turn discards down to seven cards
     @Test
     void endTurnShouldDiscardExtraCardsBeforeNextPlayerStarts() {
         Game game = new Game();
@@ -351,6 +422,28 @@ class GameTest {
         assertEquals(CardHistory.CardAction.DISCARDED, game.getUsedCards().get(1).action());
     }
 
+    // End-turn discards go to draw pile bottom and history
+    @Test
+    void endTurnDiscardsExtrasToBottomOfDrawPileAndRecordsThem() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        MoneyCard firstExtra = new MoneyCard("8M", 8);
+        MoneyCard secondExtra = new MoneyCard("9M", 9);
+        current.addCardToHand(firstExtra);
+        current.addCardToHand(secondExtra);
+
+        int drawPileBefore = game.getDrawPileNumber();
+
+        assertTrue(game.endTurn(new ScriptedDecisionMaker()));
+
+        assertEquals(drawPileBefore, game.getDrawPileNumber());
+        assertEquals(Player.MAX_CARDS_AT_HAND, current.getCardsAtHand().size());
+        assertEquals(CardHistory.CardAction.DISCARDED, game.getUsedCards().get(0).action());
+        assertEquals(CardHistory.CardAction.DISCARDED, game.getUsedCards().get(1).action());
+    }
+
+    // Birthday collects from every available opponent
     @Test
     void birthdayShouldCollectFromMultipleAvailablePlayers() {
         Game game = new Game();
@@ -373,6 +466,7 @@ class GameTest {
         assertTrue(cara.getCardsAtBank().isEmpty());
     }
 
+    // Completing three sets ends the game
     @Test
     void completingThirdSetShouldEndGameWithWinner() {
         Game game = new Game();
@@ -393,6 +487,7 @@ class GameTest {
         assertSame(current, game.getWinner());
     }
 
+    // Another player can win from a transferred property
     @Test
     void otherPlayerCompletingThirdSetShouldEndGameWithWinner() {
         Game game = new Game();
@@ -417,6 +512,7 @@ class GameTest {
         assertSame(target, game.getWinner());
     }
 
+    // Cancelled payment rolls back the action
     @Test
     void cancelledPaymentShouldRollBackThePlayedAction() {
         Game game = new Game();
@@ -443,6 +539,7 @@ class GameTest {
         assertEquals(0, game.getActionsUsed());
     }
 
+    // Payment gives no change for overpayment
     @Test
     void overpaymentShouldTransferFullCardValueWithoutChange() {
         Game game = new Game();
@@ -461,6 +558,7 @@ class GameTest {
         assertEquals(10, current.getBankTotalValue());
     }
 
+    // Failed property payment rolls back earlier transfers
     @Test
     void failedMidPaymentPropertyTransferShouldRollBackEarlierPaymentCards() {
         Game game = new Game();
@@ -496,6 +594,7 @@ class GameTest {
         assertEquals(0, game.getActionsUsed());
     }
 
+    // Exposed collections are read-only
     @Test
     void exposedCollectionsShouldBeReadOnly() {
         Game game = new Game();
@@ -510,10 +609,12 @@ class GameTest {
         assertThrows(UnsupportedOperationException.class, () -> brownSet.getCards().add(new MoneyCard("1M", 1)));
     }
 
+    // Check whether a hand card is a Just Say No card
     private static boolean isJustSayNo(Card card) {
         return card instanceof ActionCard actionCard && actionCard.getActionType() == ActionType.JUST_SAY_NO;
     }
 
+    // Remove dealt Just Say No cards so the test controls cancellation
     private static void removeJustSayNoCards(Player player) {
         List<Card> cards = new ArrayList<>(player.getCardsAtHand());
         for (Card card : cards) {
@@ -523,6 +624,14 @@ class GameTest {
         }
     }
 
+    // Empty a dealt hand so each rule starts from a controlled state
+    private static void clearHand(Player player) {
+        for (Card card : new ArrayList<>(player.getCardsAtHand())) {
+            player.removeCardFromHand(card);
+        }
+    }
+
+    // Place a property directly onto a player's table
     private static void addPropertyToTable(Player player, PropertyCard property) {
         player.addCardToHand(property);
         assertTrue(player.addProperty(property));
