@@ -189,6 +189,10 @@ public class Game {
             return false;
         }
 
+        if (updateGameOver()) {
+            return true;
+        }
+
         Player current = getCurrPlayer();
         int discardCount = current.getCardsAtHand().size() - Player.MAX_CARDS_AT_HAND;
 
@@ -231,7 +235,12 @@ public class Game {
         actionsUsed++;
         player.removeCardFromHand(card);
         addUsedCard(player, card, CardHistory.CardAction.PLAYED);
-        gameOver = player.hasWon();
+        updateGameOver();
+    }
+
+    private boolean updateGameOver() {
+        gameOver = getWinner() != null;
+        return gameOver;
     }
 
     // Handles action cards after the player chooses whether to use them as money or as actions.

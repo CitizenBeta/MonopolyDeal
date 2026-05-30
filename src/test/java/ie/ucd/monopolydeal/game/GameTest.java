@@ -394,6 +394,30 @@ class GameTest {
     }
 
     @Test
+    void otherPlayerCompletingThirdSetShouldEndGameWithWinner() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        Player target = game.getPlayers().get(1);
+
+        addPropertyToTable(current, new PropertyCard("New York Avenue", 3, PropertyColor.ORANGE));
+        addPropertyToTable(target, new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN));
+        addPropertyToTable(target, new PropertyCard("Baltic Avenue", 1, PropertyColor.BROWN));
+        addPropertyToTable(target, new PropertyCard("Boardwalk", 4, PropertyColor.DARK_BLUE));
+        addPropertyToTable(target, new PropertyCard("Park Place", 4, PropertyColor.DARK_BLUE));
+        addPropertyToTable(target, new PropertyCard("St. James Place", 2, PropertyColor.ORANGE));
+        addPropertyToTable(target, new PropertyCard("Tennessee Avenue", 2, PropertyColor.ORANGE));
+        addPropertyToTable(target, new PropertyCard("Connecticut Avenue", 1, PropertyColor.LIGHT_BLUE));
+
+        ActionCard forcedDeal = new ActionCard("Forced Deal", 3, ActionType.FORCED_DEAL);
+        current.addCardToHand(forcedDeal);
+
+        assertTrue(game.playCard(forcedDeal, new ScriptedDecisionMaker()));
+        assertTrue(game.isOver());
+        assertSame(target, game.getWinner());
+    }
+
+    @Test
     void cancelledPaymentShouldRollBackThePlayedAction() {
         Game game = new Game();
         game.setup(List.of("Alice", "Bob"));

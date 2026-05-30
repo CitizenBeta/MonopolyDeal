@@ -4,6 +4,7 @@ import ie.ucd.monopolydeal.game.Game;
 import ie.ucd.monopolydeal.model.Card;
 import ie.ucd.monopolydeal.model.Player;
 import ie.ucd.monopolydeal.model.PropertyColor;
+import ie.ucd.monopolydeal.model.PropertySet;
 import ie.ucd.monopolydeal.model.WildPropertyCard;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -256,28 +257,50 @@ public class GameController {
         }
     }
 
-    // Find player with most completed sets, then highest bank total
+    // Find leader by completed sets, partial set progress, then bank value
     private String leadingPlayer() {
-        Player highestPlayer = null;
-        int highestSets = -1;
-        int highestBank = -1;
+        Player leader = null;
+        int bestSets = -1;
+        int bestProgress = -1;
+        int bestBank = -1;
+        boolean tied = false;
 
         for (Player player : game.getPlayers()) {
             int completedSets = player.countCompletedSets();
+            int progress = unfinishedProgress(player);
             int bankTotal = player.getBankTotalValue();
 
-            if (completedSets > highestSets || (completedSets == highestSets && bankTotal > highestBank)) {
-                highestPlayer = player;
-                highestSets = completedSets;
-                highestBank = bankTotal;
+            if (leader == null
+                    || completedSets > bestSets
+                    || (completedSets == bestSets && progress > bestProgress)
+                    || (completedSets == bestSets && progress == bestProgress && bankTotal > bestBank)) {
+                leader = player;
+                bestSets = completedSets;
+                bestProgress = progress;
+                bestBank = bankTotal;
+                tied = false;
+            } else if (completedSets == bestSets && progress == bestProgress && bankTotal == bestBank) {
+                tied = true;
             }
         }
 
-        if (highestPlayer == null) {
+        if (leader == null || tied) {
             return "-";
         }
 
-        return highestPlayer.getName();
+        return leader.getName();
+    }
+
+    private int unfinishedProgress(Player player) {
+        int progress = 0;
+
+        for (PropertySet set : player.getPropertySets().values()) {
+            if (!set.isFullSet() && set.getPropertyCount() > 0) {
+                progress += set.getPropertyCount() * 12 / set.getColor().getSize();
+            }
+        }
+
+        return progress;
     }
 
     // Update player's hand from backend
