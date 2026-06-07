@@ -1,6 +1,5 @@
 package ie.ucd.monopolydeal.model;
 
-import ie.ucd.monopolydeal.game.Deck;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -9,20 +8,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 // Tests player-owned hand, bank and property behavior
 class PlayerTest {
-
-    // Money cards move from hand to bank
-    @Test
-    void bankMoneyCardShouldMoveCardFromHandToBank() {
-        Player player = new Player("Alice", 1);
-        MoneyCard money = new MoneyCard("5M", 5);
-
-        player.addCardToHand(money);
-
-        assertTrue(player.bankMoneyCard(money));
-        assertFalse(player.getCardsAtHand().contains(money));
-        assertTrue(player.getCardsAtBank().contains(money));
-        assertEquals(5, player.getCashValue());
-    }
 
     // Property cards move from hand to the matching set
     @Test
@@ -86,19 +71,34 @@ class PlayerTest {
         assertTrue(player.getPropertySets().get(PropertyColor.DARK_BLUE).getCards().isEmpty());
     }
 
-    // Full-set transfer is blocked when the receiver has no room
+    // Extra same-color properties can be stacked onto an already-full set
     @Test
-    void transferFullSetShouldRejectOverfilledReceiver() {
+    void addPropertyShouldAllowStackingBeyondFullSet() {
+        Player player = new Player("Alice", 1);
+        addAndPlayProperty(player, new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN));
+        addAndPlayProperty(player, new PropertyCard("Baltic Avenue", 1, PropertyColor.BROWN));
+
+        PropertyCard extra = new PropertyCard("Extra Brown", 1, PropertyColor.BROWN);
+        player.addCardToHand(extra);
+
+        assertTrue(player.addProperty(extra));
+        assertEquals(3, player.getPropertySets().get(PropertyColor.BROWN).getCards().size());
+        assertEquals(1, player.countCompletedSets());
+    }
+
+    // A stolen full set merges into a receiver that already owns that color (overflow allowed)
+    @Test
+    void transferFullSetShouldMergeIntoReceiverThatOwnsThatColor() {
         Player source = new Player("Alice", 1);
         Player receiver = new Player("Bob", 2);
         addAndPlayProperty(source, new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN));
         addAndPlayProperty(source, new PropertyCard("Baltic Avenue", 1, PropertyColor.BROWN));
         addAndPlayProperty(receiver, new PropertyCard("Extra Brown", 1, PropertyColor.BROWN));
 
-        assertFalse(source.transferFullSetTo(receiver, PropertyColor.BROWN));
+        assertTrue(source.transferFullSetTo(receiver, PropertyColor.BROWN));
 
-        assertEquals(2, source.getPropertySets().get(PropertyColor.BROWN).getCards().size());
-        assertEquals(1, receiver.getPropertySets().get(PropertyColor.BROWN).getCards().size());
+        assertTrue(source.getPropertySets().get(PropertyColor.BROWN).getCards().isEmpty());
+        assertEquals(3, receiver.getPropertySets().get(PropertyColor.BROWN).getCards().size());
     }
 
     // Three completed sets make the player win
@@ -117,23 +117,6 @@ class PlayerTest {
 
         assertEquals(3, player.countCompletedSets());
         assertTrue(player.hasWon());
-    }
-
-    // Excess cards are discarded down to the hand limit
-    @Test
-    void discardExcessCardsShouldReduceHandToMaximumSize() {
-        Player player = new Player("Alice", 1);
-        Deck deck = new Deck();
-
-        for (int i = 1; i <= 9; i++) {
-            player.addCardToHand(new MoneyCard(i + "M", i));
-        }
-
-        List<Card> discarded = player.discardExcessCards(deck);
-
-        assertEquals(Player.MAX_CARDS_AT_HAND, player.getCardsAtHand().size());
-        assertEquals(2, discarded.size());
-        assertEquals(2, deck.getDiscardPileCount());
     }
 
     // Place a property directly onto a player's table

@@ -74,11 +74,8 @@ final class PlayerProperties {
             return false;
         }
 
-        // Prevents merging into a recipient set that would exceed the Monopoly color size
-        if (targetSet.getCards().size() + sourceSet.getCards().size() > color.getSize()) {
-            return false;
-        }
-
+        // No per-color limit, so a stolen full set merges into the recipient even if they
+        // already own that color.
         sourceSet.transferUpgradesTo(targetSet);
 
         // Copies first because the source set is mutated while the transfer loop runs

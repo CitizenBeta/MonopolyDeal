@@ -87,6 +87,27 @@ class DeckTest {
         assertEquals(1, deck.getDiscardPileNumber());
     }
 
+    // An empty draw pile is rebuilt from the entire discard pile, with nothing held back
+    @Test
+    void drawShouldReshuffleEntireDiscardPileWhenDrawPileEmpties() {
+        Deck deck = new Deck(new Random(1));
+        List<Card> all = drawAll(deck);
+
+        assertEquals(106, all.size());
+        assertEquals(0, deck.getDrawPileNumber());
+
+        for (Card card : all) {
+            deck.discard(card);
+        }
+        assertEquals(106, deck.getDiscardPileNumber());
+
+        Card refilled = deck.draw();
+
+        assertNotNull(refilled);
+        assertEquals(105, deck.getDrawPileNumber());
+        assertEquals(0, deck.getDiscardPileNumber());
+    }
+
     // Reset restores a complete draw pile and clears discards
     @Test
     void resetShouldRestoreFullDeckAndClearDiscardPile() {

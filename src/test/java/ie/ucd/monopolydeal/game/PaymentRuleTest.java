@@ -116,6 +116,57 @@ class PaymentRuleTest {
         assertTrue(bob.getPropertySets().get(PropertyColor.LIGHT_BLUE).getCards().isEmpty());
     }
 
+    // A House used as payment is banked as money by the receiver
+    @Test
+    void paymentWithHouseShouldBankItForReceiver() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player receiver = game.getCurrPlayer();
+        Player payer = game.getPlayers().get(1);
+        Payment payment = new Payment(game);
+        ActionCard house = buildFullSetWithHouse(payer);
+
+        assertTrue(payment.transferPropertyCard(payer, receiver, house, new TestDecisionMaker()));
+
+        assertTrue(receiver.getCardsAtBank().contains(house));
+        assertEquals(3, receiver.getCashValue());
+        assertNull(payer.getPropertySets().get(PropertyColor.DARK_BLUE).getHouseCard());
+    }
+
+    // A Hotel used as payment is banked, but a House cannot be paid while a Hotel still sits on the set
+    @Test
+    void paymentWithHotelShouldBankItAndProtectHouseUnderHotel() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player receiver = game.getCurrPlayer();
+        Player payer = game.getPlayers().get(1);
+        Payment payment = new Payment(game);
+        ActionCard house = buildFullSetWithHouse(payer);
+        ActionCard hotel = new ActionCard("Hotel", 4, ActionType.HOTEL);
+        payer.addCardToHand(hotel);
+        assertTrue(payer.addHotel(PropertyColor.DARK_BLUE, hotel));
+
+        // Paying the House alone would orphan the Hotel, so it is refused.
+        assertFalse(payment.transferPropertyCard(payer, receiver, house, new TestDecisionMaker()));
+        assertSame(house, payer.getPropertySets().get(PropertyColor.DARK_BLUE).getHouseCard());
+
+        // Paying the Hotel banks it for the receiver and leaves the House in place.
+        assertTrue(payment.transferPropertyCard(payer, receiver, hotel, new TestDecisionMaker()));
+        assertTrue(receiver.getCardsAtBank().contains(hotel));
+        assertEquals(4, receiver.getCashValue());
+        assertSame(house, payer.getPropertySets().get(PropertyColor.DARK_BLUE).getHouseCard());
+    }
+
+    // Give a player a full Dark Blue set topped with a House
+    private static ActionCard buildFullSetWithHouse(Player player) {
+        addPropertyToTable(player, new PropertyCard("Park Place", 4, PropertyColor.DARK_BLUE));
+        addPropertyToTable(player, new PropertyCard("Boardwalk", 4, PropertyColor.DARK_BLUE));
+        ActionCard house = new ActionCard("House", 3, ActionType.HOUSE);
+        player.addCardToHand(house);
+        assertTrue(player.addHouse(PropertyColor.DARK_BLUE, house));
+        return house;
+    }
+
     // Empty a dealt hand so hand cards cannot hide payment behavior
     private static void clearHand(Player player) {
         for (Card card : new ArrayList<>(player.getCardsAtHand())) {

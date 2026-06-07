@@ -36,7 +36,8 @@ class GameSnapshotTest {
                 game.isStarted(),
                 game.isOver(),
                 game.getUsedCards(),
-                game.getPlayers()
+                game.getPlayers(),
+                game.getDeck()
         );
 
         MoneyCard extraBank = new MoneyCard("5M", 5);

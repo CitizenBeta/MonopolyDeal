@@ -144,9 +144,11 @@ public final class Payment {
         return false;
     }
 
-    // Transfers a House or Hotel that is already attached to a property set
+    // A House or Hotel used as payment is banked as money by the receiver.
     private boolean transferUpgradeCard(Player source, Player receiver, ActionCard card, PropertyColor color) {
-        if (!targets.canReceiveUpgradeCard(source, receiver, card, color)) {
+        PropertySet sourceSet = source.getPropertySets().get(color);
+        // Paying away a House while a Hotel still sits on the set would orphan the Hotel.
+        if (sourceSet != null && card.getActionType() == ActionType.HOUSE && sourceSet.getHotelCard() != null) {
             return false;
         }
 
@@ -154,21 +156,8 @@ public final class Payment {
             return false;
         }
 
-        PropertySet sourceSet = source.getPropertySets().get(color);
-        PropertySet receiverSet = receiver.getPropertySets().get(color);
-        if (card.getActionType() == ActionType.HOUSE) {
-            if (receiverSet.addHouse(card)) {
-                return true;
-            }
-            sourceSet.addHouse(card);
-            return false;
-        }
-
-        if (receiverSet.addHotel(card)) {
-            return true;
-        }
-        sourceSet.addHotel(card);
-        return false;
+        receiver.addCardToBank(card);
+        return true;
     }
 
     // Swaps two properties as one atomic operation

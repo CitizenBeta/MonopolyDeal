@@ -358,7 +358,7 @@ public class GameController {
         handCardsBox.setAlignment(Pos.CENTER);
         // Recreate every hand card because selection changes card styling
         for (Card handCard : handCards) {
-            handCardsBox.getChildren().add(GameUI.newHandCard(handCard, selectedCard == handCard, this::toggleSelectedCard));
+            handCardsBox.getChildren().add(GameUI.newHandCard(handCard, selectedCard == handCard, this::toggleSelectedCard, this::onCardDoubleClicked));
         }
     }
 
@@ -370,6 +370,15 @@ public class GameController {
             selectedCard = card;
         }
         refresh();
+    }
+
+    // Double-clicking a hand card plays it directly, reusing the Play Selected flow.
+    private void onCardDoubleClicked(Card card) {
+        if (!game.isStarted() || game.isOver() || card == null) {
+            return;
+        }
+        selectedCard = card;
+        onPlaySelected();
     }
 
     // Rebuild player boards from game state

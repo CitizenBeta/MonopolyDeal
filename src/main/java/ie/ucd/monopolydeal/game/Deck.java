@@ -61,44 +61,46 @@ public class Deck {
 
     public void putAtDrawPileBottom(Card card) {
         if (card != null) {
-            // End-turn discards are recycled to the bottom instead of the discard pile
+            // End-of-turn excess cards are recycled to the bottom of the draw pile.
             drawPile.add(0, card);
         }
-    }
-
-    public int getDrawPileCount() {
-        return drawPile.size();
     }
 
     public int getDrawPileNumber() {
         return drawPile.size();
     }
 
-    public int getDiscardPileCount() {
-        return discardPile.size();
-    }
-
     public int getDiscardPileNumber() {
         return discardPile.size();
-    }
-
-    public int getTotalCardCount() {
-        return totalCardNumber;
     }
 
     public int getTotalCardNumber() {
         return totalCardNumber;
     }
 
+    // Snapshot support so a canceled multistep action can also roll back deck changes.
+    List<Card> copyDrawPile() {
+        return new ArrayList<>(drawPile);
+    }
+
+    List<Card> copyDiscardPile() {
+        return new ArrayList<>(discardPile);
+    }
+
+    void restorePiles(List<Card> drawCards, List<Card> discardCards) {
+        drawPile.clear();
+        drawPile.addAll(drawCards);
+        discardPile.clear();
+        discardPile.addAll(discardCards);
+    }
+
     private void refillFromDiscard() {
         if (discardPile.isEmpty()) {
             return;
         }
-        // Keep the latest discard visible, then shuffle the older discards back into the draw pile
-        Card lastDiscard = discardPile.remove(discardPile.size() - 1);
+        // Out of cards: shuffle the whole discard pile to form the new draw pile.
         drawPile.addAll(discardPile);
         discardPile.clear();
-        discardPile.add(lastDiscard);
         shuffle();
     }
 

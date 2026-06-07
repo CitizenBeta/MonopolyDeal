@@ -66,9 +66,9 @@ public final class ActionTargets {
             PropertySet sourceSet = source.getPropertySets().get(color);
             PropertySet receiverSet = receiver.getPropertySets().get(color);
 
-            if (sourceSet != null
-                    && receiverSet != null
-                    && receiverSet.getCards().size() + sourceSet.getCards().size() <= color.getSize()) {
+            // No per-color limit, so a full set can always be stolen onto the receiver,
+            // even when they already own properties of that color.
+            if (sourceSet != null && receiverSet != null) {
                 colors.add(color);
             }
         }

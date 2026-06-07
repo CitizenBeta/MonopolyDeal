@@ -152,6 +152,7 @@ public final class ActionResolver {
 
         player.removeCardFromHand(rentCard);
         game.addUsedCard(player, rentCard, CardHistory.CardAction.PLAYED);
+        game.discardUsedCard(rentCard);
         game.addActionUsed();
         return true;
     }

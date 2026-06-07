@@ -84,6 +84,10 @@ public class Game {
         return deck.getDrawPileNumber();
     }
 
+    public int getDiscardPileNumber() {
+        return deck.getDiscardPileNumber();
+    }
+
     public int getTotalCardNumber() {
         return deck.getTotalCardNumber();
     }
@@ -111,7 +115,8 @@ public class Game {
                 started,
                 gameOver,
                 cardHistory.getUsedCards(),
-                players
+                players,
+                deck
         );
 
         // A card action can ask the user for several decisions. Roll back if any step is cancelled.
@@ -247,6 +252,11 @@ public class Game {
         actionsUsed++;
         player.removeCardFromHand(card);
         addUsedCard(player, card, CardHistory.CardAction.PLAYED);
+        // An action card resolved as an action leaves play for the discard pile.
+        // Banked action cards stay in the player's bank, so they are skipped here.
+        if (card instanceof ActionCard && !player.getCardsAtBank().contains(card)) {
+            deck.discard(card);
+        }
         updateGameOver();
     }
 
@@ -295,6 +305,8 @@ public class Game {
 
         target.removeCardFromHand(justSayNo);
         addUsedCard(target, justSayNo, CardHistory.CardAction.PLAYED);
+        // A played Just Say No leaves play for the discard pile; rollback restores it via the snapshot.
+        deck.discard(justSayNo);
 
         // Just Say No can be countered by another Just Say No, so keep checking both sides.
         return !isBlockedByJustSayNo(actor, target, dm);
@@ -319,6 +331,7 @@ public class Game {
 
         for (Card discard : discards) {
             player.removeCardFromHand(discard);
+            // End-of-turn excess cards go to the bottom of the draw pile, not the discard pile.
             deck.putAtDrawPileBottom(discard);
             addUsedCard(player, discard, CardHistory.CardAction.DISCARDED);
         }
@@ -378,6 +391,16 @@ public class Game {
 
     void addActionUsed() {
         actionsUsed++;
+    }
+
+    // Sends a card used as an action to the discard pile so it can be reshuffled later.
+    void discardUsedCard(Card card) {
+        deck.discard(card);
+    }
+
+    // Exposes the deck so a GameSnapshot can capture and restore its piles.
+    Deck getDeck() {
+        return deck;
     }
 
     public void restoreSnapshot(int currentPlayerIndex, int actionsUsed, int turnCount,

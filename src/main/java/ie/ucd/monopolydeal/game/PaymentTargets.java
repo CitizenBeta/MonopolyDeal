@@ -54,24 +54,6 @@ public final class PaymentTargets {
         return !receivableColorsAfterRemoving(receiver, incoming, outgoing).isEmpty();
     }
 
-    boolean canReceiveUpgradeCard(Player source, Player receiver, ActionCard card, PropertyColor color) {
-        PropertySet receiverSet = receiver.getPropertySets().get(color);
-        if (receiverSet == null) {
-            return false;
-        }
-
-        if (card.getActionType() == ActionType.HOUSE) {
-            PropertySet sourceSet = source.getPropertySets().get(color);
-            return (sourceSet == null || sourceSet.getHotelCard() == null) && receiverSet.canAddHouse();
-        }
-
-        if (card.getActionType() == ActionType.HOTEL) {
-            return receiverSet.canAddHotel();
-        }
-
-        return false;
-    }
-
     List<PropertyColor> receivableColors(Player receiver, Card card) {
         List<PropertyColor> colors = new ArrayList<>();
 
@@ -90,25 +72,9 @@ public final class PaymentTargets {
 
     // Like receivableColors(), but pretends the outgoing card has already left
     List<PropertyColor> receivableColorsAfterRemoving(Player receiver, Card incoming, Card outgoing) {
-        List<PropertyColor> colors = new ArrayList<>();
-
-        for (PropertyColor color : possiblePropertyColors(incoming)) {
-            PropertySet set = receiver.getPropertySets().get(color);
-            if (set == null) {
-                continue;
-            }
-
-            int count = set.getCards().size();
-            if (receiver.getPropertyColor(outgoing) == color) {
-                count--;
-            }
-
-            if (count < color.getSize()) {
-                colors.add(color);
-            }
-        }
-
-        return colors;
+        // With no per-color limit, removing the outgoing card never changes whether the
+        // incoming card can be received, so this matches the normal receivable-color check.
+        return receivableColors(receiver, incoming);
     }
 
     List<Card> stealableCards(Player source, Player receiver) {
@@ -130,30 +96,23 @@ public final class PaymentTargets {
             return false;
         }
 
+        // House/Hotel are paid into the receiver's bank as money, so the receiver can always take them.
+        // A House cannot be paid alone while a Hotel still sits on the same set (it would orphan the Hotel).
         if (card instanceof ActionCard actionCard) {
-            return canReceiveUpgradeCard(source, receiver, actionCard, color);
+            if (actionCard.getActionType() == ActionType.HOUSE) {
+                PropertySet sourceSet = source.getPropertySets().get(color);
+                return sourceSet == null || sourceSet.getHotelCard() == null;
+            }
+            return actionCard.getActionType() == ActionType.HOTEL;
         }
 
         return !receivableColors(receiver, card).isEmpty();
     }
 
-    private List<PropertyColor> possiblePropertyColors(Card card) {
-        List<PropertyColor> colors = new ArrayList<>();
-
-        if (card instanceof PropertyCard propertyCard) {
-            colors.add(propertyCard.getColor());
-        }
-
-        if (card instanceof WildPropertyCard wildCard) {
-            colors.addAll(wildCard.getPossibleColors());
-        }
-
-        return colors;
-    }
-
     private void addReceivableColor(Player receiver, List<PropertyColor> colors, PropertyColor color) {
+        // No per-color limit, so any existing set for a valid color can receive the card.
         PropertySet set = receiver.getPropertySets().get(color);
-        if (set != null && set.canAddProperty()) {
+        if (set != null) {
             colors.add(color);
         }
     }

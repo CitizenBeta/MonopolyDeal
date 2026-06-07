@@ -101,7 +101,8 @@ public class PropertySet {
     }
 
     public boolean canAddProperty() {
-        return cards.size() < color.getSize();
+        // No per-color limit: a player may stack extra properties beyond a full set.
+        return true;
     }
 
     public boolean addHouse(ActionCard card) {

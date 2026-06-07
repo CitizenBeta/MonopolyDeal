@@ -82,15 +82,27 @@ class PropertySetTest {
         assertFalse(utility.addHotel(hotel));
     }
 
-    // A set cannot exceed its official color size
+    // A set may hold extra properties beyond a full set
     @Test
-    void cannotAddMorePropertiesThanColorSize() {
+    void canStackPropertiesBeyondColorSize() {
         PropertySet set = new PropertySet(PropertyColor.BROWN);
 
         assertTrue(set.addProperty(new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN)));
         assertTrue(set.addProperty(new PropertyCard("Baltic Avenue", 1, PropertyColor.BROWN)));
-        assertFalse(set.addProperty(new PropertyCard("Extra Brown", 1, PropertyColor.BROWN)));
-        assertEquals(2, set.getPropertyCount());
+        assertTrue(set.addProperty(new PropertyCard("Extra Brown", 1, PropertyColor.BROWN)));
+        assertEquals(3, set.getPropertyCount());
+        assertTrue(set.isFullSet());
+        // Rent stays capped at the official maximum for the color.
+        assertEquals(2, set.calculateRent());
+    }
+
+    // A set still rejects a property of the wrong color
+    @Test
+    void cannotAddPropertyOfWrongColor() {
+        PropertySet set = new PropertySet(PropertyColor.BROWN);
+
+        assertFalse(set.addProperty(new PropertyCard("Oriental Avenue", 1, PropertyColor.LIGHT_BLUE)));
+        assertEquals(0, set.getPropertyCount());
     }
 
     // Removing a house also removes the hotel that depends on it

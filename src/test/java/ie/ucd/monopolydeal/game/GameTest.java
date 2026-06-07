@@ -155,6 +155,9 @@ class GameTest {
         game.setup(List.of("Alice", "Bob"));
         Player current = game.getCurrPlayer();
         Player target = game.getPlayers().get(1);
+        // Clear the dealt hand so only the cards added below decide the outcome;
+        // otherwise a randomly dealt standard rent card could satisfy Double Rent.
+        clearHand(current);
 
         PropertyCard property = new PropertyCard("Mediterranean Avenue", 1, PropertyColor.BROWN);
         current.addCardToHand(property);
@@ -422,7 +425,7 @@ class GameTest {
         assertEquals(CardHistory.CardAction.DISCARDED, game.getUsedCards().get(1).action());
     }
 
-    // End-turn discards go to draw pile bottom and history
+    // End-turn discards go to the bottom of the draw pile and history
     @Test
     void endTurnDiscardsExtrasToBottomOfDrawPileAndRecordsThem() {
         Game game = new Game();
@@ -437,7 +440,9 @@ class GameTest {
 
         assertTrue(game.endTurn(new TestDecisionMaker()));
 
+        // The two extras return to the draw pile bottom and the next player draws two, so the size is unchanged.
         assertEquals(drawPileBefore, game.getDrawPileNumber());
+        assertEquals(0, game.getDiscardPileNumber());
         assertEquals(Player.MAX_CARDS_AT_HAND, current.getCardsAtHand().size());
         assertEquals(CardHistory.CardAction.DISCARDED, game.getUsedCards().get(0).action());
         assertEquals(CardHistory.CardAction.DISCARDED, game.getUsedCards().get(1).action());
@@ -665,5 +670,36 @@ class GameTest {
     private static void addPropertyToTable(Player player, PropertyCard property) {
         player.addCardToHand(property);
         assertTrue(player.addProperty(property));
+    }
+
+    // An action card resolved as an action moves to the discard pile
+    @Test
+    void playedActionCardGoesToDiscardPile() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        clearHand(current);
+        ActionCard passGo = new ActionCard("Pass Go", 1, ActionType.PASS_GO);
+        current.addCardToHand(passGo);
+
+        assertTrue(game.playCard(passGo, new TestDecisionMaker(UseMode.PLAY, false)));
+
+        assertEquals(1, game.getDiscardPileNumber());
+    }
+
+    // A banked action card stays in the bank and never reaches the discard pile
+    @Test
+    void bankedActionCardIsNotDiscarded() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        clearHand(current);
+        ActionCard passGo = new ActionCard("Pass Go", 1, ActionType.PASS_GO);
+        current.addCardToHand(passGo);
+
+        assertTrue(game.playCard(passGo, new TestDecisionMaker(UseMode.BANK, false)));
+
+        assertEquals(0, game.getDiscardPileNumber());
+        assertTrue(current.getCardsAtBank().contains(passGo));
     }
 }

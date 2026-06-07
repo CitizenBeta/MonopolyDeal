@@ -1,7 +1,5 @@
 package ie.ucd.monopolydeal.model;
 
-import ie.ucd.monopolydeal.game.Deck;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
@@ -66,38 +64,6 @@ public class Player {
         if (bankCards != null) {
             bankCash.addAll(bankCards);
         }
-    }
-
-    public boolean bankMoneyCard(MoneyCard card) {
-        // Banking is only valid for a money card currently held by this player.
-        if (hand.contains(card)) {
-            hand.remove(card);
-            bankCash.add(card);
-            return true;
-        }
-        return false;
-    }
-
-    public void discardFromHand(Card card, Deck deck) {
-        // The deck discard pile is updated only after ownership is removed from the player.
-        if (hand.remove(card)) {
-            deck.discard(card);
-        }
-    }
-
-    public boolean isHandFull() {
-        return hand.size() >= MAX_CARDS_AT_HAND;
-    }
-
-    public List<Card> discardExcessCards(Deck deck) {
-        List<Card> discarded = new ArrayList<>();
-        // Trims from the end of the hand, preserving the earlier card order.
-        while (hand.size() > MAX_CARDS_AT_HAND) {
-            Card toDiscard = hand.remove(hand.size() - 1);
-            deck.discard(toDiscard);
-            discarded.add(toDiscard);
-        }
-        return discarded;
     }
 
     public boolean addProperty(PropertyCard card) {

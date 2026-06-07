@@ -5,6 +5,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -19,7 +20,7 @@ public final class HandCardUI {
     private HandCardUI() {
     }
 
-    static VBox newHandCard(Card card, boolean selected, Consumer<Card> onCardClicked) {
+    static VBox newHandCard(Card card, boolean selected, Consumer<Card> onCardClicked, Consumer<Card> onCardDoubleClicked) {
         // Setup card name
         Label name = new Label(CardTextUI.cardTitle(card));
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
@@ -83,9 +84,13 @@ public final class HandCardUI {
             box.setBorder(GameUI.roundCorner(CardColorUI.cardColor(card)));
         }
 
-        // If clicked again, remove focus
+        // Single click toggles selection; double click plays the card directly.
         box.setOnMouseClicked(e -> {
-            onCardClicked.accept(card);
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                onCardDoubleClicked.accept(card);
+            } else {
+                onCardClicked.accept(card);
+            }
             e.consume();
         });
 

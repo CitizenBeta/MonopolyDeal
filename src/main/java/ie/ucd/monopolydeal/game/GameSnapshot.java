@@ -17,9 +17,13 @@ public final class GameSnapshot {
     private final boolean gameOver;
     private final List<CardHistory.UsedCard> usedCards;
     private final List<PlayerSnapshot> players;
+    // Deck piles are mutated by draws and discards, so they must roll back too.
+    private final Deck deck;
+    private final List<Card> drawPile;
+    private final List<Card> discardPile;
 
     public GameSnapshot(int currentPlayerIndex, int actionsUsed, int turnCount, boolean started,
-                        boolean gameOver, List<CardHistory.UsedCard> usedCards, List<Player> players) {
+                        boolean gameOver, List<CardHistory.UsedCard> usedCards, List<Player> players, Deck deck) {
         this.currentPlayerIndex = currentPlayerIndex;
         this.actionsUsed = actionsUsed;
         this.turnCount = turnCount;
@@ -27,6 +31,9 @@ public final class GameSnapshot {
         this.gameOver = gameOver;
         this.usedCards = new ArrayList<>(usedCards);
         this.players = new ArrayList<>();
+        this.deck = deck;
+        this.drawPile = deck.copyDrawPile();
+        this.discardPile = deck.copyDiscardPile();
 
         for (Player player : players) {
             this.players.add(new PlayerSnapshot(player));
@@ -35,6 +42,7 @@ public final class GameSnapshot {
 
     public void restore(Game game) {
         game.restoreSnapshot(currentPlayerIndex, actionsUsed, turnCount, started, gameOver, usedCards);
+        deck.restorePiles(drawPile, discardPile);
 
         for (PlayerSnapshot snapshot : players) {
             snapshot.restore();

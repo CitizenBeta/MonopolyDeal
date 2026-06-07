@@ -25,8 +25,8 @@ public final class GameUI {
         return CardUI.newUsedCardBox(usedCard);
     }
 
-    public static VBox newHandCard(Card card, boolean selected, Consumer<Card> onCardClicked) {
-        return CardUI.newHandCard(card, selected, onCardClicked);
+    public static VBox newHandCard(Card card, boolean selected, Consumer<Card> onCardClicked, Consumer<Card> onCardDoubleClicked) {
+        return CardUI.newHandCard(card, selected, onCardClicked, onCardDoubleClicked);
     }
 
     public static String cardDetail(Card card) {

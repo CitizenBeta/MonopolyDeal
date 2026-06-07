@@ -68,8 +68,8 @@ public final class CardUI {
     }
 
     // Add a card row in the player's hand table
-    public static VBox newHandCard(Card card, boolean selected, Consumer<Card> onCardClicked) {
-        return HandCardUI.newHandCard(card, selected, onCardClicked);
+    public static VBox newHandCard(Card card, boolean selected, Consumer<Card> onCardClicked, Consumer<Card> onCardDoubleClicked) {
+        return HandCardUI.newHandCard(card, selected, onCardClicked, onCardDoubleClicked);
     }
 
     // Short text for card faces and used-card history
