@@ -1,6 +1,7 @@
 package ie.ucd.monopolydeal.ui;
 
 import ie.ucd.monopolydeal.model.*;
+import javafx.scene.Cursor;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -20,7 +21,7 @@ public final class HandCardUI {
     private HandCardUI() {
     }
 
-    static VBox newHandCard(Card card, boolean selected, Consumer<Card> onCardClicked, Consumer<Card> onCardDoubleClicked) {
+    static VBox newHandCard(Card card, boolean selected, Consumer<Card> onCardClicked) {
         // Setup card name
         Label name = new Label(CardTextUI.cardTitle(card));
         name.setFont(Font.font("Segoe UI", FontWeight.BOLD, 13));
@@ -76,19 +77,32 @@ public final class HandCardUI {
         box.setMaxSize(120, 162);
 
         // Set focus
+        Background defaultBackground = GameUI.solidBackground(Color.WHITE);
+        Border defaultBorder = GameUI.roundCorner(CardColorUI.cardColor(card));
         if (selected) {
             box.setBackground(GameUI.solidBackground(Color.rgb(239, 246, 255)));
             box.setBorder(GameUI.roundCorner(Color.rgb(37, 99, 235)));
         } else {
-            box.setBackground(GameUI.solidBackground(Color.WHITE));
-            box.setBorder(GameUI.roundCorner(CardColorUI.cardColor(card)));
+            box.setBackground(defaultBackground);
+            box.setBorder(defaultBorder);
         }
 
-        // Single click toggles selection; double click plays the card directly.
+        // Hovering an unselected card previews a lighter pre-selected style.
+        box.setCursor(Cursor.HAND);
+        if (!selected) {
+            box.setOnMouseEntered(e -> {
+                box.setBackground(GameUI.solidBackground(Color.rgb(248, 250, 252)));
+                box.setBorder(GameUI.roundCorner(Color.rgb(147, 197, 253)));
+            });
+            box.setOnMouseExited(e -> {
+                box.setBackground(defaultBackground);
+                box.setBorder(defaultBorder);
+            });
+        }
+
+        // The controller decides single vs double click using its own timing.
         box.setOnMouseClicked(e -> {
-            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
-                onCardDoubleClicked.accept(card);
-            } else {
+            if (e.getButton() == MouseButton.PRIMARY) {
                 onCardClicked.accept(card);
             }
             e.consume();

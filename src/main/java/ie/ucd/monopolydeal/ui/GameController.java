@@ -26,6 +26,11 @@ public class GameController {
     // Track highlighted hand card
     private Card selectedCard;
 
+    // Custom double-click window (ms); shorter than the OS default so a double click must be quick
+    private static final long DOUBLE_CLICK_INTERVAL_MS = 250;
+    private Card lastClickedCard;
+    private long lastClickTime;
+
     // Top status card
     @FXML private Label statusTitle;
     @FXML private Label statusText;
@@ -358,8 +363,22 @@ public class GameController {
         handCardsBox.setAlignment(Pos.CENTER);
         // Recreate every hand card because selection changes card styling
         for (Card handCard : handCards) {
-            handCardsBox.getChildren().add(GameUI.newHandCard(handCard, selectedCard == handCard, this::toggleSelectedCard, this::onCardDoubleClicked));
+            handCardsBox.getChildren().add(GameUI.newHandCard(handCard, selectedCard == handCard, this::onCardClicked));
         }
+    }
+
+    // Routes hand-card clicks: a quick second click on the same card counts as a double click.
+    private void onCardClicked(Card card) {
+        long now = System.currentTimeMillis();
+        if (card == lastClickedCard && now - lastClickTime <= DOUBLE_CLICK_INTERVAL_MS) {
+            lastClickedCard = null;
+            onCardDoubleClicked(card);
+            return;
+        }
+
+        lastClickTime = now;
+        lastClickedCard = card;
+        toggleSelectedCard(card);
     }
 
     // If clicked again, remove focus

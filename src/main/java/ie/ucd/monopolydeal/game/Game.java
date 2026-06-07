@@ -253,8 +253,11 @@ public class Game {
         player.removeCardFromHand(card);
         addUsedCard(player, card, CardHistory.CardAction.PLAYED);
         // An action card resolved as an action leaves play for the discard pile.
-        // Banked action cards stay in the player's bank, so they are skipped here.
-        if (card instanceof ActionCard && !player.getCardsAtBank().contains(card)) {
+        // Banked action cards stay in the bank and built Houses/Hotels stay on the table,
+        // so cards that are still owned by the player are skipped here.
+        if (card instanceof ActionCard
+                && !player.getCardsAtBank().contains(card)
+                && player.getPropertyColor(card) == null) {
             deck.discard(card);
         }
         updateGameOver();

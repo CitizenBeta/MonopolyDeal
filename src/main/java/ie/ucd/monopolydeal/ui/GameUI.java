@@ -6,6 +6,7 @@ import ie.ucd.monopolydeal.model.Player;
 import ie.ucd.monopolydeal.model.PropertyColor;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -25,8 +26,8 @@ public final class GameUI {
         return CardUI.newUsedCardBox(usedCard);
     }
 
-    public static VBox newHandCard(Card card, boolean selected, Consumer<Card> onCardClicked, Consumer<Card> onCardDoubleClicked) {
-        return CardUI.newHandCard(card, selected, onCardClicked, onCardDoubleClicked);
+    public static VBox newHandCard(Card card, boolean selected, Consumer<Card> onCardClicked) {
+        return CardUI.newHandCard(card, selected, onCardClicked);
     }
 
     public static String cardDetail(Card card) {
@@ -116,12 +117,21 @@ public final class GameUI {
 
         // Reapply style whenever disabled state changes
         button.disabledProperty().addListener((observable, oldValue, newValue) -> applyActionButtonStyle(button, color, isFilled));
+
+        // Highlight an enabled button while hovered, then restore the base style on exit
+        button.setOnMouseEntered(e -> {
+            if (!button.isDisabled()) {
+                applyActionButtonHoverStyle(button, color, isFilled);
+            }
+        });
+        button.setOnMouseExited(e -> applyActionButtonStyle(button, color, isFilled));
         applyActionButtonStyle(button, color, isFilled);
     }
 
     private static void applyActionButtonStyle(Button button, Color color, boolean isFilled) {
         // Disabled buttons keep shape but use muted colors
         if (button.isDisabled()) {
+            button.setCursor(Cursor.DEFAULT);
             button.setTextFill(Color.rgb(100, 116, 139));
             if (isFilled) {
                 button.setBackground(solidBackground(Color.rgb(226, 232, 240)));
@@ -132,6 +142,7 @@ public final class GameUI {
             return;
         }
 
+        button.setCursor(Cursor.HAND);
         // Filled buttons use the main action color
         if (isFilled) {
             button.setTextFill(Color.WHITE);
@@ -141,6 +152,19 @@ public final class GameUI {
             // Outline buttons keep a white background
             button.setTextFill(color.darker());
             button.setBackground(solidBackground(Color.WHITE));
+            button.setBorder(roundCorner(color));
+        }
+    }
+
+    // Hovered enabled buttons deepen the fill or tint the outline to preview the click
+    private static void applyActionButtonHoverStyle(Button button, Color color, boolean isFilled) {
+        if (isFilled) {
+            button.setTextFill(Color.WHITE);
+            button.setBackground(solidBackground(color.darker()));
+            button.setBorder(roundCorner(color.darker()));
+        } else {
+            button.setTextFill(color.darker());
+            button.setBackground(solidBackground(Color.WHITE.interpolate(color, 0.12)));
             button.setBorder(roundCorner(color));
         }
     }

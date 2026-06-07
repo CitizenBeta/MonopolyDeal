@@ -702,4 +702,22 @@ class GameTest {
         assertEquals(0, game.getDiscardPileNumber());
         assertTrue(current.getCardsAtBank().contains(passGo));
     }
+
+    // A House built onto a full set stays on the table and is not also discarded
+    @Test
+    void builtHouseStaysOnTableAndIsNotDiscarded() {
+        Game game = new Game();
+        game.setup(List.of("Alice", "Bob"));
+        Player current = game.getCurrPlayer();
+        clearHand(current);
+        addPropertyToTable(current, new PropertyCard("Park Place", 4, PropertyColor.DARK_BLUE));
+        addPropertyToTable(current, new PropertyCard("Boardwalk", 4, PropertyColor.DARK_BLUE));
+        ActionCard house = new ActionCard("House", 3, ActionType.HOUSE);
+        current.addCardToHand(house);
+
+        assertTrue(game.playCard(house, new TestDecisionMaker(UseMode.PLAY, false)));
+
+        assertEquals(0, game.getDiscardPileNumber());
+        assertSame(house, current.getPropertySets().get(PropertyColor.DARK_BLUE).getHouseCard());
+    }
 }
