@@ -73,8 +73,7 @@ public class PropertySet {
     }
 
     public boolean addProperty(Card card) {
-        // Refuses extra cards once the set has reached the Monopoly color size.
-        if (!canAddProperty() || !canAcceptProperty(card)) {
+        if (!canAcceptProperty(card)) {
             return false;
         }
         if (card instanceof WildPropertyCard wildCard) {
@@ -98,11 +97,6 @@ public class PropertySet {
 
     public void removeProperty(Card card) {
         cards.remove(card);
-    }
-
-    public boolean canAddProperty() {
-        // No per-color limit: a player may stack extra properties beyond a full set.
-        return true;
     }
 
     public boolean addHouse(ActionCard card) {
@@ -180,15 +174,21 @@ public class PropertySet {
         return rent;
     }
 
-    public void transferUpgradesTo(PropertySet target) {
-        // Copies upgrades only into empty target upgrade slots.
-        if (houseCard != null && target.houseCard == null) {
+    public boolean transferUpgradesTo(PropertySet target) {
+        // Reject the transfer before changing either set when an upgrade slot is occupied
+        if ((houseCard != null && target.houseCard != null)
+                || (hotelCard != null && target.hotelCard != null)) {
+            return false;
+        }
+
+        if (houseCard != null) {
             target.houseCard = houseCard;
         }
-        if (hotelCard != null && target.hotelCard == null) {
+        if (hotelCard != null) {
             target.hotelCard = hotelCard;
         }
         clearUpgrades();
+        return true;
     }
 
     public void restore(List<Card> propertyCards, ActionCard houseCard, ActionCard hotelCard) {

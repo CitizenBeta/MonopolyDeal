@@ -29,10 +29,7 @@ public class Player {
     public String getName() { return name; }
     public int getNumber() { return number; }
     public List<Card> getHand() { return Collections.unmodifiableList(hand); }
-    // Compatibility alias for code/tests that still use the older hand naming.
     public List<Card> getCardsAtHand() { return Collections.unmodifiableList(hand); }
-    public List<Card> getBankCash() { return Collections.unmodifiableList(bankCash); }
-    // Compatibility alias for code/tests that still use the older bank naming.
     public List<Card> getCardsAtBank() { return Collections.unmodifiableList(bankCash); }
     public Map<PropertyColor, PropertySet> getPropertySets() { return Collections.unmodifiableMap(propertySets); }
 
@@ -70,8 +67,7 @@ public class Player {
         // Property cards must leave the hand before they become table assets.
         if (!hand.contains(card)) return false;
         PropertySet set = propertySets.get(card.getColor());
-        if (!set.canAddProperty()) return false;
-        if (!set.addProperty(card)) return false;
+        if (set == null || !set.addProperty(card)) return false;
         hand.remove(card);
         return true;
     }
@@ -82,7 +78,6 @@ public class Player {
         if (color == null || !card.getPossibleColors().contains(color)) return false;
         PropertySet set = propertySets.get(color);
         if (set == null) return false;
-        if (!set.canAddProperty()) return false;
         if (!set.addProperty(card)) return false;
         hand.remove(card);
         return true;
@@ -100,7 +95,7 @@ public class Player {
         }
 
         PropertySet targetSet = propertySets.get(newColor);
-        if (targetSet == null || !targetSet.canAddProperty()) {
+        if (targetSet == null) {
             return false;
         }
 

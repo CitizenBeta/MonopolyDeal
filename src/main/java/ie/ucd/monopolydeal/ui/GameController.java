@@ -109,13 +109,15 @@ public class GameController {
     @FXML
     private void onNewGame() {
         List<String> names = dialogs.askPlayerNames();
-        // Need at least two players
-        if (names == null || names.size() < 2) {
+        // Keep the controller guard consistent with the game rules
+        if (names == null
+                || names.size() < Game.MIN_PLAYERS
+                || names.size() > Game.MAX_PLAYERS) {
             return;
         }
 
-        statusText.setText("Game started.");
         game.setup(names);
+        statusText.setText("Game started.");
         refresh();
     }
 

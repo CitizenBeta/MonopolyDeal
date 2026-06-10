@@ -11,7 +11,7 @@ final class PlayerProperties {
 
     static boolean receivePropertyCard(Map<PropertyColor, PropertySet> propertySets, Card card, PropertyColor color) {
         PropertySet set = propertySets.get(color);
-        if (set == null || !set.canAddProperty()) {
+        if (set == null) {
             return false;
         }
 
@@ -76,7 +76,9 @@ final class PlayerProperties {
 
         // No per-color limit, so a stolen full set merges into the recipient even if they
         // already own that color.
-        sourceSet.transferUpgradesTo(targetSet);
+        if (!sourceSet.transferUpgradesTo(targetSet)) {
+            return false;
+        }
 
         // Copies first because the source set is mutated while the transfer loop runs
         List<Card> cardsToMove = new ArrayList<>(sourceSet.getCards());

@@ -227,7 +227,9 @@ public class Game {
     private void resetState() {
         players.clear();
         cardHistory.clear();
-        deck = new Deck();
+        if (started) {
+            deck = new Deck();
+        }
         currentPlayerIndex = 0;
         actionsUsed = 0;
         turnCount = 0;
